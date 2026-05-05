@@ -1,0 +1,175 @@
+// FILE: prisma/schema.prisma
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Prisma manages only the public application schema. `User.id` stores
+// the Supabase Auth UUID, but it does not create a cross-schema foreign key to
+// `auth.users`, avoiding Supabase-managed schema drift.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Enums keep subscription and message state constrained at the
+// database layer while preserving readable values for API responses.
+enum PlanTier {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum MessageStatus {
+  RECEIVED
+  PROCESSING
+  REPLIED
+  FAILED
+  IGNORED
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: The application user row mirrors Supabase Auth identity data and is
+// the parent record for all tenant-scoped data.
+model User {
+  id                   String               @id @db.Uuid
+  email                String               @unique
+  fullName             String?              @map("full_name")
+  avatarUrl            String?              @map("avatar_url")
+  planTier             PlanTier             @default(FREE) @map("plan_tier")
+  stripeCustomerId     String?              @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?              @map("stripe_subscription_id")
+  subscriptionStatus   SubscriptionStatus   @default(INACTIVE) @map("subscription_status")
+  monthlyReplyCount    Int                  @default(0) @map("monthly_reply_count")
+  replyCountResetAt    DateTime             @default(now()) @map("reply_count_reset_at")
+  createdAt            DateTime             @default(now()) @map("created_at")
+  updatedAt            DateTime             @updatedAt @map("updated_at")
+  connections          WhatsAppConnection[]
+  messages             Message[]
+  settings             UserSettings?
+  subscriptionEvents   SubscriptionEvent[]
+
+  @@index([createdAt])
+  @@index([planTier])
+  @@index([subscriptionStatus])
+  @@map("users")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: WhatsApp connections are tenant-owned and cascade with the user so
+// deleting an account removes credentials and linked message history.
+model WhatsAppConnection {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String    @map("user_id") @db.Uuid
+  phoneNumberId      String    @map("phone_number_id")
+  businessAccountId  String    @map("business_account_id")
+  // WhatsApp access tokens must be encrypted before this field is written.
+  accessToken        String    @map("access_token")
+  webhookVerifyToken String    @map("webhook_verify_token")
+  displayName        String?   @map("display_name")
+  isActive           Boolean   @default(false) @map("is_active")
+  isVerified         Boolean   @default(false) @map("is_verified")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages           Message[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([isActive])
+  @@index([isVerified])
+  @@map("whatsapp_connections")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Messages are scoped by user and connection, with idempotency enforced
+// by WhatsApp's message id to make webhook retries safe.
+model Message {
+  id           String             @id @default(uuid()) @db.Uuid
+  userId       String             @map("user_id") @db.Uuid
+  connectionId String             @map("connection_id") @db.Uuid
+  waMessageId  String             @unique @map("wa_message_id")
+  direction    MessageDirection
+  fromNumber   String             @map("from_number")
+  toNumber     String             @map("to_number")
+  bodyText     String             @map("body_text")
+  mediaUrl     String?            @map("media_url")
+  mediaType    String?            @map("media_type")
+  status       MessageStatus      @default(RECEIVED)
+  aiReplyText  String?            @map("ai_reply_text")
+  aiModelUsed  String?            @map("ai_model_used")
+  aiTokensUsed Int?               @map("ai_tokens_used")
+  processedAt  DateTime?          @map("processed_at")
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection   WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([connectionId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([waMessageId])
+  @@map("messages")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: User settings are one-to-one with the tenant user and cascade on
+// account deletion to keep prompt behavior isolated per tenant.
+model UserSettings {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @unique @map("user_id") @db.Uuid
+  systemPrompt     String   @default("You are a helpful business assistant for {businessName}. Your role is to respond\nto customer WhatsApp messages in a friendly, professional, and concise manner.\nAlways stay on topic. If you cannot help with something, politely direct the\ncustomer to contact a human agent. Respond in {language}. Keep replies under\n{maxReplyLength} characters.") @map("system_prompt")
+  autoReplyEnabled Boolean  @default(true) @map("auto_reply_enabled")
+  language         String   @default("en")
+  businessName     String?  @map("business_name")
+  businessContext  String?  @map("business_context")
+  fallbackMessage  String?  @map("fallback_message")
+  maxReplyLength   Int      @default(300) @map("max_reply_length")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@map("user_settings")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Stripe events are append-only audit records scoped to the user; they
+// cascade on account deletion to honor tenant data removal.
+model SubscriptionEvent {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  stripeEventId String    @unique @map("stripe_event_id")
+  eventType     String    @map("event_type")
+  planTier      PlanTier  @map("plan_tier")
+  status        String
+  amount        Int?
+  currency      String?
+  periodStart   DateTime? @map("period_start")
+  periodEnd     DateTime? @map("period_end")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([eventType])
+  @@index([planTier])
+  @@index([status])
+  @@map("subscription_events")
+}

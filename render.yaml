@@ -1,0 +1,60 @@
+# FILE: render.yaml
+# [ROLE: DEVOPS ENGINEER]
+# Decision: Render deploys from a Git-backed Blueprint, so the service contract keeps
+# build, start, health check, and secret environment variables in one auditable file.
+services:
+  - type: web
+    name: wa-ai-assistant
+    env: node
+    plan: starter
+    buildCommand: pnpm install && pnpm prisma generate && pnpm prisma migrate deploy && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DIRECT_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        sync: false
+      - key: WHATSAPP_APP_ID
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        sync: false
+      - key: WHATSAPP_MOCK_MODE
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRO_PRICE_ID
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: E2E_AUTH_BYPASS_SECRET
+        sync: false
+      - key: ENCRYPTION_SECRET
+        sync: false

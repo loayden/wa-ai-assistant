@@ -1,0 +1,5 @@
+# FILE: prisma/migrations/migration_lock.toml
+# [ROLE: BACKEND ENGINEER]
+# Decision: Prisma uses this lock file to ensure migration history is applied
+# with the PostgreSQL provider expected by Supabase.
+provider = "postgresql"

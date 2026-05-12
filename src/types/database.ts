@@ -31,7 +31,7 @@ export type MessageWithConnection = Prisma.MessageGetPayload<{
   };
 }>;
 
-export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken"> & {
+export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken" | "ownerPhoneNumber"> & {
   accessTokenMasked: string;
 };
 

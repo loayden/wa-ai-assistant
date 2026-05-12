@@ -14,6 +14,7 @@ export const connectWhatsAppSchema = z
     businessAccountId: metaNumericIdSchema,
     accessToken: z.string().trim().min(20).max(4096),
     displayName: z.string().trim().max(100).nullable().optional(),
+    ownerPhoneNumber: z.string().trim().min(6).max(32).optional(),
   })
   .strict();
 

@@ -9,6 +9,7 @@ import "server-only";
 
 import Stripe from "stripe";
 
+import type { PlanTier } from "@/types/subscription";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
@@ -16,26 +17,42 @@ export const stripe = new Stripe(appEnv.STRIPE_SECRET_KEY, {
   apiVersion: "2024-12-18.acacia",
 });
 
-export async function createCheckoutSession(userId: string, email: string, priceId = appEnv.STRIPE_PRO_PRICE_ID) {
+function getPriceIdForPlan(planTier: Extract<PlanTier, "PRO" | "BUSINESS">): string {
+  return planTier === "BUSINESS" ? appEnv.STRIPE_BUSINESS_PRICE_ID : appEnv.STRIPE_PRO_PRICE_ID;
+}
+
+export async function createCheckoutSession(params: {
+  userId: string;
+  email: string;
+  planTier: Extract<PlanTier, "PRO" | "BUSINESS">;
+}) {
+  const priceId = getPriceIdForPlan(params.planTier);
+
   try {
     return await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer_email: email,
+      customer_email: params.email,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       success_url: `${appEnv.NEXT_PUBLIC_APP_URL}/billing?checkout=success`,
       cancel_url: `${appEnv.NEXT_PUBLIC_APP_URL}/billing?checkout=cancelled`,
       metadata: {
-        userId,
+        userId: params.userId,
+        planTier: params.planTier,
       },
       subscription_data: {
         metadata: {
-          userId,
+          userId: params.userId,
+          planTier: params.planTier,
         },
       },
     });
   } catch (error) {
-    logger.error("stripe.createCheckoutSession", "Failed to create Stripe Checkout session.", { error, userId });
+    logger.error("stripe.createCheckoutSession", "Failed to create Stripe Checkout session.", {
+      error,
+      userId: params.userId,
+      planTier: params.planTier,
+    });
     throw error;
   }
 }

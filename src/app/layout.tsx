@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/shared/Providers";
+import { BRAND_LOCKUP } from "@/lib/utils/brand";
 import "./globals.css";
 
 /*
@@ -16,13 +17,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "WA-AI Assistant",
-    template: "%s | WA-AI Assistant",
+    default: BRAND_LOCKUP,
+    template: `%s | ${BRAND_LOCKUP}`,
   },
-  description: "AI WhatsApp Business assistant SaaS.",
+  description: "AI WhatsApp assistant for your business.",
   openGraph: {
-    title: "WA-AI Assistant",
-    description: "AI WhatsApp Business assistant SaaS.",
+    title: BRAND_LOCKUP,
+    description: "AI WhatsApp assistant for your business.",
     type: "website",
   },
 };

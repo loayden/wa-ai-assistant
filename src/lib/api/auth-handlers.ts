@@ -23,6 +23,13 @@ const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 
 type AuthAction = z.infer<typeof authActionSchema>["action"];
 
+function isObfuscatedExistingUserResponse(data: {
+  user: { identities?: ArrayLike<unknown> | null } | null;
+  session: unknown;
+}): boolean {
+  return !data.session && !!data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+}
+
 async function readJsonBody(request: Request): Promise<unknown> {
   try {
     return await request.json();
@@ -122,6 +129,16 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
 
       if (error) {
         return jsonError(error.message, 400);
+      }
+
+      /*
+       * [ROLE: BACKEND ENGINEER]
+       * Decision: Supabase can return an obfuscated user object instead of an
+       * explicit duplicate-email error when confirm email/phone is enabled.
+       * Detect that shape before syncing Prisma to avoid surfacing a 500.
+       */
+      if (isObfuscatedExistingUserResponse(data)) {
+        return jsonError("An account with this email already exists. Please log in.", 409);
       }
 
       if (data.user) {

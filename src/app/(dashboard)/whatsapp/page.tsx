@@ -8,15 +8,9 @@ import { WhatsAppPageClient } from "@/components/whatsapp/WhatsAppPageClient";
 
 export default function WhatsAppPage() {
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-normal">WhatsApp</h1>
-        <p className="text-sm text-muted-foreground">Connect WhatsApp Cloud API or use mock mode for local inbound message testing.</p>
-      </div>
-      <WhatsAppPageClient
-        appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
-        mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}
-      />
-    </div>
+    <WhatsAppPageClient
+      appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
+      mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}
+    />
   );
 }

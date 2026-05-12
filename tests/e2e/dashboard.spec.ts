@@ -2,11 +2,11 @@
 /*
  * [ROLE: QA ENGINEER]
  * Decision: Dashboard E2E tests verify middleware redirect behavior and the
- * authenticated dashboard surface with mocked tenant-scoped API responses.
+ * authenticated dashboard surface with a real session plus mocked tenant data.
  */
 import { expect, test, type Page } from "@playwright/test";
 
-const AUTH_BYPASS_HEADER = { "x-e2e-auth-bypass": process.env.E2E_AUTH_BYPASS_SECRET ?? "playwright-secret" };
+import { login } from "./helpers/auth";
 
 async function mockDashboardApis(page: Page) {
   await page.route("**/api/settings", async (route) => {
@@ -91,14 +91,12 @@ test("unauthenticated users are redirected to login", async ({ page }) => {
   await expect(page).toHaveURL(/\/login\?next=%2Fdashboard/);
 });
 
-test("authenticated user can reach dashboard and see stats", async ({ page }) => {
-  await page.setExtraHTTPHeaders(AUTH_BYPASS_HEADER);
+test("authenticated user can reach dashboard and see the command center", async ({ page }) => {
   await mockDashboardApis(page);
+  await login(page);
 
-  await page.goto("/dashboard");
-
-  await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();
-  await expect(page.getByText("Total messages this month")).toBeVisible();
-  await expect(page.getByText("AI replies sent")).toBeVisible();
-  await expect(page.getByText("Reply success rate")).toBeVisible();
+  await expect(page.getByText("Your AI assistant")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pause AI replies" })).toBeVisible();
+  await expect(page.getByText("Recent conversations")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Customize assistant" })).toBeVisible();
 });

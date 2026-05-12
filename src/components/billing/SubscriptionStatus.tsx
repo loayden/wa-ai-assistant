@@ -7,9 +7,10 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UsageBar } from "@/components/dashboard/UsageBar";
+import type { PlanTier } from "@/types/subscription";
 
 type SubscriptionStatusProps = {
-  planTier: "FREE" | "PRO";
+  planTier: PlanTier;
   subscriptionStatus: "ACTIVE" | "INACTIVE" | "PAST_DUE" | "CANCELED";
   monthlyReplyCount: number;
   nextBillingDate?: string | null;
@@ -47,7 +48,7 @@ export function SubscriptionStatus({ planTier, subscriptionStatus, monthlyReplyC
           </div>
           <div>
             <p className="text-xs font-medium uppercase text-muted-foreground">Next billing date</p>
-            <p className="mt-2 text-sm">{planTier === "PRO" ? nextBillingDate ?? "Available in Stripe Portal" : "No active billing period"}</p>
+            <p className="mt-2 text-sm">{planTier !== "FREE" ? nextBillingDate ?? "Available in Stripe Portal" : "No active billing period"}</p>
           </div>
         </div>
         <UsageBar planTier={planTier} used={monthlyReplyCount} />

@@ -1,8 +1,8 @@
 // FILE: src/app/api/settings/route.ts
 /*
  * [ROLE: BACKEND ENGINEER]
- * Decision: Settings reads lazily create defaults, while writes enforce PRO-only
- * prompt customization at the server boundary.
+ * Decision: Settings reads lazily create defaults, while writes enforce
+ * paid-plan prompt customization at the server boundary.
  */
 import { PlanTier } from "@prisma/client";
 
@@ -64,7 +64,7 @@ export async function PUT(request: Request) {
     }
 
     if (user.planTier === PlanTier.FREE && parsed.data.systemPrompt !== undefined) {
-      return jsonError("Custom prompts are available on the PRO plan.", 403);
+      return jsonError("Custom prompts are available on the PRO and BUSINESS plans.", 403);
     }
 
     const settings = await prisma.userSettings.upsert({

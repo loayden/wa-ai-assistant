@@ -50,23 +50,67 @@ describe("subscription utilities", () => {
   });
 
   it.each([
-    { count: 0, allowed: true, remaining: 50 },
-    { count: 49, allowed: true, remaining: 1 },
-    { count: 50, allowed: false, remaining: 0 },
-  ])("checks FREE limit at $count replies", async ({ count, allowed, remaining }) => {
+    { count: 0, allowed: true, remaining: 50, overageCount: 0 },
+    { count: 49, allowed: true, remaining: 1, overageCount: 0 },
+    { count: 50, allowed: false, remaining: 0, overageCount: 0 },
+  ])("checks FREE limit at $count replies", async ({ count, allowed, remaining, overageCount }) => {
     prismaMock.user.findUnique
       .mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() })
       .mockResolvedValueOnce({ planTier: PlanTier.FREE, monthlyReplyCount: count });
 
-    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({ allowed, remaining });
+    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({
+      allowed,
+      remaining,
+      includedRepliesPerMonth: 50,
+      overageCount,
+      allowsOverage: false,
+      planTier: PlanTier.FREE,
+    });
   });
 
-  it("allows PRO users without a remaining cap", async () => {
+  it("allows PRO users through the included 2,000 replies", async () => {
     prismaMock.user.findUnique
       .mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() })
       .mockResolvedValueOnce({ planTier: PlanTier.PRO, monthlyReplyCount: 500 });
 
-    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({ allowed: true, remaining: null });
+    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({
+      allowed: true,
+      remaining: 1500,
+      includedRepliesPerMonth: 2000,
+      overageCount: 0,
+      allowsOverage: true,
+      planTier: PlanTier.PRO,
+    });
+  });
+
+  it("tracks PRO overage instead of blocking after 2,000 replies", async () => {
+    prismaMock.user.findUnique
+      .mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() })
+      .mockResolvedValueOnce({ planTier: PlanTier.PRO, monthlyReplyCount: 2250 });
+
+    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({
+      allowed: true,
+      remaining: 0,
+      includedRepliesPerMonth: 2000,
+      overageCount: 250,
+      allowsOverage: true,
+      planTier: PlanTier.PRO,
+    });
+  });
+
+  it("tracks BUSINESS overage instead of blocking after 10,000 replies", async () => {
+    prismaMock.user.findUnique
+      .mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() })
+      .mockResolvedValueOnce({ planTier: PlanTier.BUSINESS, monthlyReplyCount: 10025 });
+
+    await expect(checkSubscriptionLimit(USER_ID)).resolves.toEqual({
+      allowed: true,
+      remaining: 0,
+      includedRepliesPerMonth: 10000,
+      overageCount: 25,
+      allowsOverage: true,
+      planTier: PlanTier.BUSINESS,
+    });
   });
 
   it("increments the monthly reply count", async () => {

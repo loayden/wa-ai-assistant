@@ -6,14 +6,11 @@
  */
 "use client";
 
-import { Copy, Power, Trash2 } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
 export type WhatsAppConnectionSummary = {
   id: string;
@@ -37,69 +34,61 @@ type ConnectionStatusProps = {
 export function ConnectionStatus({
   connection,
   webhookUrl,
-  autoReplyEnabled,
-  isUpdating,
-  onToggleAutoReply,
   onDisconnect,
 }: ConnectionStatusProps) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div>
-          <CardTitle>{connection.displayName ?? "WhatsApp Connection"}</CardTitle>
-          <p className="mt-1 text-sm text-muted-foreground">Phone Number ID {connection.phoneNumberId}</p>
-        </div>
-        <Badge variant={connection.isVerified ? "success" : "warning"}>{connection.isVerified ? "Verified" : "Pending verification"}</Badge>
-      </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">Business Account ID</p>
-            <p className="mt-1 text-sm">{connection.businessAccountId}</p>
+            <p className="text-body font-medium text-wa-gray-900">{connection.displayName ?? "WhatsApp connected"}</p>
+            <p className="mt-1 text-body-sm text-wa-gray-600">Your assistant is connected to this number.</p>
+          </div>
+          <StatusBadge label={connection.isVerified ? "Verified" : "Pending"} variant={connection.isVerified ? "active" : "paused"} />
+        </div>
+        <div className="space-y-3 rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+          <div>
+            <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Phone number</p>
+            <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.phoneNumberId}</p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">Access Token</p>
-            <p className="mt-1 text-sm">{connection.accessTokenMasked}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium uppercase text-muted-foreground">Connection</p>
-            <Badge className="mt-1" variant={connection.isActive ? "success" : "secondary"}>
-              {connection.isActive ? "Active" : "Inactive"}
-            </Badge>
+            <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Connection</p>
+            <p className="mt-1 text-body-sm text-wa-gray-600">{connection.isActive ? "Active and ready" : "Inactive"}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <Power className="size-4 text-primary" aria-hidden="true" />
+        <details className="rounded-xl border border-wa-gray-100 bg-white p-5">
+          <summary className="cursor-pointer text-body-sm font-medium text-wa-blue-600">Advanced settings</summary>
+          <div className="mt-4 space-y-4">
             <div>
-              <p className="text-sm font-medium">Auto-reply</p>
-              <p className="text-xs text-muted-foreground">Turn AI replies on or off for inbound messages.</p>
+              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Business account</p>
+              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.businessAccountId}</p>
             </div>
-          </div>
-          <Switch
-            checked={autoReplyEnabled}
-            disabled={isUpdating}
-            onChange={(event) => onToggleAutoReply(event.currentTarget.checked)}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="webhook-url">Webhook URL</Label>
-          <div className="flex gap-2">
-            <Input id="webhook-url" readOnly value={webhookUrl} />
-            <Button
-              aria-label="Copy webhook URL"
-              size="icon"
-              variant="outline"
-              onClick={() => void navigator.clipboard.writeText(webhookUrl)}
-            >
-              <Copy className="size-4" aria-hidden="true" />
+            <div>
+              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Access token</p>
+              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.accessTokenMasked}</p>
+            </div>
+            <div className="space-y-2">
+              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Webhook URL</p>
+              <div className="flex gap-2">
+                <code className="min-w-0 flex-1 truncate rounded-lg border border-wa-gray-100 bg-wa-gray-50 px-3 py-3 font-mono text-mono text-wa-gray-600">
+                  {webhookUrl}
+                </code>
+                <Button
+                  aria-label="Copy webhook URL"
+                  size="icon"
+                  variant="outline"
+                  onClick={() => void navigator.clipboard.writeText(webhookUrl)}
+                >
+                  <Copy className="size-4" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+            <Button className="w-full" variant="destructive" onClick={onDisconnect}>
+              <Trash2 className="size-4" aria-hidden="true" />
+              Disconnect
             </Button>
           </div>
-        </div>
-        <Button variant="destructive" onClick={onDisconnect}>
-          <Trash2 className="size-4" aria-hidden="true" />
-          Disconnect
-        </Button>
+        </details>
       </CardContent>
     </Card>
   );

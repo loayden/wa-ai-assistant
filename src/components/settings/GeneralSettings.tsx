@@ -89,7 +89,7 @@ export function GeneralSettings() {
     );
   }
 
-  const isProPlan = settingsResult.user.planTier === "PRO";
+  const canEditCustomPrompt = settingsResult.user.planTier !== "FREE";
   const businessName = String(form.watch("businessName") ?? "");
   const language = String(form.watch("language") ?? "en");
   const maxReplyLength = Number(form.watch("maxReplyLength") ?? 300);
@@ -105,7 +105,7 @@ export function GeneralSettings() {
       maxReplyLength: Number(values.maxReplyLength ?? 300),
     };
 
-    if (!isProPlan) {
+    if (!canEditCustomPrompt) {
       delete payload.systemPrompt;
     }
 
@@ -173,7 +173,7 @@ export function GeneralSettings() {
           </div>
           <PromptEditor
             value={systemPrompt}
-            isProPlan={isProPlan}
+            canEditCustomPrompt={canEditCustomPrompt}
             businessName={businessName}
             language={language}
             maxReplyLength={maxReplyLength}

@@ -1,0 +1,23 @@
+/* FILE: src/styles/elder-mode.css */
+
+/*
+ * [ROLE: FRONTEND ENGINEER]
+ * Decision: Elder mode scales readable text through the root body class and
+ * enforces larger touch targets without changing route or component state.
+ */
+.elder-mode {
+  font-size: 130%;
+}
+
+.elder-mode :where(p, span, h1, h2, h3, h4, h5, h6, label, input, button, a, li, textarea, select) {
+  line-height: 1.8;
+}
+
+.elder-mode :where(button, [role="button"], input, select, textarea, a) {
+  min-height: 60px !important;
+  min-width: 60px !important;
+}
+
+.elder-mode :where(.text-micro, .text-label, .text-body-sm, .text-body, .text-body-lg) {
+  font-size: 1.3em;
+}

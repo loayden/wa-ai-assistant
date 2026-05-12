@@ -20,6 +20,7 @@ datasource db {
 enum PlanTier {
   FREE
   PRO
+  BUSINESS
 }
 
 enum SubscriptionStatus {
@@ -80,6 +81,7 @@ model WhatsAppConnection {
   // WhatsApp access tokens must be encrypted before this field is written.
   accessToken        String    @map("access_token")
   webhookVerifyToken String    @map("webhook_verify_token")
+  ownerPhoneNumber   String?   @map("owner_phone_number")
   displayName        String?   @map("display_name")
   isActive           Boolean   @default(false) @map("is_active")
   isVerified         Boolean   @default(false) @map("is_verified")

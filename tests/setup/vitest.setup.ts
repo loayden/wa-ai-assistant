@@ -24,6 +24,7 @@ Object.assign(process.env, {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_dummy",
   STRIPE_WEBHOOK_SECRET: "whsec_dummy",
   STRIPE_PRO_PRICE_ID: "price_dummy",
+  STRIPE_BUSINESS_PRICE_ID: "price_business_dummy",
   RESEND_API_KEY: "re_dummy",
   RESEND_FROM_EMAIL: "noreply@example.com",
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",

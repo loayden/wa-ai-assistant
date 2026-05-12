@@ -4,7 +4,43 @@
  * Decision: Playwright starts the same Next app used in development while
  * passing deterministic mock credentials for E2E-only API interception.
  */
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+
+function loadLocalEnvFile() {
+  const envPath = join(process.cwd(), ".env.local");
+
+  if (!existsSync(envPath)) {
+    return;
+  }
+
+  const rawEnv = readFileSync(envPath, "utf8");
+
+  for (const line of rawEnv.split(/\r?\n/)) {
+    const trimmedLine = line.trim();
+
+    if (!trimmedLine || trimmedLine.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = trimmedLine.indexOf("=");
+
+    if (separatorIndex === -1) {
+      continue;
+    }
+
+    const key = trimmedLine.slice(0, separatorIndex).trim();
+    const rawValue = trimmedLine.slice(separatorIndex + 1).trim();
+    const unquotedValue = rawValue.replace(/^['"]|['"]$/g, "");
+
+    if (!(key in process.env)) {
+      process.env[key] = unquotedValue;
+    }
+  }
+}
+
+loadLocalEnvFile();
 
 const env = {
   ...process.env,
@@ -25,6 +61,7 @@ const env = {
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "pk_test_dummy",
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ?? "whsec_dummy",
   STRIPE_PRO_PRICE_ID: process.env.STRIPE_PRO_PRICE_ID ?? "price_dummy",
+  STRIPE_BUSINESS_PRICE_ID: process.env.STRIPE_BUSINESS_PRICE_ID ?? "price_business_dummy",
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? "re_dummy",
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL ?? "noreply@example.com",
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000",
@@ -35,20 +72,21 @@ const env = {
 
 export default defineConfig({
   testDir: "./tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   timeout: 30_000,
   expect: {
     timeout: 10_000,
   },
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: "http://127.0.0.1:3002",
     trace: "on-first-retry",
   },
   webServer: {
-    command: 'PATH="/Users/shereenmagdy/Desktop/whats app/.codex-bin:$PATH" pnpm dev --hostname 127.0.0.1 --port 3000',
+    command: 'PATH="/Users/shereenmagdy/Desktop/whats app/.codex-bin:$PATH" pnpm dev --hostname 127.0.0.1 --port 3002',
     env,
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
-    url: "http://127.0.0.1:3000",
+    url: "http://127.0.0.1:3002",
   },
   projects: [
     {

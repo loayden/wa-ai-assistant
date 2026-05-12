@@ -1,144 +1,182 @@
 // FILE: src/components/dashboard/DashboardPageClient.tsx
-/*
- * [ROLE: FRONTEND ENGINEER]
- * Decision: The dashboard composes independent TanStack Query reads so failed
- * widgets can show errors without blocking the whole page shell.
- */
 "use client";
 
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Bot, CheckCircle2, MessageSquareText, PlugZap } from "lucide-react";
+/*
+ * [ROLE: FRONTEND ENGINEER]
+ * Decision: The v2 dashboard is a command center with one hero action, recent
+ * conversations, and a drawer for all secondary assistant controls.
+ */
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { SlidersHorizontal } from "lucide-react";
 
-import { RecentMessages } from "@/components/dashboard/RecentMessages";
-import { StatsCard } from "@/components/dashboard/StatsCard";
-import { UsageBar } from "@/components/dashboard/UsageBar";
+import { AIToggle } from "@/components/ai/AIToggle";
+import { ConversationCard } from "@/components/conversations/ConversationCard";
+import { ConversationThread } from "@/components/conversations/ConversationThread";
+import { CustomizeDrawer, type CustomizeDrawerValues } from "@/components/customize/CustomizeDrawer";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMessages } from "@/hooks/useMessages";
-import { useSettings } from "@/hooks/useSettings";
+import { useMessages, type MessageRecord } from "@/hooks/useMessages";
+import { useSettings, useUpdateSettings, type SettingsRecord } from "@/hooks/useSettings";
 import { useSubscription } from "@/hooks/useSubscription";
-import { apiData } from "@/lib/api/client";
-
-type SafeConnection = {
-  id: string;
-  phoneNumberId: string;
-  displayName: string | null;
-  isActive: boolean;
-  isVerified: boolean;
-};
-
-type ConnectionsResponse = {
-  connections: SafeConnection[];
-};
+import type { UpdateSettingsInput } from "@/lib/validators/settings";
+import { useAuthStore } from "@/store/authStore";
 
 type DashboardPageClientProps = {
   mockMode: boolean;
 };
 
-function isCurrentMonth(dateValue: string) {
-  const date = new Date(dateValue);
-  const now = new Date();
+function formatTimestamp(value: string) {
+  return new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+}
 
-  return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+function makeDrawerValues(settings: SettingsRecord): CustomizeDrawerValues {
+  return {
+    tone: "friendly",
+    businessName: settings.businessName ?? "",
+    businessContext: settings.businessContext ?? "",
+    language: settings.language,
+    fallbackMessage: settings.fallbackMessage ?? "",
+    systemPrompt: settings.systemPrompt,
+    largeTextEnabled: false,
+  };
 }
 
 export function DashboardPageClient({ mockMode }: DashboardPageClientProps) {
+  const router = useRouter();
+  const clearAuth = useAuthStore((state) => state.clearAuth);
   const settingsResult = useSettings();
   const subscription = useSubscription();
-  const messagesResult = useMessages({ page: 1, limit: 100 });
-  const connectionsQuery = useQuery({
-    queryKey: ["whatsapp-connections"],
-    queryFn: () => apiData<ConnectionsResponse>("/api/whatsapp/connect"),
-  });
+  const messagesResult = useMessages({ page: 1, limit: 20 });
+  const updateSettings = useUpdateSettings();
+  const [activeConversation, setActiveConversation] = useState<MessageRecord | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerValues, setDrawerValues] = useState<CustomizeDrawerValues | null>(null);
+  const [dirty, setDirty] = useState(false);
 
-  const messages = messagesResult.messages;
-  const monthMessages = useMemo(() => messages.filter((message) => isCurrentMonth(message.createdAt)), [messages]);
-  const repliedMessages = monthMessages.filter((message) => message.status === "REPLIED");
-  const failedMessages = monthMessages.filter((message) => message.status === "FAILED");
-  const successRate = repliedMessages.length + failedMessages.length === 0
-    ? 0
-    : Math.round((repliedMessages.length / (repliedMessages.length + failedMessages.length)) * 100);
-  const activeConnection = connectionsQuery.data?.connections.find((connection) => connection.isActive) ?? null;
-  const hasError = settingsResult.error || messagesResult.error || connectionsQuery.isError;
+  useEffect(() => {
+    if (settingsResult.settings) {
+      setDrawerValues(makeDrawerValues(settingsResult.settings));
+      setDirty(false);
+    }
+  }, [settingsResult.settings]);
 
-  if (settingsResult.isLoading || messagesResult.isLoading || connectionsQuery.isLoading) {
+  const threadMessages = useMemo(() => {
+    if (!activeConversation) {
+      return [];
+    }
+
+    const phone = activeConversation.fromNumber;
+    return messagesResult.messages.filter((message) => message.fromNumber === phone || message.toNumber === phone);
+  }, [activeConversation, messagesResult.messages]);
+
+  if (settingsResult.isLoading || messagesResult.isLoading) {
+    return <div className="mx-auto max-w-[480px] px-4 pt-6"><Skeleton className="h-[520px] w-full" /></div>;
+  }
+
+  if (settingsResult.error || messagesResult.error || !settingsResult.settings) {
     return (
-      <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-32 w-full" />
-          ))}
-        </div>
-        <Skeleton className="h-64 w-full" />
+      <div className="mx-auto max-w-[480px] px-4 pt-6">
+        <Alert>
+          <AlertTitle>Dashboard unavailable</AlertTitle>
+          <AlertDescription>Refresh after checking your session.</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
-  if (hasError) {
-    return (
-      <Alert>
-        <AlertTitle>Dashboard unavailable</AlertTitle>
-        <AlertDescription>One or more dashboard requests failed. Refresh the page after checking your session.</AlertDescription>
-      </Alert>
-    );
+  async function handleSignOut() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    clearAuth();
+    router.push("/login");
+    router.refresh();
   }
+
+  function saveDrawer() {
+    if (!drawerValues) {
+      return;
+    }
+
+    const payload: UpdateSettingsInput = {
+      businessName: drawerValues.businessName || null,
+      businessContext: drawerValues.businessContext || null,
+      fallbackMessage: drawerValues.fallbackMessage || null,
+      language: drawerValues.language,
+    };
+
+    if (subscription.canUseCustomPrompt) {
+      payload.systemPrompt = drawerValues.systemPrompt;
+    }
+
+    updateSettings.mutate(payload);
+    setDirty(false);
+  }
+
+  function updateDrawer(values: Partial<CustomizeDrawerValues>) {
+    setDrawerValues((current) => (current ? { ...current, ...values } : current));
+    setDirty(true);
+  }
+
+  const recentMessages = messagesResult.messages.slice(0, 3);
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-3">
-        <StatsCard title="Total messages this month" value={String(monthMessages.length)} description="Inbound and outbound records" icon={MessageSquareText} />
-        <StatsCard title="AI replies sent" value={String(repliedMessages.length)} description="Replies generated by automation" icon={Bot} />
-        <StatsCard title="Reply success rate" value={`${successRate}%`} description="Successful AI replies vs failures" icon={CheckCircle2} />
-      </div>
-      <div className="grid gap-4 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Usage</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <UsageBar planTier={subscription.planTier} used={subscription.usage} />
-            </CardContent>
-          </Card>
-          <RecentMessages messages={messages.slice(0, 5)} />
-        </div>
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>WhatsApp Connection</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Status</span>
-                <Badge variant={activeConnection ? "success" : "warning"}>{activeConnection ? "Connected" : "Not connected"}</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Auto-reply</span>
-                <Badge variant={settingsResult.settings?.autoReplyEnabled ? "success" : "secondary"}>
-                  {settingsResult.settings?.autoReplyEnabled ? "Enabled" : "Disabled"}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <PlugZap className="size-4 text-primary" aria-hidden="true" />
-                <span>{activeConnection?.displayName ?? activeConnection?.phoneNumberId ?? "Connect a number to start processing messages."}</span>
-              </div>
-            </CardContent>
-          </Card>
-          {mockMode ? (
-            <MockMessageSender
-              phoneNumberId={activeConnection?.phoneNumberId}
-              onSent={() => {
-                void messagesResult.refetch();
-                void settingsResult.refetch();
-              }}
+    <div className="relative mx-auto max-w-[480px] px-4 pb-8 pt-6">
+      <AIToggle enabled={settingsResult.settings.autoReplyEnabled} />
+      <section className="mt-8">
+        <header className="mb-4 flex items-center justify-between">
+          <span className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Recent conversations</span>
+          <Link href="/messages" className="text-body-sm text-wa-blue-600">View all</Link>
+        </header>
+        <div className="overflow-hidden rounded-xl border border-wa-gray-100 bg-white">
+          {recentMessages.length > 0 ? recentMessages.map((message) => (
+            <ConversationCard
+              key={message.id}
+              aiGenerated={!!message.aiReplyText}
+              contactName={message.connection?.displayName}
+              phoneNumber={message.fromNumber}
+              preview={message.aiReplyText ?? message.bodyText}
+              timestamp={formatTimestamp(message.createdAt)}
+              unread={message.status === "RECEIVED"}
+              onClick={() => setActiveConversation(message)}
             />
-          ) : null}
+          )) : (
+            <div className="p-5 text-center text-body text-wa-gray-600">No messages yet</div>
+          )}
         </div>
-      </div>
+      </section>
+      <button
+        type="button"
+        onClick={() => setDrawerOpen(true)}
+        className="mt-4 flex h-[54px] w-full items-center justify-center gap-2 rounded-xl border border-wa-gray-100 bg-white text-body font-medium text-wa-gray-600 transition-all duration-150 hover:border-wa-gray-200 hover:bg-wa-gray-50 active:scale-[0.98]"
+      >
+        <SlidersHorizontal className="size-4" aria-hidden="true" />
+        Customize assistant
+      </button>
+      {mockMode ? <div className="mt-4"><MockMessageSender onSent={() => void messagesResult.refetch()} /></div> : null}
+      {activeConversation ? (
+        <ConversationThread
+          contactName={activeConversation.connection?.displayName ?? activeConversation.fromNumber}
+          phoneNumber={activeConversation.fromNumber}
+          messages={threadMessages}
+          onBack={() => setActiveConversation(null)}
+        />
+      ) : null}
+      {drawerValues ? (
+        <CustomizeDrawer
+          dirty={dirty}
+          canEditCustomPrompt={subscription.canUseCustomPrompt}
+          isSaving={updateSettings.isPending}
+          open={drawerOpen}
+          values={drawerValues}
+          onBilling={() => router.push("/billing")}
+          onChange={updateDrawer}
+          onClose={() => setDrawerOpen(false)}
+          onSave={saveDrawer}
+          onSignOut={handleSignOut}
+        />
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { handleOwnerCommand } from "@/lib/utils/ownerCommands";
 import { checkSubscriptionLimit, incrementReplyCount } from "@/lib/utils/subscription";
 import { inboundWebhookSchema, type InboundWhatsAppMessage } from "@/lib/validators/message";
 import { webhookVerifySchema } from "@/lib/validators/whatsapp";
@@ -61,6 +62,10 @@ function extractMessageBody(message: InboundWhatsAppMessage): string {
 
 function extractMediaType(message: InboundWhatsAppMessage): string | undefined {
   return ["image", "video", "document", "audio", "sticker"].includes(message.type) ? message.type : undefined;
+}
+
+function normalizePhoneNumber(value: string): string {
+  return value.replace(/\D/g, "");
 }
 
 async function sendReply(params: {
@@ -133,6 +138,61 @@ async function processInboundMessage(params: {
       status: settings.autoReplyEnabled ? MessageStatus.PROCESSING : MessageStatus.IGNORED,
     },
   });
+
+  // [ROLE: BACKEND ENGINEER]
+  // Decision: Owner-originated messages act as control commands and must not
+  // consume AI quota or continue into the reply-generation path.
+  if (
+    connection.ownerPhoneNumber &&
+    normalizePhoneNumber(params.message.from) === normalizePhoneNumber(connection.ownerPhoneNumber)
+  ) {
+    const commandResult = await handleOwnerCommand(bodyText, connection.userId, prisma);
+
+    if (commandResult.settingsUpdate) {
+      await prisma.userSettings.upsert({
+        where: { userId: connection.userId },
+        create: {
+          userId: connection.userId,
+          systemPrompt: commandResult.settingsUpdate.systemPrompt ?? settings.systemPrompt,
+          autoReplyEnabled: commandResult.settingsUpdate.autoReplyEnabled ?? settings.autoReplyEnabled,
+          language: settings.language,
+          businessName: settings.businessName,
+          businessContext: settings.businessContext,
+          fallbackMessage: settings.fallbackMessage,
+          maxReplyLength: settings.maxReplyLength,
+        },
+        update: commandResult.settingsUpdate,
+      });
+    }
+
+    try {
+      await sendReply({
+        phoneNumberId: params.phoneNumberId,
+        accessToken: connection.accessToken,
+        to: params.message.from,
+        replyText: commandResult.confirmationMessage,
+      });
+    } catch (error) {
+      logger.error("api.webhooks.whatsapp", "Owner command confirmation send failed.", {
+        error,
+        waMessageId: inboundMessage.waMessageId,
+      });
+    }
+
+    await prisma.message.update({
+      where: { id: inboundMessage.id },
+      data: {
+        status: MessageStatus.IGNORED,
+        processedAt: new Date(),
+      },
+    });
+
+    return {
+      waMessageId: inboundMessage.waMessageId,
+      status: MessageStatus.IGNORED,
+      aiReplyText: commandResult.confirmationMessage,
+    };
+  }
 
   if (!settings.autoReplyEnabled) {
     return {

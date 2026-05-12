@@ -6,7 +6,7 @@
  */
 import { expect, test, type Page } from "@playwright/test";
 
-const AUTH_BYPASS_HEADER = { "x-e2e-auth-bypass": process.env.E2E_AUTH_BYPASS_SECRET ?? "playwright-secret" };
+import { login } from "./helpers/auth";
 
 type MockMessage = {
   id: string;
@@ -91,18 +91,16 @@ async function mockSharedApis(page: Page, messages: MockMessage[]) {
 }
 
 test("messages page loads and shows empty state", async ({ page }) => {
-  await page.setExtraHTTPHeaders(AUTH_BYPASS_HEADER);
   await mockSharedApis(page, []);
-
+  await login(page);
   await page.goto("/messages");
 
-  await expect(page.getByText("No messages match the current filters.")).toBeVisible();
+  await expect(page.getByText("No conversations match this view.")).toBeVisible();
 });
 
 test("mock mode test message appears in the message list", async ({ page }) => {
   const messages: MockMessage[] = [];
 
-  await page.setExtraHTTPHeaders(AUTH_BYPASS_HEADER);
   await mockSharedApis(page, messages);
   await page.route("**/api/webhooks/whatsapp", async (route) => {
     const payload = await route.request().postDataJSON();
@@ -131,13 +129,14 @@ test("mock mode test message appears in the message list", async ({ page }) => {
     });
   });
 
+  await login(page);
   await page.goto("/whatsapp");
   await page.getByLabel("Message text").fill("Do you deliver today?");
   await page.getByRole("button", { name: "Send" }).click();
   await expect(page.getByText("Mock reply generated")).toBeVisible();
 
   await page.goto("/messages");
-  await expect(page.getByText("Do you deliver today?")).toBeVisible();
+  await expect(page.getByText("Mock reply generated")).toBeVisible();
 });
 
 test("pagination works", async ({ page }) => {
@@ -153,12 +152,11 @@ test("pagination works", async ({ page }) => {
     connection: { id: "connection-1", displayName: "Support", phoneNumberId: "1234567890" },
   }));
 
-  await page.setExtraHTTPHeaders(AUTH_BYPASS_HEADER);
   await mockSharedApis(page, messages);
-
+  await login(page);
   await page.goto("/messages");
   await expect(page.getByText("Page 1 of 2")).toBeVisible();
   await page.getByRole("button", { name: "Next" }).click();
   await expect(page.getByText("Page 2 of 2")).toBeVisible();
-  await expect(page.getByText("Message 21")).toBeVisible();
+  await expect(page.getByText("Reply 21")).toBeVisible();
 });

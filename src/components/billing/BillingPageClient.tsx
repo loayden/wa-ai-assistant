@@ -17,15 +17,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSubscription } from "@/hooks/useSubscription";
 import { apiData } from "@/lib/api/client";
+import type { PlanTier } from "@/types/subscription";
 
 type RedirectResponse = {
   url: string;
 };
 
+type PaidPlanTier = Extract<PlanTier, "PRO" | "BUSINESS">;
+
 export function BillingPageClient() {
   const subscription = useSubscription();
   const checkoutMutation = useMutation({
-    mutationFn: () => apiData<RedirectResponse>("/api/billing/create-checkout", { method: "POST" }),
+    mutationFn: (planTier: PaidPlanTier) =>
+      apiData<RedirectResponse>("/api/billing/create-checkout", {
+        method: "POST",
+        body: JSON.stringify({ planTier }),
+      }),
     onSuccess: (data) => {
       window.location.href = data.url;
     },
@@ -60,8 +67,18 @@ export function BillingPageClient() {
   }
 
   const user = subscription.user;
-  const isProPlan = subscription.isProPlan;
+  const currentPlan = subscription.planTier;
+  const isPaidPlan = subscription.isPaidPlan;
   const mutationError = checkoutMutation.error ?? portalMutation.error;
+
+  function handlePlanAction(targetPlan: PlanTier) {
+    if (targetPlan === "FREE" || isPaidPlan) {
+      portalMutation.mutate();
+      return;
+    }
+
+    checkoutMutation.mutate(targetPlan);
+  }
 
   return (
     <div className="space-y-6">
@@ -76,27 +93,43 @@ export function BillingPageClient() {
           <AlertDescription>{mutationError.message}</AlertDescription>
         </Alert>
       ) : null}
-      <div className="grid gap-4 md:grid-cols-2">
+      <Alert>
+        <AlertTitle>Included replies by plan</AlertTitle>
+        <AlertDescription>FREE stops at 50 replies. PRO includes 2,000 replies and BUSINESS includes 10,000 replies before overage tracking begins.</AlertDescription>
+      </Alert>
+      <div className="grid gap-4 xl:grid-cols-3">
         <PlanCard
           title="FREE"
-          description="Test automation with one WhatsApp number."
+          priceLabel="$0/month"
+          description="Start automation with one WhatsApp number."
           features={["50 AI replies/month", "1 WhatsApp number", "Default assistant prompt"]}
-          current={!isProPlan}
-          actionLabel="Downgrade in Portal"
-          disabled={!isProPlan}
-          onAction={() => portalMutation.mutate()}
+          current={currentPlan === "FREE"}
+          actionLabel={portalMutation.isPending ? "Opening Portal..." : "Manage in Portal"}
+          disabled={portalMutation.isPending}
+          onAction={() => handlePlanAction("FREE")}
         />
         <PlanCard
           title="PRO"
-          description="Scale automated support with prompt control."
-          features={["Unlimited AI replies", "3 WhatsApp numbers", "Custom prompt", "Priority support"]}
-          current={isProPlan}
+          priceLabel="$19/month"
+          description="Grow support volume with included replies and tracked overage."
+          features={["2,000 included AI replies/month", "3 WhatsApp numbers", "Custom prompt", "Priority support", "Tracked overage after included replies"]}
+          current={currentPlan === "PRO"}
           actionLabel={checkoutMutation.isPending ? "Opening Checkout..." : "Upgrade to PRO"}
           disabled={checkoutMutation.isPending}
-          onAction={() => checkoutMutation.mutate()}
+          onAction={() => handlePlanAction("PRO")}
+        />
+        <PlanCard
+          title="BUSINESS"
+          priceLabel="$49/month"
+          description="Higher reply volume, more numbers, and tracked overage after the included allowance."
+          features={["10,000 included AI replies/month", "10 WhatsApp numbers", "Custom prompt", "Priority support", "Tracked overage after included replies"]}
+          current={currentPlan === "BUSINESS"}
+          actionLabel={checkoutMutation.isPending ? "Opening Checkout..." : "Upgrade to BUSINESS"}
+          disabled={checkoutMutation.isPending}
+          onAction={() => handlePlanAction("BUSINESS")}
         />
       </div>
-      {isProPlan ? (
+      {isPaidPlan ? (
         <Button disabled={portalMutation.isPending} onClick={() => portalMutation.mutate()}>
           {portalMutation.isPending ? "Opening Portal..." : "Manage Subscription"}
         </Button>

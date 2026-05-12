@@ -25,7 +25,18 @@ const deleteConnectionQuerySchema = z.object({
 });
 
 function getMaxConnectionCount(planTier: PlanTier): number {
-  return planTier === PlanTier.PRO ? 3 : 1;
+  switch (planTier) {
+    case PlanTier.BUSINESS:
+      return 10;
+    case PlanTier.PRO:
+      return 3;
+    default:
+      return 1;
+  }
+}
+
+function normalizeOwnerPhoneNumber(value: string): string {
+  return value.replace(/\D/g, "");
 }
 
 export async function GET() {
@@ -79,6 +90,7 @@ export async function POST(request: Request) {
         accessToken: encrypt(parsed.data.accessToken),
         webhookVerifyToken: appEnv.WHATSAPP_VERIFY_TOKEN,
         displayName: parsed.data.displayName,
+        ownerPhoneNumber: parsed.data.ownerPhoneNumber ? normalizeOwnerPhoneNumber(parsed.data.ownerPhoneNumber) : null,
         isActive: true,
         isVerified: appEnv.WHATSAPP_MOCK_MODE,
       },

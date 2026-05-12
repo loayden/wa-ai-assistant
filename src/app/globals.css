@@ -1,7 +1,11 @@
 /* FILE: src/app/globals.css */
+@import "../styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@import "../styles/elder-mode.css";
 
 /*
  * [ROLE: ARCHITECT]
@@ -32,6 +36,7 @@
 }
 
 .dark {
+  /* Dark mode: deferred to v3 */
   --background: 224 71.4% 4.1%;
   --foreground: 210 20% 98%;
   --card: 224 71.4% 4.1%;
@@ -60,5 +65,11 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

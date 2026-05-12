@@ -8,8 +8,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { AIToggle } from "@/components/ai/AIToggle";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
-import { ConnectForm } from "@/components/whatsapp/ConnectForm";
+import { SetupFlow } from "@/components/whatsapp/SetupFlow";
 import { ConnectionStatus, type WhatsAppConnectionSummary } from "@/components/whatsapp/ConnectionStatus";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -64,7 +65,7 @@ export function WhatsAppPageClient({ appUrl, mockMode }: WhatsAppPageClientProps
 
   if (!connection) {
     return (
-      <ConnectForm
+      <SetupFlow
         mockMode={mockMode}
         onConnected={() => {
           void queryClient.invalidateQueries({ queryKey: ["whatsapp-connections"] });
@@ -74,13 +75,14 @@ export function WhatsAppPageClient({ appUrl, mockMode }: WhatsAppPageClientProps
   }
 
   return (
-    <div className="space-y-4">
+    <div className="mx-auto max-w-[480px] space-y-4 px-4 pt-6">
       {mockMode ? (
-        <Alert className="border-yellow-300 bg-yellow-50 text-yellow-950">
+        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
           <AlertTitle>Mock Mode Active</AlertTitle>
           <AlertDescription>No real WhatsApp messages will be sent from this environment.</AlertDescription>
         </Alert>
       ) : null}
+      <AIToggle enabled={settingsResult.settings.autoReplyEnabled} />
       <ConnectionStatus
         connection={connection}
         webhookUrl={`${appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp`}

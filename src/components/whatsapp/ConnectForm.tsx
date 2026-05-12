@@ -27,9 +27,10 @@ type ConnectWhatsAppFormValues = z.infer<typeof connectWhatsAppSchema>;
 type ConnectFormProps = {
   mockMode: boolean;
   onConnected: () => void;
+  ownerPhoneNumber?: string;
 };
 
-export function ConnectForm({ mockMode, onConnected }: ConnectFormProps) {
+export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: ConnectFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const form = useForm<ConnectWhatsAppFormValues>({
     resolver: strictZodResolver<ConnectWhatsAppFormValues>(connectWhatsAppSchema),
@@ -47,6 +48,7 @@ export function ConnectForm({ mockMode, onConnected }: ConnectFormProps) {
         body: JSON.stringify({
           ...values,
           displayName: values.displayName || null,
+          ownerPhoneNumber: ownerPhoneNumber || undefined,
         }),
       }),
     onSuccess: () => onConnected(),

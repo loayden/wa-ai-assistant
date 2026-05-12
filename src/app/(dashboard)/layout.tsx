@@ -1,21 +1,25 @@
 // FILE: src/app/(dashboard)/layout.tsx
 /*
  * [ROLE: FRONTEND ENGINEER]
- * Decision: Protected pages share a persistent operational shell with sidebar
- * navigation and a constrained content region.
+ * Decision: Protected pages now share a compact command-center shell so the
+ * assistant toggle and conversation surfaces stay visually primary.
  */
-import { Sidebar } from "@/components/shared/Sidebar";
+import { TopBar } from "@/components/shared/TopBar";
+import { getUser } from "@/lib/supabase/server";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const user = await getUser();
+  const fullName = typeof user?.user_metadata.full_name === "string" ? user.user_metadata.full_name : null;
+
   return (
-    <div className="min-h-screen bg-muted/20">
-      <Sidebar />
-      <main className="lg:ml-64">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">{children}</div>
+    <div className="min-h-screen bg-wa-gray-50">
+      <TopBar userEmail={user?.email ?? null} userName={fullName} />
+      <main className="min-h-screen bg-wa-gray-50 pb-safe pt-14">
+        {children}
       </main>
     </div>
   );

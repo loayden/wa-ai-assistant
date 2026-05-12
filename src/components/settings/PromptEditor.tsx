@@ -2,7 +2,7 @@
 /*
  * [ROLE: FRONTEND ENGINEER]
  * Decision: Prompt editing is presented in one place and gated visually for
- * FREE users before the API also enforces the PRO-only custom prompt rule.
+ * FREE users before the API also enforces the paid-plan custom prompt rule.
  */
 "use client";
 
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 type PromptEditorProps = {
   value: string;
-  isProPlan: boolean;
+  canEditCustomPrompt: boolean;
   businessName: string;
   language: string;
   maxReplyLength: number;
@@ -32,7 +32,7 @@ function interpolatePrompt(value: string, businessName: string, language: string
     .replaceAll("{maxReplyLength}", String(maxReplyLength || 300));
 }
 
-export function PromptEditor({ value, isProPlan, businessName, language, maxReplyLength, error, onChange }: PromptEditorProps) {
+export function PromptEditor({ value, canEditCustomPrompt, businessName, language, maxReplyLength, error, onChange }: PromptEditorProps) {
   const characterCount = value.length;
 
   return (
@@ -41,13 +41,13 @@ export function PromptEditor({ value, isProPlan, businessName, language, maxRepl
         <Label htmlFor="systemPrompt">System Prompt</Label>
         <span className="text-xs text-muted-foreground">{characterCount}/2000 characters</span>
       </div>
-      {!isProPlan ? (
+      {!canEditCustomPrompt ? (
         <Alert>
           <Lock className="size-4" aria-hidden="true" />
-          <AlertTitle>Custom prompt is a PRO feature</AlertTitle>
+          <AlertTitle>Custom prompt is a PRO or BUSINESS feature</AlertTitle>
           <AlertDescription>
             <Link href="/billing" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
-              Upgrade to PRO
+              Upgrade your plan
             </Link>{" "}
             to edit assistant behavior.
           </AlertDescription>
@@ -55,7 +55,7 @@ export function PromptEditor({ value, isProPlan, businessName, language, maxRepl
       ) : null}
       <Textarea
         id="systemPrompt"
-        disabled={!isProPlan}
+        disabled={!canEditCustomPrompt}
         rows={8}
         value={value}
         onChange={(event) => onChange(event.target.value)}

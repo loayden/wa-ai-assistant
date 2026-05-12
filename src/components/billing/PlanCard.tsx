@@ -9,9 +9,11 @@ import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import type { PlanTier } from "@/types/subscription";
 
 type PlanCardProps = {
-  title: "FREE" | "PRO";
+  title: PlanTier;
+  priceLabel: string;
   description: string;
   features: string[];
   current: boolean;
@@ -20,7 +22,7 @@ type PlanCardProps = {
   onAction: () => void;
 };
 
-export function PlanCard({ title, description, features, current, actionLabel, disabled, onAction }: PlanCardProps) {
+export function PlanCard({ title, priceLabel, description, features, current, actionLabel, disabled, onAction }: PlanCardProps) {
   return (
     <Card className={current ? "border-primary" : undefined}>
       <CardHeader className="gap-2">
@@ -28,6 +30,7 @@ export function PlanCard({ title, description, features, current, actionLabel, d
           <CardTitle>{title}</CardTitle>
           {current ? <Badge variant="success">Current</Badge> : null}
         </div>
+        <p className="text-2xl font-semibold">{priceLabel}</p>
         <p className="text-sm text-muted-foreground">{description}</p>
       </CardHeader>
       <CardContent className="space-y-3">

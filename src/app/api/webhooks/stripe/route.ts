@@ -11,6 +11,7 @@ import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/a
 import { prisma } from "@/lib/prisma/client";
 import { sendEmail } from "@/lib/resend/client";
 import { constructWebhookEvent } from "@/lib/stripe/client";
+import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
@@ -44,8 +45,53 @@ function mapStripeSubscriptionStatus(status: Stripe.Subscription.Status): Subscr
   }
 }
 
-function mapPlanTierFromSubscriptionStatus(status: Stripe.Subscription.Status): PlanTier {
-  return status === "active" || status === "trialing" || status === "past_due" ? PlanTier.PRO : PlanTier.FREE;
+function parsePlanTier(value: string | null | undefined): PlanTier | null {
+  if (value === PlanTier.FREE || value === PlanTier.PRO || value === PlanTier.BUSINESS) {
+    return value;
+  }
+
+  return null;
+}
+
+function mapPlanTierFromPriceId(priceId: string | null | undefined): PlanTier | null {
+  if (!priceId) {
+    return null;
+  }
+
+  if (priceId === appEnv.STRIPE_PRO_PRICE_ID) {
+    return PlanTier.PRO;
+  }
+
+  if (priceId === appEnv.STRIPE_BUSINESS_PRICE_ID) {
+    return PlanTier.BUSINESS;
+  }
+
+  return null;
+}
+
+function resolvePaidPlanTier(params: {
+  fallbackTier: PlanTier;
+  metadataPlanTier?: string | null;
+  priceId?: string | null;
+  subscriptionStatus: Stripe.Subscription.Status;
+}): PlanTier {
+  if (!["active", "trialing", "past_due"].includes(params.subscriptionStatus)) {
+    return PlanTier.FREE;
+  }
+
+  const metadataTier = parsePlanTier(params.metadataPlanTier);
+
+  if (metadataTier && metadataTier !== PlanTier.FREE) {
+    return metadataTier;
+  }
+
+  const priceTier = mapPlanTierFromPriceId(params.priceId);
+
+  if (priceTier && priceTier !== PlanTier.FREE) {
+    return priceTier;
+  }
+
+  return params.fallbackTier === PlanTier.FREE ? PlanTier.PRO : params.fallbackTier;
 }
 
 async function findUserForStripeObject(params: {
@@ -102,6 +148,11 @@ async function saveSubscriptionEvent(params: {
 
 async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Checkout.Session) {
   const userId = session.metadata?.userId;
+  const planTier = resolvePaidPlanTier({
+    fallbackTier: PlanTier.PRO,
+    metadataPlanTier: session.metadata?.planTier,
+    subscriptionStatus: "active",
+  });
   const customerId = getStripeId(session.customer);
   const subscriptionId = getStripeId(session.subscription);
 
@@ -117,7 +168,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
   await prisma.user.update({
     where: { id: userId },
     data: {
-      planTier: PlanTier.PRO,
+      planTier,
       subscriptionStatus: SubscriptionStatus.ACTIVE,
       stripeCustomerId: customerId,
       stripeSubscriptionId: subscriptionId,
@@ -127,7 +178,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, session: Stripe.Chec
   await saveSubscriptionEvent({
     event,
     userId,
-    planTier: PlanTier.PRO,
+    planTier,
     status: SubscriptionStatus.ACTIVE,
     amount: session.amount_total,
     currency: session.currency,
@@ -151,7 +202,13 @@ async function handleSubscriptionUpdated(event: Stripe.Event, subscription: Stri
   }
 
   const subscriptionStatus = mapStripeSubscriptionStatus(subscription.status);
-  const planTier = mapPlanTierFromSubscriptionStatus(subscription.status);
+  const priceId = subscription.items.data[0]?.price?.id;
+  const planTier = resolvePaidPlanTier({
+    fallbackTier: user.planTier,
+    metadataPlanTier: subscription.metadata?.planTier,
+    priceId,
+    subscriptionStatus: subscription.status,
+  });
 
   await prisma.user.update({
     where: { id: user.id },
@@ -252,9 +309,9 @@ async function handleInvoicePaymentFailed(event: Stripe.Event, invoice: Stripe.I
   try {
     await sendEmail({
       to: user.email,
-      subject: "Payment failed for WA-AI Assistant",
-      html: "<p>Your latest WA-AI Assistant subscription payment failed. Please update your payment method to keep PRO features active.</p>",
-      text: "Your latest WA-AI Assistant subscription payment failed. Please update your payment method to keep PRO features active.",
+      subject: "Payment failed for kalm",
+      html: "<p>Your latest kalm subscription payment failed. Please update your payment method to keep your paid features active.</p>",
+      text: "Your latest kalm subscription payment failed. Please update your payment method to keep your paid features active.",
     });
   } catch (error) {
     logger.error("api.webhooks.stripe", "Failed to send invoice payment failure email.", { error, userId: user.id });

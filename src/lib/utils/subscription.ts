@@ -11,11 +11,28 @@ import { PlanTier } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 
-export const FREE_MONTHLY_AI_REPLY_LIMIT = 50;
+const PLAN_REPLY_LIMITS: Record<PlanTier, { includedRepliesPerMonth: number; allowsOverage: boolean }> = {
+  [PlanTier.FREE]: {
+    includedRepliesPerMonth: 50,
+    allowsOverage: false,
+  },
+  [PlanTier.PRO]: {
+    includedRepliesPerMonth: 2000,
+    allowsOverage: true,
+  },
+  [PlanTier.BUSINESS]: {
+    includedRepliesPerMonth: 10000,
+    allowsOverage: true,
+  },
+};
 
 export type SubscriptionLimitResult = {
   allowed: boolean;
-  remaining: number | null;
+  remaining: number;
+  includedRepliesPerMonth: number;
+  overageCount: number;
+  allowsOverage: boolean;
+  planTier: PlanTier;
 };
 
 function getCurrentUtcMonthStart(): Date {
@@ -66,18 +83,27 @@ export async function checkSubscriptionLimit(userId: string): Promise<Subscripti
 
   if (!user) {
     logger.warn("subscription.checkSubscriptionLimit", "User not found during subscription limit check.", { userId });
-    return { allowed: false, remaining: 0 };
+    return {
+      allowed: false,
+      remaining: 0,
+      includedRepliesPerMonth: 0,
+      overageCount: 0,
+      allowsOverage: false,
+      planTier: PlanTier.FREE,
+    };
   }
 
-  if (user.planTier === PlanTier.PRO) {
-    return { allowed: true, remaining: null };
-  }
-
-  const remaining = Math.max(FREE_MONTHLY_AI_REPLY_LIMIT - user.monthlyReplyCount, 0);
+  const limitConfig = PLAN_REPLY_LIMITS[user.planTier];
+  const remaining = Math.max(limitConfig.includedRepliesPerMonth - user.monthlyReplyCount, 0);
+  const overageCount = limitConfig.allowsOverage ? Math.max(user.monthlyReplyCount - limitConfig.includedRepliesPerMonth, 0) : 0;
 
   return {
-    allowed: remaining > 0,
+    allowed: limitConfig.allowsOverage ? true : remaining > 0,
     remaining,
+    includedRepliesPerMonth: limitConfig.includedRepliesPerMonth,
+    overageCount,
+    allowsOverage: limitConfig.allowsOverage,
+    planTier: user.planTier,
   };
 }
 

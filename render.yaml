@@ -48,6 +48,8 @@ services:
         sync: false
       - key: STRIPE_PRO_PRICE_ID
         sync: false
+      - key: STRIPE_BUSINESS_PRICE_ID
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL

@@ -16,21 +16,28 @@ export function useSubscription() {
   const planTier = settingsQuery.user?.planTier ?? "FREE";
   const status = settingsQuery.user?.subscriptionStatus ?? "INACTIVE";
   const usage = settingsQuery.user?.monthlyReplyCount ?? 0;
-  const limit = PLAN_LIMITS[planTier].maxRepliesPerMonth;
+  const planLimits = PLAN_LIMITS[planTier];
+  const includedReplies = planLimits.includedRepliesPerMonth;
+  const remainingIncludedReplies = Math.max(includedReplies - usage, 0);
+  const overageReplies = planLimits.allowsOverage ? Math.max(usage - includedReplies, 0) : 0;
   const usagePercentage = useMemo(() => {
-    if (limit === null) {
-      return 100;
-    }
-
-    return Math.min(100, Math.round((usage / limit) * 100));
-  }, [limit, usage]);
+    return Math.min(100, Math.round((Math.min(usage, includedReplies) / includedReplies) * 100));
+  }, [includedReplies, usage]);
 
   return {
     planTier,
     status,
     usage,
-    limit,
+    limit: includedReplies,
+    includedReplies,
+    remainingIncludedReplies,
+    overageReplies,
+    maxConnections: planLimits.maxConnections,
+    canUseCustomPrompt: planLimits.allowsCustomPrompt,
+    allowsOverage: planLimits.allowsOverage,
+    isPaidPlan: planTier !== "FREE",
     isProPlan: planTier === "PRO",
+    isBusinessPlan: planTier === "BUSINESS",
     usagePercentage,
     isLoading: settingsQuery.isLoading,
     error: settingsQuery.error,

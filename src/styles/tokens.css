@@ -1,0 +1,70 @@
+/* FILE: src/styles/tokens.css */
+
+/*
+ * [ROLE: FRONTEND ENGINEER]
+ * Decision: WA v2 tokens live as CSS custom properties so Tailwind classes,
+ * custom CSS, and future JS-driven surfaces can share one visual contract.
+ */
+:root {
+  --wa-blue-600: #1A56FF;
+  --wa-blue-50: #EBF0FF;
+  --wa-blue-100: #C7D7FE;
+  --wa-blue-800: #0C447C;
+  --wa-blue-900: #042C53;
+  --wa-gray-0: #FFFFFF;
+  --wa-gray-50: #F7F7F8;
+  --wa-gray-100: #EFEFEF;
+  --wa-gray-200: #D4D4D8;
+  --wa-gray-400: #A0A0A0;
+  --wa-gray-600: #5C5C5C;
+  --wa-gray-800: #1A1A1A;
+  --wa-gray-900: #0D0D0D;
+  --wa-success: #1A7A4A;
+  --wa-success-bg: #E8F5EE;
+  --wa-warning: #A05C00;
+  --wa-warning-bg: #FFF4E0;
+  --wa-error: #C0392B;
+  --wa-error-bg: #FDECEA;
+
+  --wa-font-display: 40px;
+  --wa-font-h1: 28px;
+  --wa-font-h2: 22px;
+  --wa-font-h3: 18px;
+  --wa-font-body-lg: 17px;
+  --wa-font-body: 15px;
+  --wa-font-body-sm: 13px;
+  --wa-font-label: 11px;
+  --wa-font-micro: 10px;
+  --wa-font-mono: 14px;
+
+  --wa-space-1: 4px;
+  --wa-space-2: 8px;
+  --wa-space-3: 12px;
+  --wa-space-4: 16px;
+  --wa-space-5: 20px;
+  --wa-space-6: 24px;
+  --wa-space-8: 32px;
+  --wa-space-10: 40px;
+  --wa-space-12: 48px;
+  --wa-space-16: 64px;
+  --wa-space-20: 80px;
+
+  --wa-radius-xs: 4px;
+  --wa-radius-sm: 8px;
+  --wa-radius-md: 12px;
+  --wa-radius-lg: 16px;
+  --wa-radius-xl: 20px;
+  --wa-radius-full: 9999px;
+
+  --wa-shadow-1: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --wa-shadow-2: 0 4px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.05);
+  --wa-shadow-3: 0 16px 48px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.06);
+
+  --wa-duration-instant: 80ms;
+  --wa-duration-fast: 150ms;
+  --wa-duration-normal: 250ms;
+  --wa-duration-slow: 400ms;
+  --wa-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --wa-ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --wa-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}

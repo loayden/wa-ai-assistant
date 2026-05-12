@@ -11,9 +11,10 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { ensureAppUser, requireAuthenticatedUser, UnauthorizedError } from "@/lib/api/auth";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
-import { loginSchema, signupSchema } from "@/lib/validators/auth";
 import { logger } from "@/lib/utils/logger";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
+import { appEnv } from "@/lib/utils/env";
+import { loginSchema, signupSchema } from "@/lib/validators/auth";
 
 const authActionSchema = z.object({
   action: z.enum(["login", "signup", "logout"]),
@@ -64,6 +65,15 @@ function getAuthRateLimitKey(request: Request, action: AuthAction, body: unknown
       : "unknown-email";
 
   return `auth:${action}:${getClientIp(request)}:${email}`;
+}
+
+function getSignupRedirectUrl() {
+  /*
+   * [ROLE: BACKEND ENGINEER]
+   * Decision: Supabase confirmation emails must land on the deployed app
+   * explicitly instead of relying on the project's Site URL default.
+   */
+  return `${appEnv.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/login`;
 }
 
 function enforceAuthRateLimit(request: Request, action: AuthAction, body: unknown) {
@@ -121,6 +131,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
         email: parsed.data.email,
         password: parsed.data.password,
         options: {
+          emailRedirectTo: getSignupRedirectUrl(),
           data: {
             full_name: parsed.data.fullName,
           },

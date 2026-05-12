@@ -24,7 +24,7 @@ export const webhookVerifySchema = z
     "hub.verify_token": z.string().min(1).max(255),
     "hub.challenge": z.string().min(1).max(2048),
   })
-  .strict();
+  .passthrough();
 
 export type ConnectWhatsAppInput = z.infer<typeof connectWhatsAppSchema>;
 export type WebhookVerifyInput = z.infer<typeof webhookVerifySchema>;

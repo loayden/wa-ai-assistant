@@ -44,7 +44,12 @@ export function LoginForm() {
         body: JSON.stringify(values),
       }),
     onSuccess: () => {
-      router.push(searchParams.get("next") || "/dashboard");
+      /*
+       * [ROLE: FRONTEND ENGINEER]
+       * Decision: After a normal sign-in, users should land on WhatsApp setup
+       * or connection status first because that is the critical next step.
+       */
+      router.push(searchParams.get("next") || "/whatsapp");
       router.refresh();
     },
   });

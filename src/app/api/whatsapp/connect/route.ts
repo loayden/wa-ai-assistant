@@ -16,6 +16,7 @@ import { encrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 import { connectWhatsAppSchema } from "@/lib/validators/whatsapp";
+import { EmbeddedSignupError, getPhoneProfile } from "@/lib/whatsapp/embedded-signup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,8 +36,20 @@ function getMaxConnectionCount(planTier: PlanTier): number {
   }
 }
 
-function normalizeOwnerPhoneNumber(value: string): string {
-  return value.replace(/\D/g, "");
+function normalizeOwnerPhoneNumber(value?: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const digits = value.replace(/\D/g, "");
+  return digits || null;
+}
+
+function resolveConnectionName(
+  displayName?: string | null,
+  phoneProfile?: { verified_name?: string; display_phone_number?: string },
+): string | null {
+  return displayName || phoneProfile?.verified_name || phoneProfile?.display_phone_number || null;
 }
 
 export async function GET() {
@@ -74,6 +87,18 @@ export async function POST(request: Request) {
       return jsonValidationError(parsed.error);
     }
 
+    const conflictingConnection = await prisma.whatsAppConnection.findFirst({
+      where: {
+        phoneNumberId: parsed.data.phoneNumberId,
+        userId: { not: user.id },
+      },
+      select: { id: true },
+    });
+
+    if (conflictingConnection) {
+      return jsonError("This WhatsApp number is already connected to another workspace.", 409);
+    }
+
     const connectionCount = await prisma.whatsAppConnection.count({
       where: { userId: user.id },
     });
@@ -82,6 +107,10 @@ export async function POST(request: Request) {
       return jsonError("WhatsApp connection limit reached for current plan.", 403);
     }
 
+    const phoneProfile = appEnv.WHATSAPP_MOCK_MODE
+      ? undefined
+      : await getPhoneProfile(parsed.data.phoneNumberId, parsed.data.accessToken);
+
     const connection = await prisma.whatsAppConnection.create({
       data: {
         userId: user.id,
@@ -89,10 +118,12 @@ export async function POST(request: Request) {
         businessAccountId: parsed.data.businessAccountId,
         accessToken: encrypt(parsed.data.accessToken),
         webhookVerifyToken: appEnv.WHATSAPP_VERIFY_TOKEN,
-        displayName: parsed.data.displayName,
-        ownerPhoneNumber: parsed.data.ownerPhoneNumber ? normalizeOwnerPhoneNumber(parsed.data.ownerPhoneNumber) : null,
+        displayName: resolveConnectionName(parsed.data.displayName, phoneProfile),
+        ownerPhoneNumber:
+          normalizeOwnerPhoneNumber(parsed.data.ownerPhoneNumber) ??
+          normalizeOwnerPhoneNumber(phoneProfile?.display_phone_number),
         isActive: true,
-        isVerified: appEnv.WHATSAPP_MOCK_MODE,
+        isVerified: true,
       },
     });
 
@@ -108,6 +139,10 @@ export async function POST(request: Request) {
 
     if (error instanceof InvalidJsonError) {
       return jsonError(error.message, 400);
+    }
+
+    if (error instanceof EmbeddedSignupError) {
+      return jsonError("The Meta credentials could not be verified. Check the number ID, business account ID, and access token.", 502);
     }
 
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.whatsapp.connect.post", error);

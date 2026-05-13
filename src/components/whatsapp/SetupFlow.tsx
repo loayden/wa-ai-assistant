@@ -3,207 +3,117 @@
 
 /*
  * [ROLE: FRONTEND ENGINEER]
- * Decision: The primary setup path asks for only a phone number, then moves
- * through OTP and optional voice setup while preserving the original developer
- * credential form inside an advanced disclosure.
+ * Decision: The setup screen is centered on Meta Embedded Signup so normal
+ * businesses never need IDs or tokens, while manual credentials remain
+ * available as an advanced fallback for internal or recovery use.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Check } from "lucide-react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
-import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/IconButton";
+import { EmbeddedSignupLauncher } from "@/components/whatsapp/EmbeddedSignupLauncher";
 import { Input } from "@/components/ui/input";
-import { OTPInput } from "@/components/ui/OTPInput";
-
-type SetupStep = "phone" | "otp" | "voice" | "complete";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface SetupFlowProps {
+  appId: string | null;
+  appUrl: string;
+  configurationId: string | null;
+  apiVersion: string;
   mockMode: boolean;
   onConnected: () => void;
 }
-
-const VoiceSetup = dynamic(
-  () => import("@/components/setup/VoiceSetup").then((module) => module.VoiceSetup),
-  { ssr: false },
-);
 
 const ConnectForm = dynamic(
   () => import("@/components/whatsapp/ConnectForm").then((module) => module.ConnectForm),
   { ssr: false },
 );
 
-function normalizeEgyptOwnerPhone(phone: string) {
+function normalizeOwnerPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
 
   if (!digits) {
     return undefined;
   }
 
-  if (digits.startsWith("20")) {
+  if (digits.startsWith("20") && digits.length > 10) {
     return digits;
   }
 
-  if (digits.startsWith("0")) {
+  if (digits.startsWith("0") && digits.length >= 10) {
     return `20${digits.slice(1)}`;
   }
 
-  return `20${digits}`;
+  return digits;
 }
 
-function maskPhone(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 7) {
-    return "+20";
-  }
-
-  return `+20 ${digits.slice(0, 2)}X XXX ${digits.slice(-4)}`;
-}
-
-export function SetupFlow({ mockMode, onConnected }: SetupFlowProps) {
-  const router = useRouter();
-  const [step, setStep] = useState<SetupStep>("phone");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpError, setOtpError] = useState<string | null>(null);
-  const [voicePreview, setVoicePreview] = useState<string | null>(null);
+export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode, onConnected }: SetupFlowProps) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [ownerPhoneNumber, setOwnerPhoneNumber] = useState("");
 
-  useEffect(() => {
-    if (step !== "complete") {
-      return;
-    }
-
-    const timeout = window.setTimeout(() => router.push("/dashboard"), 1500);
-    return () => window.clearTimeout(timeout);
-  }, [router, step]);
-
-  function submitPhone() {
-    if (phone.replace(/\D/g, "").length < 8) {
-      return;
-    }
-
-    /*
-     * [ROLE: FRONTEND ENGINEER]
-     * Decision: SMS verification is not implemented for the live Meta flow, so
-     * real environments move straight to the credential form instead of showing
-     * a non-functional OTP screen.
-     */
-    if (!mockMode) {
-      setAdvancedOpen(true);
-      return;
-    }
-
-    setStep("otp");
-  }
-
-  function completeOtp(value: string) {
-    if (value.length !== 6) {
-      setOtpError("Enter the full 6-digit code.");
-      return;
-    }
-    setOtpError(null);
-    setStep("voice");
-  }
-
-  if (step === "complete") {
-    return (
-      <div className="mx-auto flex max-w-[420px] flex-col items-center px-4 pt-20 text-center">
-        <div className="mb-6 flex size-16 animate-fade-in items-center justify-center rounded-full bg-wa-success-bg text-wa-success">
-          <Check className="size-8" aria-hidden="true" />
-        </div>
-        <h2 className="text-h2 font-medium text-wa-gray-900">Your assistant is ready</h2>
+  return (
+    <div className="mx-auto max-w-[720px] space-y-5 px-4 pt-12">
+      <div className="mx-auto max-w-[460px] text-center">
+        <BrandLogo className="mb-8" layout="stacked" wordmarkSize="md" />
+        <h1 className="text-h1 font-medium text-wa-gray-900">Connect WhatsApp</h1>
+        <p className="mt-3 text-body text-wa-gray-600">
+          The easiest path is Meta’s own guided onboarding. Your customer signs in, chooses the business, verifies the number, and kallem completes the secure setup automatically.
+        </p>
       </div>
-    );
-  }
-
-  if (step === "voice") {
-    return (
-      <div className="pt-12">
-        <VoiceSetup
-          onAudioReady={() => {
-            setVoicePreview("Detected: General · Language: Arabic · Tone: Friendly");
-          }}
-          onSkip={() => setStep("complete")}
+      {mockMode ? (
+        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
+          <AlertTitle>Mock Mode Active</AlertTitle>
+          <AlertDescription>One-click Meta onboarding is disabled in mock mode. Use the advanced credentials flow below for local testing.</AlertDescription>
+        </Alert>
+      ) : (
+        <EmbeddedSignupLauncher
+          apiVersion={apiVersion}
+          appId={appId}
+          configurationId={configurationId}
+          onConnected={onConnected}
         />
-        {voicePreview ? (
-          <div className="mx-auto mt-6 max-w-[420px] rounded-xl border border-wa-gray-100 bg-white p-5 text-center">
-            <p className="text-body font-medium text-wa-gray-900">{voicePreview}</p>
-            <p className="mt-1 text-body-sm text-wa-gray-600">Looks right?</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <Button variant="outline" onClick={() => setVoicePreview(null)}>Change</Button>
-              <Button onClick={() => setStep("complete")}>Confirm</Button>
+      )}
+      <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
+        <button className="text-body-sm font-medium text-wa-blue-600" type="button" onClick={() => setAdvancedOpen((current) => !current)}>
+          Use API credentials instead →
+        </button>
+        {advancedOpen ? (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl bg-wa-warning-bg p-4 text-body-sm text-wa-warning">
+              This path is for internal testing, migrations, or recovery. Business customers should use the Meta button above.
             </div>
+            <div className="space-y-2">
+              <label className="block text-body-sm font-medium text-wa-gray-800" htmlFor="ownerPhoneNumber">
+                Business phone number (optional)
+              </label>
+              <Input
+                id="ownerPhoneNumber"
+                inputMode="tel"
+                placeholder="+20 11 4499 9221"
+                value={ownerPhoneNumber}
+                onChange={(event) => setOwnerPhoneNumber(event.target.value)}
+              />
+              <p className="text-body-sm text-wa-gray-600">
+                Save this only if you want owner commands like <code>stop</code> and <code>resume</code> to map cleanly to the connected business number.
+              </p>
+            </div>
+            <ConnectForm
+              mockMode={mockMode}
+              onConnected={onConnected}
+              ownerPhoneNumber={normalizeOwnerPhone(ownerPhoneNumber)}
+            />
           </div>
         ) : null}
       </div>
-    );
-  }
-
-  if (step === "otp") {
-    return (
-      <div className="mx-auto max-w-[420px] px-4 pt-8">
-        <IconButton label="Back to phone number" onClick={() => setStep("phone")}>
-          <ArrowLeft aria-hidden="true" />
-        </IconButton>
-        <div className="mt-8 text-center">
-          <h1 className="text-h1 font-medium text-wa-gray-900">Check your messages</h1>
-          <p className="mt-3 text-body text-wa-gray-600">We sent a code to {maskPhone(phone)}</p>
-        </div>
-        <div className="mt-8">
-          <OTPInput error={otpError} value={otp} onChange={setOtp} onComplete={completeOtp} />
-        </div>
-        <button className="mt-6 w-full text-center text-body-sm text-wa-blue-600" type="button">
-          Resend code in 60s
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto max-w-[420px] px-4 pt-12">
-      <BrandLogo className="mb-8" layout="stacked" wordmarkSize="md" />
-      <div className="text-center">
-        <h1 className="text-h1 font-medium text-wa-gray-900">Connect WhatsApp</h1>
-        <p className="mt-3 text-body text-wa-gray-600">Enter the business phone number customers already message.</p>
-      </div>
-      <div className="mt-8 flex gap-2">
-        <div className="flex h-[52px] min-w-[92px] items-center justify-center rounded-lg border border-wa-gray-100 bg-wa-gray-50 text-body text-wa-gray-800">
-          EG +20
-        </div>
-        <Input
-          inputMode="tel"
-          placeholder="10 1234 5678"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-        />
-      </div>
-      <Button className="mt-4 w-full" disabled={phone.replace(/\D/g, "").length < 8} onClick={submitPhone}>
-        {mockMode ? "Send verification code" : "Continue with API credentials"}
-      </Button>
-      {!mockMode ? (
-        <p className="mt-3 text-center text-body-sm text-wa-gray-600">
-          SMS verification is not active in this build. Connect with your Meta API credentials below.
-        </p>
-      ) : null}
-      <div className="mt-5 rounded-xl border border-wa-gray-100 bg-white p-5">
-        <button
-          className="text-body-sm font-medium text-wa-blue-600"
-          type="button"
-          onClick={() => setAdvancedOpen((current) => !current)}
-        >
-          I have API credentials →
-        </button>
-        {advancedOpen ? (
-          <>
-            <div className="mt-4 rounded-xl bg-wa-warning-bg p-4 text-body-sm text-wa-warning">This requires a Meta Developer account.</div>
-            <div className="mt-4">
-              <ConnectForm mockMode={mockMode} onConnected={onConnected} ownerPhoneNumber={normalizeEgyptOwnerPhone(phone)} />
-            </div>
-          </>
-        ) : null}
+      <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-5">
+        <p className="text-body-sm font-medium text-wa-gray-900">What your customer will need</p>
+        <ul className="mt-3 list-disc space-y-2 pl-5 text-body-sm text-wa-gray-600">
+          <li>A Meta account with access to the business that owns the number.</li>
+          <li>The WhatsApp number they want to connect.</li>
+          <li>Permission to complete Meta’s verification steps in the popup.</li>
+        </ul>
+        <p className="mt-3 text-body-sm text-wa-gray-600">They do not need Phone Number IDs, WABA IDs, or access tokens.</p>
+        <p className="mt-2 text-body-sm text-wa-gray-500">Webhook target: {appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp</p>
       </div>
     </div>
   );

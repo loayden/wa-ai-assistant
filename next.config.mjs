@@ -88,10 +88,10 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "img-src 'self' data: blob: https://lookaside.fbsbx.com https://scontent.xx.fbcdn.net https://*.cdn.whatsapp.net",
   "font-src 'self' data:",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline'",
-  "connect-src 'self' https://*.supabase.co https://api.openai.com https://graph.facebook.com https://api.stripe.com",
-  "frame-src https://js.stripe.com https://hooks.stripe.com",
+  "connect-src 'self' https://*.supabase.co https://api.openai.com https://graph.facebook.com https://api.stripe.com https://connect.facebook.net https://www.facebook.com https://web.facebook.com",
+  "frame-src https://js.stripe.com https://hooks.stripe.com https://www.facebook.com https://web.facebook.com",
   "media-src 'self' blob: https://lookaside.fbsbx.com https://scontent.xx.fbcdn.net https://*.cdn.whatsapp.net",
   "upgrade-insecure-requests",
 ].join("; ");

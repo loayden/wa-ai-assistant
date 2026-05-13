@@ -33,6 +33,7 @@ export type MessageWithConnection = Prisma.MessageGetPayload<{
 
 export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken" | "ownerPhoneNumber"> & {
   accessTokenMasked: string;
+  ownerPhoneNumberMasked: string | null;
 };
 
 export type DatabaseRecord = User | WhatsAppConnection | Message | UserSettings | SubscriptionEvent;

@@ -17,6 +17,7 @@ export type WhatsAppConnectionSummary = {
   phoneNumberId: string;
   businessAccountId: string;
   accessTokenMasked: string;
+  ownerPhoneNumberMasked: string | null;
   displayName: string | null;
   isActive: boolean;
   isVerified: boolean;
@@ -36,6 +37,9 @@ export function ConnectionStatus({
   webhookUrl,
   onDisconnect,
 }: ConnectionStatusProps) {
+  const statusLabel = connection.isVerified ? "Verified" : connection.isActive ? "Connected" : "Pending";
+  const statusVariant = connection.isVerified || connection.isActive ? "active" : "paused";
+
   return (
     <Card>
       <CardContent className="space-y-5">
@@ -44,12 +48,12 @@ export function ConnectionStatus({
             <p className="text-body font-medium text-wa-gray-900">{connection.displayName ?? "WhatsApp connected"}</p>
             <p className="mt-1 text-body-sm text-wa-gray-600">Your assistant is connected to this number.</p>
           </div>
-          <StatusBadge label={connection.isVerified ? "Verified" : "Pending"} variant={connection.isVerified ? "active" : "paused"} />
+          <StatusBadge label={statusLabel} variant={statusVariant} />
         </div>
         <div className="space-y-3 rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <div>
             <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Phone number</p>
-            <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.phoneNumberId}</p>
+            <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.ownerPhoneNumberMasked ?? "Saved in Meta"}</p>
           </div>
           <div>
             <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Connection</p>
@@ -59,6 +63,10 @@ export function ConnectionStatus({
         <details className="rounded-xl border border-wa-gray-100 bg-white p-5">
           <summary className="cursor-pointer text-body-sm font-medium text-wa-blue-600">Advanced settings</summary>
           <div className="mt-4 space-y-4">
+            <div>
+              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Number ID</p>
+              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.phoneNumberId}</p>
+            </div>
             <div>
               <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Business account</p>
               <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.businessAccountId}</p>

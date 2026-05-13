@@ -18,6 +18,15 @@ export const connectWhatsAppSchema = z
   })
   .strict();
 
+export const embeddedSignupExchangeSchema = z
+  .object({
+    code: z.string().trim().min(10).max(4096),
+    phoneNumberId: metaNumericIdSchema,
+    businessAccountId: metaNumericIdSchema,
+    event: z.enum(["FINISH", "FINISH_ONLY_WABA", "FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING"]).optional(),
+  })
+  .strict();
+
 export const webhookVerifySchema = z
   .object({
     "hub.mode": z.literal("subscribe"),
@@ -27,4 +36,5 @@ export const webhookVerifySchema = z
   .passthrough();
 
 export type ConnectWhatsAppInput = z.infer<typeof connectWhatsAppSchema>;
+export type EmbeddedSignupExchangeInput = z.infer<typeof embeddedSignupExchangeSchema>;
 export type WebhookVerifyInput = z.infer<typeof webhookVerifySchema>;

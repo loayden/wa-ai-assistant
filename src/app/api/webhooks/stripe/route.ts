@@ -309,9 +309,9 @@ async function handleInvoicePaymentFailed(event: Stripe.Event, invoice: Stripe.I
   try {
     await sendEmail({
       to: user.email,
-      subject: "Payment failed for kalm",
-      html: "<p>Your latest kalm subscription payment failed. Please update your payment method to keep your paid features active.</p>",
-      text: "Your latest kalm subscription payment failed. Please update your payment method to keep your paid features active.",
+      subject: "Payment failed for kallem",
+      html: "<p>Your latest kallem subscription payment failed. Please update your payment method to keep your paid features active.</p>",
+      text: "Your latest kallem subscription payment failed. Please update your payment method to keep your paid features active.",
     });
   } catch (error) {
     logger.error("api.webhooks.stripe", "Failed to send invoice payment failure email.", { error, userId: user.id });

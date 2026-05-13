@@ -24,7 +24,7 @@ export interface TopBarProps {
 }
 
 function initialsFor(name?: string | null, email?: string | null) {
-  const source = name || email || "kalm";
+  const source = name || email || "kallem";
   return source.slice(0, 2).toUpperCase();
 }
 

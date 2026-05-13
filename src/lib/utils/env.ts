@@ -31,6 +31,7 @@ const envSchema = z.object({
   RESEND_API_KEY: z.string().min(1),
   RESEND_FROM_EMAIL: z.string().email(),
   NEXT_PUBLIC_APP_URL: z.string().url(),
+  AUTH_EMAIL_REDIRECT_URL: z.string().url().optional(),
   NODE_ENV: z.enum(["development", "test", "production"]),
   ENCRYPTION_SECRET: z.string().length(32),
 });

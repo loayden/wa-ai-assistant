@@ -73,7 +73,7 @@ export function SignupForm() {
         <CardHeader className="items-center p-0 text-center">
           <BrandLogo className="mb-6" layout="stacked" wordmarkSize="md" />
           <CardTitle className="text-h1 font-medium text-wa-gray-900">Check your email</CardTitle>
-          <CardDescription className="mt-2 text-body text-wa-gray-600">We sent a verification link to complete your signup.</CardDescription>
+          <CardDescription className="mt-2 text-body text-wa-gray-600">We sent a verification link. Open it, and kallem will continue to WhatsApp setup automatically.</CardDescription>
         </CardHeader>
         <CardContent className="p-0 pt-8">
           <Button className="w-full" type="button" onClick={() => mutation.reset()}>

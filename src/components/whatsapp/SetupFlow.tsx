@@ -49,7 +49,8 @@ function normalizeOwnerPhone(phone: string) {
 }
 
 export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode, onConnected }: SetupFlowProps) {
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const embeddedSignupAvailable = !mockMode && Boolean(appId && configurationId);
+  const [advancedOpen, setAdvancedOpen] = useState(!embeddedSignupAvailable);
   const [ownerPhoneNumber, setOwnerPhoneNumber] = useState("");
 
   return (
@@ -66,18 +67,27 @@ export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode
           <AlertTitle>Mock Mode Active</AlertTitle>
           <AlertDescription>One-click Meta onboarding is disabled in mock mode. Use the advanced credentials flow below for local testing.</AlertDescription>
         </Alert>
-      ) : (
+      ) : embeddedSignupAvailable ? (
         <EmbeddedSignupLauncher
           apiVersion={apiVersion}
           appId={appId}
           configurationId={configurationId}
           onConnected={onConnected}
         />
+      ) : (
+        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
+          <AlertTitle>Meta one-click onboarding is not configured yet</AlertTitle>
+          <AlertDescription>Use the secure assisted credentials flow below in this environment. When the Meta configuration ID is added, the popup onboarding button will appear here automatically.</AlertDescription>
+        </Alert>
       )}
       <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
-        <button className="text-body-sm font-medium text-wa-blue-600" type="button" onClick={() => setAdvancedOpen((current) => !current)}>
-          Use API credentials instead →
-        </button>
+        {embeddedSignupAvailable ? (
+          <button className="text-body-sm font-medium text-wa-blue-600" type="button" onClick={() => setAdvancedOpen((current) => !current)}>
+            Use API credentials instead →
+          </button>
+        ) : (
+          <p className="text-body-sm font-medium text-wa-gray-900">Continue with API credentials</p>
+        )}
         {advancedOpen ? (
           <div className="mt-4 space-y-4">
             <div className="rounded-xl bg-wa-warning-bg p-4 text-body-sm text-wa-warning">

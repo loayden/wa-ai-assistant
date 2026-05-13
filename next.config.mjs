@@ -61,6 +61,10 @@ function validateEnv(env = process.env) {
   assertValidUrl("DIRECT_URL", env.DIRECT_URL);
   assertValidUrl("NEXT_PUBLIC_APP_URL", env.NEXT_PUBLIC_APP_URL);
 
+  if (env.AUTH_EMAIL_REDIRECT_URL) {
+    assertValidUrl("AUTH_EMAIL_REDIRECT_URL", env.AUTH_EMAIL_REDIRECT_URL);
+  }
+
   if (!VALID_NODE_ENV_VALUES.has(env.NODE_ENV)) {
     throw new Error("Invalid environment variable NODE_ENV: expected development, test, or production.");
   }

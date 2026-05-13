@@ -10,6 +10,7 @@ import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { ensureAppUser, requireAuthenticatedUser, UnauthorizedError } from "@/lib/api/auth";
+import { resolveSignupRedirectUrl } from "@/lib/auth/redirect-url";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { logger } from "@/lib/utils/logger";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
@@ -67,13 +68,19 @@ function getAuthRateLimitKey(request: Request, action: AuthAction, body: unknown
   return `auth:${action}:${getClientIp(request)}:${email}`;
 }
 
-function getSignupRedirectUrl() {
+function getSignupRedirectUrl(request: Request) {
   /*
    * [ROLE: BACKEND ENGINEER]
-   * Decision: Supabase confirmation emails must land on the deployed app
-   * explicitly instead of relying on the project's Site URL default.
+   * Decision: Signup confirmations should use a forced override when present,
+   * otherwise they should resolve from the public request origin before
+   * falling back to the configured app URL.
    */
-  return `${appEnv.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/login`;
+  return resolveSignupRedirectUrl({
+    request,
+    fallbackAppUrl: appEnv.NEXT_PUBLIC_APP_URL,
+    explicitRedirectUrl: process.env.AUTH_EMAIL_REDIRECT_URL ?? null,
+    path: "/auth/confirm?next=/whatsapp",
+  });
 }
 
 function enforceAuthRateLimit(request: Request, action: AuthAction, body: unknown) {
@@ -131,7 +138,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
         email: parsed.data.email,
         password: parsed.data.password,
         options: {
-          emailRedirectTo: getSignupRedirectUrl(),
+          emailRedirectTo: getSignupRedirectUrl(request),
           data: {
             full_name: parsed.data.fullName,
           },

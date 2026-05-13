@@ -28,6 +28,7 @@ import { strictZodResolver } from "@/lib/validators/resolver";
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const authError = searchParams.get("authError");
   const [showPassword, setShowPassword] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const form = useForm<LoginInput>({
@@ -70,6 +71,16 @@ export function LoginForm() {
           {mutation.error ? (
             <Alert className="border-wa-error bg-wa-error-bg">
               <AlertDescription>{mutation.error.message}</AlertDescription>
+            </Alert>
+          ) : null}
+          {authError === "confirmation_failed" ? (
+            <Alert className="border-wa-error bg-wa-error-bg">
+              <AlertDescription>The confirmation link could not sign you in. Request a fresh confirmation email and try again.</AlertDescription>
+            </Alert>
+          ) : null}
+          {authError === "confirmation_required" ? (
+            <Alert className="border-wa-warning bg-wa-warning-bg">
+              <AlertDescription>Your email was confirmed, but the session was not recovered. Sign in once to continue.</AlertDescription>
             </Alert>
           ) : null}
           <div className="flex flex-col gap-1.5">

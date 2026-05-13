@@ -13,6 +13,7 @@ import { CheckCircle2, MessageSquareLock, Smartphone } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiData, ApiClientError } from "@/lib/api/client";
+import { BRAND_NAME } from "@/lib/utils/brand";
 
 type EmbeddedSignupLauncherProps = {
   appId: string | null;
@@ -177,7 +178,7 @@ export function EmbeddedSignupLauncher({
         const message =
           requestError instanceof ApiClientError
             ? requestError.message
-            : "Meta connected successfully, but kallem could not finish the secure handoff.";
+            : `Meta connected successfully, but ${BRAND_NAME} could not finish the secure handoff.`;
 
         setError(message);
         setLaunchState("idle");
@@ -232,7 +233,7 @@ export function EmbeddedSignupLauncher({
       <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Recommended</p>
       <h2 className="mt-3 text-h2 font-medium text-wa-gray-900">Connect with Meta</h2>
       <p className="mt-2 max-w-[32rem] text-body text-wa-gray-600">
-        No IDs, tokens, or developer settings. Sign in with Meta, choose your business, and kallem will finish the secure setup automatically.
+        No IDs, tokens, or developer settings. Sign in with Meta, choose your business, and {BRAND_NAME} will finish the secure setup automatically.
       </p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
@@ -248,7 +249,7 @@ export function EmbeddedSignupLauncher({
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <CheckCircle2 className="size-5 text-wa-blue-600" aria-hidden="true" />
           <p className="mt-3 text-body-sm font-medium text-wa-gray-900">Webhook wired for you</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">kallem stores the connection securely and subscribes the account automatically.</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">{BRAND_NAME} stores the connection securely and subscribes the account automatically.</p>
         </div>
       </div>
       {error ? (

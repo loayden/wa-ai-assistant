@@ -11,6 +11,7 @@ import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/a
 import { prisma } from "@/lib/prisma/client";
 import { sendEmail } from "@/lib/resend/client";
 import { constructWebhookEvent } from "@/lib/stripe/client";
+import { BRAND_NAME } from "@/lib/utils/brand";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
@@ -309,9 +310,9 @@ async function handleInvoicePaymentFailed(event: Stripe.Event, invoice: Stripe.I
   try {
     await sendEmail({
       to: user.email,
-      subject: "Payment failed for kallem",
-      html: "<p>Your latest kallem subscription payment failed. Please update your payment method to keep your paid features active.</p>",
-      text: "Your latest kallem subscription payment failed. Please update your payment method to keep your paid features active.",
+      subject: `Payment failed for ${BRAND_NAME}`,
+      html: `<p>Your latest ${BRAND_NAME} subscription payment failed. Please update your payment method to keep your paid features active.</p>`,
+      text: `Your latest ${BRAND_NAME} subscription payment failed. Please update your payment method to keep your paid features active.`,
     });
   } catch (error) {
     logger.error("api.webhooks.stripe", "Failed to send invoice payment failure email.", { error, userId: user.id });

@@ -14,6 +14,7 @@ import { ProfileSheet } from "@/components/shared/ProfileSheet";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useAuthStore } from "@/store/authStore";
 import type { PlanTier } from "@/types/subscription";
+import { BRAND_NAME } from "@/lib/utils/brand";
 
 export interface TopBarProps {
   userName?: string | null;
@@ -24,7 +25,7 @@ export interface TopBarProps {
 }
 
 function initialsFor(name?: string | null, email?: string | null) {
-  const source = name || email || "kallem";
+  const source = name || email || BRAND_NAME;
   return source.slice(0, 2).toUpperCase();
 }
 

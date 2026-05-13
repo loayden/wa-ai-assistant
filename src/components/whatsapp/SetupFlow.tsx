@@ -14,6 +14,7 @@ import { BrandLogo } from "@/components/shared/BrandLogo";
 import { EmbeddedSignupLauncher } from "@/components/whatsapp/EmbeddedSignupLauncher";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BRAND_NAME } from "@/lib/utils/brand";
 
 interface SetupFlowProps {
   appId: string | null;
@@ -57,7 +58,7 @@ export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode
         <BrandLogo className="mb-8" layout="stacked" wordmarkSize="md" />
         <h1 className="text-h1 font-medium text-wa-gray-900">Connect WhatsApp</h1>
         <p className="mt-3 text-body text-wa-gray-600">
-          The easiest path is Meta’s own guided onboarding. Your customer signs in, chooses the business, verifies the number, and kallem completes the secure setup automatically.
+          The easiest path is Meta’s own guided onboarding. Your customer signs in, chooses the business, verifies the number, and {BRAND_NAME} completes the secure setup automatically.
         </p>
       </div>
       {mockMode ? (

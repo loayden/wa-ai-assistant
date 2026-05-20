@@ -20,6 +20,7 @@ interface SetupFlowProps {
   appId: string | null;
   appUrl: string;
   configurationId: string | null;
+  embeddedSignupEnabled: boolean;
   apiVersion: string;
   mockMode: boolean;
   onConnected: () => void;
@@ -48,8 +49,16 @@ function normalizeOwnerPhone(phone: string) {
   return digits;
 }
 
-export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode, onConnected }: SetupFlowProps) {
-  const embeddedSignupAvailable = !mockMode && Boolean(appId && configurationId);
+export function SetupFlow({
+  apiVersion,
+  appId,
+  appUrl,
+  configurationId,
+  embeddedSignupEnabled,
+  mockMode,
+  onConnected,
+}: SetupFlowProps) {
+  const embeddedSignupAvailable = !mockMode && embeddedSignupEnabled && Boolean(appId && configurationId);
   const [advancedOpen, setAdvancedOpen] = useState(!embeddedSignupAvailable);
   const [ownerPhoneNumber, setOwnerPhoneNumber] = useState("");
 
@@ -58,9 +67,15 @@ export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode
       <div className="mx-auto max-w-[460px] text-center">
         <BrandLogo className="mb-8" layout="stacked" wordmarkSize="md" />
         <h1 className="text-h1 font-medium text-wa-gray-900">Connect WhatsApp</h1>
-        <p className="mt-3 text-body text-wa-gray-600">
-          The easiest path is Meta’s own guided onboarding. Your customer signs in, chooses the business, verifies the number, and {BRAND_NAME} completes the secure setup automatically.
-        </p>
+        {embeddedSignupAvailable ? (
+          <p className="mt-3 text-body text-wa-gray-600">
+            The easiest path is Meta’s own guided onboarding. Your customer signs in, chooses the business, verifies the number, and {BRAND_NAME} completes the secure setup automatically.
+          </p>
+        ) : (
+          <p className="mt-3 text-body text-wa-gray-600">
+            Connect this business manually with the secure WhatsApp API credentials from Meta. This path is the active onboarding flow for the current app environment.
+          </p>
+        )}
       </div>
       {mockMode ? (
         <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
@@ -74,25 +89,26 @@ export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode
           configurationId={configurationId}
           onConnected={onConnected}
         />
-      ) : (
-        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
-          <AlertTitle>Meta one-click onboarding is not configured yet</AlertTitle>
-          <AlertDescription>Use the secure assisted credentials flow below in this environment. When the Meta configuration ID is added, the popup onboarding button will appear here automatically.</AlertDescription>
-        </Alert>
-      )}
+      ) : null}
       <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
         {embeddedSignupAvailable ? (
           <button className="text-body-sm font-medium text-wa-blue-600" type="button" onClick={() => setAdvancedOpen((current) => !current)}>
             Use API credentials instead →
           </button>
         ) : (
-          <p className="text-body-sm font-medium text-wa-gray-900">Continue with API credentials</p>
+          <p className="text-body-sm font-medium text-wa-gray-900">Connect with API credentials</p>
         )}
         {advancedOpen ? (
           <div className="mt-4 space-y-4">
-            <div className="rounded-xl bg-wa-warning-bg p-4 text-body-sm text-wa-warning">
-              This path is for internal testing, migrations, or recovery. Business customers should use the Meta button above.
-            </div>
+            {embeddedSignupAvailable ? (
+              <div className="rounded-xl bg-wa-warning-bg p-4 text-body-sm text-wa-warning">
+                This path is for internal testing, migrations, or recovery. Business customers should use the Meta button above.
+              </div>
+            ) : (
+              <div className="rounded-xl bg-wa-gray-50 p-4 text-body-sm text-wa-gray-600">
+                Enter the Phone Number ID, WhatsApp Business Account ID, and access token from Meta. {BRAND_NAME} will validate the credentials before saving the connection.
+              </div>
+            )}
             <div className="space-y-2">
               <label className="block text-body-sm font-medium text-wa-gray-800" htmlFor="ownerPhoneNumber">
                 Business phone number (optional)
@@ -121,9 +137,17 @@ export function SetupFlow({ apiVersion, appId, appUrl, configurationId, mockMode
         <ul className="mt-3 list-disc space-y-2 pl-5 text-body-sm text-wa-gray-600">
           <li>A Meta account with access to the business that owns the number.</li>
           <li>The WhatsApp number they want to connect.</li>
-          <li>Permission to complete Meta’s verification steps in the popup.</li>
+          {embeddedSignupAvailable ? (
+            <li>Permission to complete Meta’s verification steps in the popup.</li>
+          ) : (
+            <li>The Phone Number ID, WhatsApp Business Account ID, and access token from Meta.</li>
+          )}
         </ul>
-        <p className="mt-3 text-body-sm text-wa-gray-600">They do not need Phone Number IDs, WABA IDs, or access tokens.</p>
+        <p className="mt-3 text-body-sm text-wa-gray-600">
+          {embeddedSignupAvailable
+            ? "They do not need Phone Number IDs, WABA IDs, or access tokens."
+            : "If the business cannot access these values, the number must be onboarded by someone who manages the Meta app and WhatsApp account."}
+        </p>
         <p className="mt-2 text-body-sm text-wa-gray-500">Webhook target: {appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp</p>
       </div>
     </div>

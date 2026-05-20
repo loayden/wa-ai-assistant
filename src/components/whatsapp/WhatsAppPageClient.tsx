@@ -25,6 +25,7 @@ type WhatsAppPageClientProps = {
   appUrl: string;
   embeddedSignupAppId: string | null;
   embeddedSignupConfigId: string | null;
+  embeddedSignupEnabled: boolean;
   apiVersion: string;
   mockMode: boolean;
 };
@@ -34,6 +35,7 @@ export function WhatsAppPageClient({
   appUrl,
   embeddedSignupAppId,
   embeddedSignupConfigId,
+  embeddedSignupEnabled,
   mockMode,
 }: WhatsAppPageClientProps) {
   const queryClient = useQueryClient();
@@ -79,6 +81,7 @@ export function WhatsAppPageClient({
         appId={embeddedSignupAppId}
         appUrl={appUrl}
         configurationId={embeddedSignupConfigId}
+        embeddedSignupEnabled={embeddedSignupEnabled}
         mockMode={mockMode}
         onConnected={() => {
           void queryClient.invalidateQueries({ queryKey: ["whatsapp-connections"] });

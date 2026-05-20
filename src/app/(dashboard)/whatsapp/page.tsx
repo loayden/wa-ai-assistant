@@ -13,6 +13,7 @@ export default function WhatsAppPage() {
       appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
       embeddedSignupAppId={process.env.WHATSAPP_APP_ID ?? null}
       embeddedSignupConfigId={process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null}
+      embeddedSignupEnabled={process.env.WHATSAPP_EMBEDDED_SIGNUP_ENABLED === "true"}
       mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}
     />
   );

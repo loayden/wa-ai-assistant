@@ -23,19 +23,10 @@ type ConnectionsResponse = {
 
 type WhatsAppPageClientProps = {
   appUrl: string;
-  embeddedSignupAppId: string | null;
-  embeddedSignupConfigId: string | null;
-  apiVersion: string;
   mockMode: boolean;
 };
 
-export function WhatsAppPageClient({
-  apiVersion,
-  appUrl,
-  embeddedSignupAppId,
-  embeddedSignupConfigId,
-  mockMode,
-}: WhatsAppPageClientProps) {
+export function WhatsAppPageClient({ appUrl, mockMode }: WhatsAppPageClientProps) {
   const queryClient = useQueryClient();
   const connectionsQuery = useQuery({
     queryKey: ["whatsapp-connections"],
@@ -75,10 +66,7 @@ export function WhatsAppPageClient({
   if (!connection) {
     return (
       <SetupFlow
-        apiVersion={apiVersion}
-        appId={embeddedSignupAppId}
         appUrl={appUrl}
-        configurationId={embeddedSignupConfigId}
         mockMode={mockMode}
         onConnected={() => {
           void queryClient.invalidateQueries({ queryKey: ["whatsapp-connections"] });

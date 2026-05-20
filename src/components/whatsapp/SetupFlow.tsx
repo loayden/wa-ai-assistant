@@ -11,7 +11,6 @@ import dynamic from "next/dynamic";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface SetupFlowProps {
   appUrl: string;
@@ -54,12 +53,6 @@ export function SetupFlow({ appUrl, mockMode, onConnected }: SetupFlowProps) {
           Connect your WhatsApp Business account with the values from Meta. This app will store the connection securely and wire the webhook automatically after you save it.
         </p>
       </div>
-      {!mockMode ? (
-        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
-          <AlertTitle>Use your Meta credentials</AlertTitle>
-          <AlertDescription>Meta one-click onboarding is not available for this app account, so direct API credentials are the supported path here.</AlertDescription>
-        </Alert>
-      ) : null}
       <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
         <p className="text-body-sm font-medium text-wa-gray-900">Continue with API credentials</p>
         <div className="mt-4 space-y-4">

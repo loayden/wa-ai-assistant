@@ -65,7 +65,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
       <Card>
         <CardHeader>
           <CardTitle>Connect WhatsApp Business</CardTitle>
-          <CardDescription>Store one tenant-scoped WhatsApp Cloud API connection for automated replies.</CardDescription>
+          <CardDescription>Store one tenant-scoped WhatsApp Cloud API connection for automated replies. The app validates the IDs against Meta before saving.</CardDescription>
         </CardHeader>
         <CardContent>
           {mockMode ? (
@@ -90,6 +90,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
             <div className="space-y-2">
               <Label htmlFor="accessToken">Access Token</Label>
               <Input id="accessToken" type="password" {...form.register("accessToken")} />
+              <p className="text-sm text-muted-foreground">Use a token that can read phone assets, manage WhatsApp business settings, and subscribe the app to the business account.</p>
               {form.formState.errors.accessToken ? <p className="text-sm text-destructive">{form.formState.errors.accessToken.message}</p> : null}
             </div>
             <div className="space-y-2">
@@ -116,7 +117,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
             <li>Create a Meta Developer App and add the WhatsApp product.</li>
             <li>Copy your Phone Number ID and Business Account ID.</li>
             <li>Generate or attach a Cloud API access token with send permissions.</li>
-            <li>Save this connection, then configure the webhook URL shown after connection.</li>
+            <li>Save this connection. The app will verify that the number belongs to that business account and subscribe the webhook app automatically.</li>
           </ol>
         </AccordionItem>
         <AccordionItem title="Local development">

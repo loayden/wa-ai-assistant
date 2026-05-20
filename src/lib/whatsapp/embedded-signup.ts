@@ -38,6 +38,10 @@ export type WhatsAppPhoneProfile = {
   code_verification_status?: string;
 };
 
+type WhatsAppBusinessPhoneNumbersResponse = {
+  data?: WhatsAppPhoneProfile[];
+};
+
 export class EmbeddedSignupError extends Error {
   public readonly status?: number;
   public readonly response?: MetaGraphErrorBody;
@@ -137,4 +141,26 @@ export async function getPhoneProfile(phoneNumberId: string, accessToken: string
       Accept: "application/json",
     },
   });
+}
+
+export async function getBusinessAccountPhoneNumber(
+  businessAccountId: string,
+  phoneNumberId: string,
+  accessToken: string,
+): Promise<WhatsAppPhoneProfile | null> {
+  const url = new URL(buildGraphUrl(`${businessAccountId}/phone_numbers`));
+  url.searchParams.set(
+    "fields",
+    "display_phone_number,verified_name,quality_rating,name_status,code_verification_status",
+  );
+
+  const response = await requestGraph<WhatsAppBusinessPhoneNumbersResponse>(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+  });
+
+  return response.data?.find((phone) => phone.id === phoneNumberId) ?? null;
 }

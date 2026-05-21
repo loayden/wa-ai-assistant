@@ -49,8 +49,8 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
   const loading = updateSettings.isPending;
 
   return (
-    <section className={cn("w-full rounded-2xl border border-wa-gray-100 bg-white p-5 text-center", className)}>
-      <p className="mb-4 text-label font-medium uppercase tracking-widest text-wa-gray-400">Your AI assistant</p>
+    <section className={cn("w-full rounded-2xl border border-wa-gray-100 bg-white p-4 text-center sm:p-5", className)}>
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-wa-gray-400 sm:mb-4 sm:text-label">Your AI assistant</p>
       <button
         type="button"
         aria-label={localEnabled ? "Pause AI replies" : "Resume AI replies"}
@@ -58,7 +58,7 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
         disabled={disabled || loading}
         onClick={handleToggle}
         className={cn(
-          "relative mx-auto flex h-10 w-[72px] items-center rounded-full transition-colors duration-250 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 disabled:pointer-events-none",
+          "relative mx-auto flex h-10 w-[72px] items-center rounded-full transition-colors duration-250 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 disabled:pointer-events-none sm:h-11 sm:w-20",
           localEnabled ? "bg-wa-blue-600" : "bg-wa-gray-200",
           loading && "animate-pulse",
         )}
@@ -66,14 +66,14 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
         {localEnabled ? <span className="absolute inset-0 animate-ring-pulse rounded-full ring-4 ring-wa-blue-50" aria-hidden="true" /> : null}
         <span
           className={cn(
-            "relative z-10 size-[34px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.15)] transition-transform duration-250 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
-            localEnabled ? "translate-x-[35px]" : "translate-x-[3px]",
+            "relative z-10 size-[34px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.15)] transition-transform duration-250 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] sm:size-[38px]",
+            localEnabled ? "translate-x-[35px] sm:translate-x-[39px]" : "translate-x-[3px]",
             loading && "opacity-60",
           )}
           aria-hidden="true"
         />
       </button>
-      <p className={cn("mt-4 text-body-sm transition duration-200", localEnabled ? "font-medium text-wa-success" : "text-wa-gray-400")}>
+      <p className={cn("mt-3 text-body-sm transition duration-200 sm:mt-4", localEnabled ? "font-medium text-wa-success" : "text-wa-gray-400")}>
         {localEnabled ? "Replying to customers" : "Paused"}
       </p>
       {error ? <p className="mt-3 rounded-lg bg-wa-error-bg px-3 py-2 text-body-sm text-wa-error">{error}</p> : null}

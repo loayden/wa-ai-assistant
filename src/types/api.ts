@@ -98,8 +98,8 @@ export type SettingsUserResponse = {
   subscriptionStatus: SubscriptionStatus;
   monthlyReplyCount: number;
   replyCountResetAt: string;
-  stripeCustomerId: string | null;
-  stripeSubscriptionId: string | null;
+  paymentCustomerId: string | null;
+  paymentSubscriptionId: string | null;
 };
 
 export type UserSettingsResponse = {

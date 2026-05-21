@@ -32,7 +32,10 @@ export function ProfileSheet({ onBilling, onClose, onSignOut, open, planTier, us
         <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
           <p className="text-body font-medium text-wa-gray-900">{userName || "Account"}</p>
           <p className="mt-1 text-body-sm text-wa-gray-600">{userEmail || "Signed in"}</p>
-          <StatusBadge className="mt-3" label={planTier} variant={planTier === "FREE" ? "free" : "pro"} />
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <StatusBadge label={planTier} variant={planTier === "FREE" ? "free" : "pro"} />
+            <p className="text-body-sm text-wa-gray-600">{planTier === "FREE" ? "Starter access" : "Paid plan active"}</p>
+          </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-wa-gray-100 bg-white px-5 py-4">
           <div>

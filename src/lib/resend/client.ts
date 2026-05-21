@@ -1,7 +1,7 @@
 // FILE: src/lib/resend/client.ts
 /*
  * [ROLE: BACKEND ENGINEER]
- * Decision: Email delivery is wrapped behind one helper so Stripe webhook and
+ * Decision: Email delivery is wrapped behind one helper so payment webhook and
  * account notifications share sender validation and error logging.
  */
 import "server-only";

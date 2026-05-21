@@ -2,14 +2,13 @@
 /*
  * [ROLE: BACKEND ENGINEER]
  * Decision: Checkout creation is tenant-scoped and delegates subscription
- * payment collection to Stripe Checkout.
+ * payment collection to Paymob hosted checkout.
  */
-import { PlanTier } from "@prisma/client";
-
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/api/response";
-import { createCheckoutSession } from "@/lib/stripe/client";
+import { createPaymobCheckoutSession, PaymobConfigurationError, PaymobRequestError } from "@/lib/paymob/client";
+import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { createCheckoutSchema } from "@/lib/validators/billing";
 
@@ -30,19 +29,28 @@ export async function POST(request: Request) {
       return jsonError("You are already on this plan.", 409);
     }
 
-    if (user.planTier !== PlanTier.FREE) {
-      return jsonError("Use the Stripe Portal to change paid plans.", 409);
-    }
-
-    const session = await createCheckoutSession({
+    const session = await createPaymobCheckoutSession({
       userId: user.id,
       email: user.email,
+      fullName: user.fullName,
       planTier: parsed.data.planTier,
     });
 
-    if (!session.url) {
-      return jsonError("Stripe did not return a Checkout URL.", 502);
-    }
+    await prisma.subscriptionEvent.upsert({
+      where: { paymentEventId: session.reference },
+      update: {
+        status: "PENDING",
+      },
+      create: {
+        userId: user.id,
+        paymentEventId: session.reference,
+        eventType: "paymob.checkout.created",
+        planTier: parsed.data.planTier,
+        status: "PENDING",
+        amount: session.amountCents,
+        currency: session.currency,
+      },
+    });
 
     return jsonSuccess({ url: session.url });
   } catch (error) {
@@ -54,13 +62,21 @@ export async function POST(request: Request) {
       return jsonError(error.message, 400);
     }
 
+    if (error instanceof PaymobConfigurationError) {
+      return jsonError(error.message, 503);
+    }
+
+    if (error instanceof PaymobRequestError) {
+      return jsonError(error.message, error.status >= 400 && error.status < 600 ? error.status : 502);
+    }
+
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.billing.createCheckout", error);
 
     if (databaseErrorResponse) {
       return databaseErrorResponse;
     }
 
-    logger.error("api.billing.createCheckout", "Failed to create checkout session.", { error });
-    return jsonError("Failed to create checkout session.", 500);
+    logger.error("api.billing.createCheckout", "Failed to create Paymob checkout session.", { error });
+    return jsonError("Failed to create Paymob checkout session.", 500);
   }
 }

@@ -6,6 +6,8 @@
  * Decision: Conversations replace technical table rows with a compact contact,
  * preview, status, and timestamp surface optimized for one-handed scanning.
  */
+import { Bot, MessageCircle } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 export interface ConversationCardProps {
@@ -15,6 +17,8 @@ export interface ConversationCardProps {
   timestamp: string;
   aiGenerated?: boolean;
   unread?: boolean;
+  selected?: boolean;
+  className?: string;
   onClick?: () => void;
 }
 
@@ -25,28 +29,49 @@ function initialsFor(value: string) {
 export function ConversationCard({
   aiGenerated = false,
   contactName,
+  className,
   onClick,
   phoneNumber,
   preview,
+  selected = false,
   timestamp,
   unread = false,
 }: ConversationCardProps) {
   const content = (
     <>
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-wa-gray-100 bg-wa-gray-50 text-body-sm font-medium text-wa-gray-600">
-        {initialsFor(contactName || phoneNumber)}
+      <div
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-xl border text-body-sm font-semibold transition-colors sm:size-12 sm:rounded-2xl",
+          unread || selected
+            ? "border-wa-blue-100 bg-wa-blue-50 text-wa-blue-700"
+            : "border-wa-gray-100 bg-wa-gray-50 text-wa-gray-600",
+        )}
+      >
+        {contactName ? initialsFor(contactName) : <MessageCircle className="size-4 sm:size-5" aria-hidden="true" />}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-3">
-          <p className="truncate text-body-sm font-medium text-wa-gray-800">{contactName || phoneNumber}</p>
-          <time className="shrink-0 text-label font-normal text-wa-gray-400">{timestamp}</time>
+          <div className="min-w-0">
+            <p className="truncate text-body-sm font-semibold text-wa-gray-900 sm:text-body">{contactName || phoneNumber}</p>
+            <p className="mt-0.5 truncate text-label font-medium uppercase tracking-widest text-wa-gray-400">{phoneNumber}</p>
+          </div>
+          <time className="shrink-0 text-xs font-medium text-wa-gray-400 sm:text-body-sm">{timestamp}</time>
         </div>
-        <p className="mt-1 truncate text-body-sm text-wa-gray-400">
-          {aiGenerated ? <span className="mr-1 rounded bg-wa-blue-600 px-1 py-0.5 text-[9px] font-medium text-white">AI</span> : null}
+        <p className="mt-1.5 flex min-w-0 items-center gap-2 truncate text-xs text-wa-gray-600 sm:mt-2 sm:text-body-sm">
+          {aiGenerated ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa-blue-50 px-2 py-0.5 text-[10px] font-semibold text-wa-blue-700">
+              <Bot className="size-3" aria-hidden="true" />
+              AI
+            </span>
+          ) : null}
           {preview}
         </p>
       </div>
-      {unread ? <span className="size-2 rounded-full bg-wa-blue-600" aria-label="Unread conversation" /> : null}
+      {unread ? (
+        <span className="hidden rounded-full bg-wa-blue-50 px-3 py-1 text-[10px] font-semibold text-wa-blue-700 sm:inline-flex" aria-label="Unread conversation">
+          Needs reply
+        </span>
+      ) : null}
     </>
   );
 
@@ -55,12 +80,17 @@ export function ConversationCard({
       <button
         type="button"
         onClick={onClick}
-        className="flex h-20 w-full items-center gap-3 border-b border-wa-gray-100 px-4 text-left transition-colors hover:bg-wa-gray-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50"
+        aria-pressed={selected || undefined}
+        className={cn(
+          "group flex min-h-[78px] w-full items-center gap-2.5 border-b border-wa-gray-100 px-3 py-3 text-left transition-colors hover:bg-wa-gray-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 sm:min-h-[96px] sm:gap-3 sm:px-5 sm:py-4",
+          selected && "bg-wa-blue-50/60",
+          className,
+        )}
       >
         {content}
       </button>
     );
   }
 
-  return <div className={cn("flex h-20 w-full items-center gap-3 border-b border-wa-gray-100 px-4")}>{content}</div>;
+  return <div className={cn("flex min-h-[78px] w-full items-center gap-2.5 border-b border-wa-gray-100 px-3 py-3 sm:min-h-[96px] sm:gap-3 sm:px-5 sm:py-4", className)}>{content}</div>;
 }

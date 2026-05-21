@@ -6,7 +6,8 @@
  */
 "use client";
 
-import { Copy, Trash2 } from "lucide-react";
+import type { ReactNode } from "react";
+import { Building2, Copy, KeyRound, Radio, ShieldCheck, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,71 +34,123 @@ type ConnectionStatusProps = {
 };
 
 export function ConnectionStatus({
+  autoReplyEnabled,
   connection,
+  isUpdating,
   webhookUrl,
   onDisconnect,
 }: ConnectionStatusProps) {
-  const statusLabel = connection.isVerified ? "Verified" : connection.isActive ? "Connected" : "Pending";
-  const statusVariant = connection.isVerified || connection.isActive ? "active" : "paused";
+  const statusLabel = connection.isActive ? "Connected" : "Paused";
+  const statusVariant = connection.isActive ? "active" : "paused";
+  const replyLabel = autoReplyEnabled ? "Replying" : "Paused";
 
   return (
-    <Card>
-      <CardContent className="space-y-5">
-        <div className="flex items-start justify-between gap-4">
+    <Card className="overflow-hidden rounded-[22px] border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
+      <CardContent className="p-0">
+        <div className="flex items-start justify-between gap-3 border-b border-wa-gray-100 p-4 sm:gap-4 sm:p-6">
           <div>
-            <p className="text-body font-medium text-wa-gray-900">{connection.displayName ?? "WhatsApp connected"}</p>
-            <p className="mt-1 text-body-sm text-wa-gray-600">Your assistant is connected to this number.</p>
+            <p className="text-body font-semibold text-wa-gray-900">{connection.displayName ?? "WhatsApp connected"}</p>
+            <p className="mt-2 max-w-[640px] text-body-sm leading-6 text-wa-gray-600">
+              This number is ready for the assistant. Messages can enter the inbox and route through the connected
+              WhatsApp account.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <StatusBadge className="px-3 py-1" label={statusLabel} variant={statusVariant} />
+              <StatusBadge className="px-3 py-1" label={replyLabel} variant={autoReplyEnabled ? "active" : "paused"} />
+            </div>
           </div>
-          <StatusBadge label={statusLabel} variant={statusVariant} />
+          {isUpdating ? <StatusBadge label="Updating" variant="paused" /> : null}
         </div>
-        <div className="space-y-3 rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-          <div>
-            <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Phone number</p>
-            <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.ownerPhoneNumberMasked ?? "Saved in Meta"}</p>
+
+        <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SummaryCard
+              label="AI status"
+              value={autoReplyEnabled ? "Replying to customers" : "Paused for now"}
+              icon={<Radio className="size-4 text-wa-blue-600" aria-hidden="true" />}
+            />
+            <SummaryCard
+              label="Webhook"
+              value="Connected and subscribed"
+              icon={<ShieldCheck className="size-4 text-wa-success" aria-hidden="true" />}
+            />
+            <SummaryCard
+              label="Owner number"
+              value={connection.ownerPhoneNumberMasked ?? "Not saved"}
+              icon={<KeyRound className="size-4 text-wa-gray-500" aria-hidden="true" />}
+            />
           </div>
-          <div>
-            <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Connection</p>
-            <p className="mt-1 text-body-sm text-wa-gray-600">{connection.isActive ? "Active and ready" : "Inactive"}</p>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <CredentialBlock
+              icon={<Radio className="size-4" aria-hidden="true" />}
+              label="Phone Number ID"
+              value={connection.phoneNumberId}
+            />
+            <CredentialBlock
+              icon={<Building2 className="size-4" aria-hidden="true" />}
+              label="Business account"
+              value={connection.businessAccountId}
+            />
           </div>
-        </div>
-        <details className="rounded-xl border border-wa-gray-100 bg-white p-5">
-          <summary className="cursor-pointer text-body-sm font-medium text-wa-blue-600">Advanced settings</summary>
-          <div className="mt-4 space-y-4">
-            <div>
-              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Number ID</p>
-              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.phoneNumberId}</p>
-            </div>
-            <div>
-              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Business account</p>
-              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.businessAccountId}</p>
-            </div>
-            <div>
-              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Access token</p>
-              <p className="mt-1 font-mono text-mono text-wa-gray-800">{connection.accessTokenMasked}</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Webhook URL</p>
-              <div className="flex gap-2">
-                <code className="min-w-0 flex-1 truncate rounded-lg border border-wa-gray-100 bg-wa-gray-50 px-3 py-3 font-mono text-mono text-wa-gray-600">
-                  {webhookUrl}
-                </code>
-                <Button
-                  aria-label="Copy webhook URL"
-                  size="icon"
-                  variant="outline"
-                  onClick={() => void navigator.clipboard.writeText(webhookUrl)}
-                >
-                  <Copy className="size-4" aria-hidden="true" />
-                </Button>
+
+          <details className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4 sm:rounded-[22px] sm:p-5">
+            <summary className="cursor-pointer text-body-sm font-semibold text-wa-blue-600">Advanced settings</summary>
+            <div className="mt-4 space-y-4">
+              <CredentialBlock
+                icon={<KeyRound className="size-4" aria-hidden="true" />}
+                label="Access token"
+                value={connection.accessTokenMasked}
+              />
+              <div className="space-y-2">
+                <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Webhook URL</p>
+                <div className="flex gap-2">
+                  <code className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-wa-gray-100 bg-white px-3 py-3 font-mono text-mono text-wa-gray-600">
+                    {webhookUrl}
+                  </code>
+                  <Button
+                    aria-label="Copy webhook URL"
+                    className="shrink-0"
+                    size="icon"
+                    variant="outline"
+                    onClick={() => void navigator.clipboard.writeText(webhookUrl)}
+                  >
+                    <Copy className="size-4" aria-hidden="true" />
+                  </Button>
+                </div>
               </div>
+              <Button className="w-full rounded-full" variant="destructive" onClick={onDisconnect}>
+                <Trash2 className="size-4" aria-hidden="true" />
+                Disconnect
+              </Button>
             </div>
-            <Button className="w-full" variant="destructive" onClick={onDisconnect}>
-              <Trash2 className="size-4" aria-hidden="true" />
-              Disconnect
-            </Button>
-          </div>
-        </details>
+          </details>
+        </div>
       </CardContent>
     </Card>
+  );
+}
+
+function SummaryCard({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3 sm:p-4">
+      <div className="mb-2.5 flex size-9 items-center justify-center rounded-xl bg-white shadow-[0_10px_28px_rgba(13,20,33,0.05)] sm:mb-3 sm:size-10 sm:rounded-2xl">
+        {icon}
+      </div>
+      <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">{label}</p>
+      <p className="mt-1 text-body-sm font-medium text-wa-gray-900">{value}</p>
+    </div>
+  );
+}
+
+function CredentialBlock({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-wa-gray-100 bg-white p-3 sm:p-4">
+      <div className="mb-3 flex items-center gap-2 text-wa-blue-600">
+        <span className="flex size-8 items-center justify-center rounded-xl bg-wa-blue-50">{icon}</span>
+        <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">{label}</p>
+      </div>
+      <p className="break-all font-mono text-mono text-wa-gray-800">{value}</p>
+    </div>
   );
 }

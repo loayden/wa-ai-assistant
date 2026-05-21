@@ -13,7 +13,7 @@ export type PlanLimits = {
   maxConnections: number;
   allowsCustomPrompt: boolean;
   allowsOverage: boolean;
-  monthlyPriceUsd: number;
+  monthlyPriceEgp: number;
 };
 
 export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
@@ -22,21 +22,21 @@ export const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxConnections: 1,
     allowsCustomPrompt: false,
     allowsOverage: false,
-    monthlyPriceUsd: 0,
+    monthlyPriceEgp: 0,
   },
   PRO: {
     includedRepliesPerMonth: 2000,
     maxConnections: 3,
     allowsCustomPrompt: true,
     allowsOverage: true,
-    monthlyPriceUsd: 19,
+    monthlyPriceEgp: 999,
   },
   BUSINESS: {
     includedRepliesPerMonth: 10000,
     maxConnections: 10,
     allowsCustomPrompt: true,
     allowsOverage: true,
-    monthlyPriceUsd: 49,
+    monthlyPriceEgp: 2499,
   },
 };
 

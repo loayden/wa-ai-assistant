@@ -33,8 +33,8 @@ export async function GET() {
         subscriptionStatus: user.subscriptionStatus,
         monthlyReplyCount: user.monthlyReplyCount,
         replyCountResetAt: user.replyCountResetAt,
-        stripeCustomerId: user.stripeCustomerId,
-        stripeSubscriptionId: user.stripeSubscriptionId,
+        paymentCustomerId: user.paymentCustomerId,
+        paymentSubscriptionId: user.paymentSubscriptionId,
       },
     });
   } catch (error) {
@@ -87,8 +87,8 @@ export async function PUT(request: Request) {
         subscriptionStatus: user.subscriptionStatus,
         monthlyReplyCount: user.monthlyReplyCount,
         replyCountResetAt: user.replyCountResetAt,
-        stripeCustomerId: user.stripeCustomerId,
-        stripeSubscriptionId: user.stripeSubscriptionId,
+        paymentCustomerId: user.paymentCustomerId,
+        paymentSubscriptionId: user.paymentSubscriptionId,
       },
     });
   } catch (error) {

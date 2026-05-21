@@ -1,5 +1,6 @@
 // FILE: tailwind.config.ts
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 /*
  * [ROLE: ARCHITECT]
@@ -94,14 +95,14 @@ const config: Config = {
         mono: ["JetBrains Mono", "SF Mono", "Fira Code", "monospace"],
       },
       fontSize: {
-        display: ["40px", { lineHeight: "1.10", letterSpacing: "-0.025em" }],
-        h1: ["28px", { lineHeight: "1.20", letterSpacing: "-0.020em" }],
-        h2: ["22px", { lineHeight: "1.25", letterSpacing: "-0.015em" }],
-        h3: ["18px", { lineHeight: "1.30", letterSpacing: "-0.010em" }],
+        display: ["40px", { lineHeight: "1.10", letterSpacing: "0em" }],
+        h1: ["28px", { lineHeight: "1.20", letterSpacing: "0em" }],
+        h2: ["22px", { lineHeight: "1.25", letterSpacing: "0em" }],
+        h3: ["18px", { lineHeight: "1.30", letterSpacing: "0em" }],
         "body-lg": ["17px", { lineHeight: "1.60", letterSpacing: "0em" }],
         body: ["15px", { lineHeight: "1.60", letterSpacing: "0em" }],
         "body-sm": ["13px", { lineHeight: "1.50", letterSpacing: "0em" }],
-        label: ["11px", { lineHeight: "1.20", letterSpacing: "0.060em" }],
+        label: ["11px", { lineHeight: "1.20", letterSpacing: "0em" }],
         micro: ["10px", { lineHeight: "1.20", letterSpacing: "0em" }],
         mono: ["14px", { lineHeight: "1.40", letterSpacing: "0em" }],
       },
@@ -137,7 +138,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;

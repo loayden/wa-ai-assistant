@@ -43,7 +43,7 @@ export function OTPInput({ disabled = false, error, onChange, onComplete, value 
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-center gap-2" role="group" aria-label="Verification code">
+      <div className="flex justify-center gap-1.5 sm:gap-2" role="group" aria-label="Verification code">
         {cells.map((digit, index) => (
           <input
             key={index}
@@ -74,7 +74,7 @@ export function OTPInput({ disabled = false, error, onChange, onComplete, value 
               focusCell(OTP_LENGTH - 1);
             }}
             className={cn(
-              "h-14 w-12 rounded-xl border border-wa-gray-100 bg-wa-gray-50 text-center text-h2 font-medium text-wa-gray-800 caret-transparent transition-colors focus:border-[1.5px] focus:border-wa-blue-600 focus:bg-white focus:outline-none",
+              "h-12 w-10 rounded-xl border border-wa-gray-100 bg-wa-gray-50 text-center text-h3 font-medium text-wa-gray-800 caret-transparent transition-colors focus:border-[1.5px] focus:border-wa-blue-600 focus:bg-white focus:outline-none sm:h-14 sm:w-12 sm:text-h2",
               digit && "bg-white",
               error && "animate-shake border-[1.5px] border-wa-error",
             )}

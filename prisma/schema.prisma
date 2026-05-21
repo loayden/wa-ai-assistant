@@ -52,8 +52,8 @@ model User {
   fullName             String?              @map("full_name")
   avatarUrl            String?              @map("avatar_url")
   planTier             PlanTier             @default(FREE) @map("plan_tier")
-  stripeCustomerId     String?              @unique @map("stripe_customer_id")
-  stripeSubscriptionId String?              @map("stripe_subscription_id")
+  paymentCustomerId    String?              @unique @map("stripe_customer_id")
+  paymentSubscriptionId String?             @map("stripe_subscription_id")
   subscriptionStatus   SubscriptionStatus   @default(INACTIVE) @map("subscription_status")
   monthlyReplyCount    Int                  @default(0) @map("monthly_reply_count")
   replyCountResetAt    DateTime             @default(now()) @map("reply_count_reset_at")
@@ -152,12 +152,12 @@ model UserSettings {
 }
 
 // [ROLE: BACKEND ENGINEER]
-// Decision: Stripe events are append-only audit records scoped to the user; they
-// cascade on account deletion to honor tenant data removal.
+// Decision: Payment events are append-only audit records scoped to the user;
+// they cascade on account deletion to honor tenant data removal.
 model SubscriptionEvent {
   id            String    @id @default(uuid()) @db.Uuid
   userId        String    @map("user_id") @db.Uuid
-  stripeEventId String    @unique @map("stripe_event_id")
+  paymentEventId String   @unique @map("stripe_event_id")
   eventType     String    @map("event_type")
   planTier      PlanTier  @map("plan_tier")
   status        String

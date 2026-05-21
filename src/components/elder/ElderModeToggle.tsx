@@ -28,7 +28,7 @@ export function ElderModeToggle({ enabled, onToggle }: ElderModeToggleProps) {
     >
       <span
         className={cn(
-          "absolute top-[3px] size-[34px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.15)] transition-transform duration-250 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
+          "absolute top-[3px] size-[34px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.15)] transition-transform duration-250 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)]",
           enabled ? "translate-x-[35px]" : "translate-x-[3px]",
         )}
         aria-hidden="true"

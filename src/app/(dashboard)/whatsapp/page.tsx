@@ -5,8 +5,15 @@
  * the server so client components only receive safe configuration.
  */
 import { WhatsAppPageClient } from "@/components/whatsapp/WhatsAppPageClient";
+import { getWhatsAppPageBootstrap } from "@/lib/server/dashboard-bootstrap";
 
-export default function WhatsAppPage() {
+export default async function WhatsAppPage() {
+  const bootstrap = await getWhatsAppPageBootstrap();
+
+  if (!bootstrap) {
+    return null;
+  }
+
   return (
     <WhatsAppPageClient
       apiVersion={process.env.WHATSAPP_API_VERSION ?? "v19.0"}
@@ -14,6 +21,8 @@ export default function WhatsAppPage() {
       embeddedSignupAppId={process.env.WHATSAPP_APP_ID ?? null}
       embeddedSignupConfigId={process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null}
       embeddedSignupEnabled={process.env.WHATSAPP_EMBEDDED_SIGNUP_ENABLED === "true"}
+      initialConnection={bootstrap.connections[0] ?? null}
+      initialSettings={bootstrap.settings}
       mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}
     />
   );

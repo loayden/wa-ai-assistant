@@ -10,14 +10,13 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,14 +59,28 @@ export function LoginForm() {
   }, []);
 
   return (
-    <Card className="w-full max-w-[420px] rounded-2xl border-wa-gray-100 bg-white p-8">
+    <Card className="w-full max-w-[500px] rounded-[24px] border-wa-gray-100 bg-white p-5 shadow-[0_18px_56px_rgba(13,20,33,0.08)] sm:rounded-[30px] sm:p-8">
       <CardHeader className="items-center p-0 text-center">
-        <BrandLogo className="mb-6" layout="stacked" wordmarkSize="md" />
-        <CardTitle className="text-h1 font-medium text-wa-gray-900">Welcome back</CardTitle>
-        <CardDescription className="mt-2 text-body text-wa-gray-600">Sign in to your business inbox</CardDescription>
+        <BrandLogo className="mb-4 sm:mb-6" layout="stacked" wordmarkSize="md" />
+        <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">Welcome back</CardTitle>
+        <CardDescription className="mt-2 max-w-[390px] text-body-sm leading-6 text-wa-gray-600 sm:mt-3 sm:text-body">
+          Sign in to manage your connected number, AI replies, conversations, and billing.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-0 pt-8">
-        <form className="flex flex-col gap-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
+      <CardContent className="p-0 pt-5 sm:pt-7">
+        <div className="mb-5 rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-3.5 sm:mb-6 sm:rounded-[24px] sm:p-4">
+          <div className="flex items-start gap-3">
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
+            <div>
+              <p className="text-body-sm font-semibold text-wa-gray-900">After sign in</p>
+              <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
+                We open WhatsApp setup first so the business number is ready before daily use.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <form className="flex flex-col gap-3.5 sm:gap-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
           {mutation.error ? (
             <Alert className="border-wa-error bg-wa-error-bg">
               <AlertDescription>{mutation.error.message}</AlertDescription>
@@ -101,7 +114,7 @@ export function LoginForm() {
                 {...form.register("password")}
               />
               <IconButton
-                className="absolute right-1 top-1 size-11 bg-transparent"
+                className="absolute right-1 top-1 size-10 bg-transparent sm:size-11"
                 label={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword((current) => !current)}
               >
@@ -110,17 +123,17 @@ export function LoginForm() {
             </div>
             {form.formState.errors.password ? <p className="text-body-sm text-wa-error">{form.formState.errors.password.message}</p> : null}
           </div>
-          <div className="flex items-center justify-between gap-3 text-body-sm">
-            <label className="flex items-center gap-2 text-wa-gray-600">
-              <Checkbox />
-              Remember me
-            </label>
-            <Link href="/forgot-password" className="text-wa-blue-600 hover:underline">
-              Forgot password?
-            </Link>
+          <div className="grid gap-2 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+            {["Connected number status", "AI reply control", "Inbox and billing"].map((item) => (
+              <div key={item} className="flex items-center gap-2 text-body-sm font-medium text-wa-gray-700">
+                <CheckCircle2 className="size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
+                {item}
+              </div>
+            ))}
           </div>
-          <Button disabled={!isHydrated} isLoading={mutation.isPending} type="submit">
+          <Button className="rounded-full" disabled={!isHydrated} isLoading={mutation.isPending} type="submit">
             Sign in
+            {!mutation.isPending ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
           </Button>
           <div className="flex items-center gap-3 text-body-sm text-wa-gray-400">
             <span className="h-px flex-1 bg-wa-gray-100" />

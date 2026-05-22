@@ -16,7 +16,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   DIRECT_URL: z.string().url(),
   OPENAI_API_KEY: z.string().min(1),
-  OPENAI_MODEL: z.string().min(1).default("gpt-4o"),
+  OPENAI_MODEL: z.string().min(1).default("gpt-4o-mini"),
   WHATSAPP_APP_ID: z.string().min(1),
   WHATSAPP_APP_SECRET: z.string().min(1),
   WHATSAPP_VERIFY_TOKEN: z.string().min(1),

@@ -64,6 +64,9 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
   });
   const checks = diagnosticsMutation.data?.checks;
   const overallStatus = getOverallStatus(checks);
+  const isMetaTestNumber = checks?.some(
+    (check) => check.id === "phone-profile" && /test number|\+1 555-142-1769|15551421769/i.test(check.detail),
+  );
 
   return (
     <Card className="overflow-hidden rounded-[22px] border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
@@ -91,11 +94,11 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-5">
         <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-          <p className="text-body-sm font-semibold text-wa-gray-900">How to test the real flow</p>
+          <p className="text-body-sm font-semibold text-wa-gray-900">How replies work</p>
           <ol className="mt-3 list-decimal space-y-2 pl-4 text-body-sm leading-6 text-wa-gray-600">
-            <li>Run the readiness check below.</li>
-            <li>Send a normal WhatsApp message from a customer phone to the connected business number.</li>
-            <li>Open Messages and confirm the inbound message, AI reply, and usage count appear.</li>
+            <li>Customers message your connected WhatsApp number.</li>
+            <li>kallem receives the message through the webhook.</li>
+            <li>The assistant writes and sends the reply automatically when AI quota and WhatsApp sending are available.</li>
           </ol>
         </div>
 
@@ -134,6 +137,16 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
                 </div>
               </div>
             ))}
+            {isMetaTestNumber ? (
+              <div className="rounded-2xl border border-wa-warning-bg bg-wa-warning-bg p-4 text-wa-warning">
+                <p className="text-body-sm font-semibold">You are using a Meta test number</p>
+                <p className="mt-2 text-body-sm leading-6">
+                  This is good for testing, but Meta only lets it send replies to phones approved in the API Setup test
+                  recipient list. Real customers do not need that step after you connect a production WhatsApp Business
+                  number.
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="flex items-start gap-3 rounded-2xl border border-wa-blue-100 bg-wa-blue-50 p-4 text-wa-gray-700">

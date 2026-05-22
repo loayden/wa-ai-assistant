@@ -8,7 +8,7 @@
  */
 import { useDeferredValue, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 import { ConversationCard } from "@/components/conversations/ConversationCard";
@@ -84,7 +84,8 @@ export function MessageList() {
     { value: "TODAY", label: "Today" },
   ];
   const unansweredCount = messagesResult.messages.filter((message) => message.status === "RECEIVED").length;
-  const aiRepliesCount = messagesResult.messages.filter((message) => Boolean(message.aiReplyText)).length;
+  const aiRepliesCount = messagesResult.messages.filter((message) => message.status === "REPLIED" && Boolean(message.aiReplyText)).length;
+  const failedCount = messagesResult.messages.filter((message) => message.status === "FAILED").length;
   const todayCount = messagesResult.messages.filter((message) => isToday(message.createdAt)).length;
 
   return (
@@ -109,6 +110,7 @@ export function MessageList() {
             <InboxHeroStat label="Visible" value={String(filteredMessages.length)} />
             <InboxHeroStat label="Needs reply" value={String(unansweredCount)} tone={unansweredCount > 0 ? "attention" : "calm"} />
             <InboxHeroStat label="AI replies" value={String(aiRepliesCount)} />
+            {failedCount > 0 ? <InboxHeroStat label="Needs setup" value={String(failedCount)} tone="attention" /> : null}
           </div>
         </div>
       </header>
@@ -168,10 +170,11 @@ export function MessageList() {
             filteredMessages.map((message) => (
               <ConversationCard
                 key={message.id}
-                aiGenerated={!!message.aiReplyText}
+                aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
                 contactName={message.connection?.displayName}
+                failed={message.status === "FAILED"}
                 phoneNumber={message.fromNumber}
-                preview={message.aiReplyText ?? message.bodyText}
+                preview={message.status === "FAILED" ? "Reply did not send. Open this thread to see what needs setup." : message.aiReplyText ?? message.bodyText}
                 timestamp={formatTimestamp(message.createdAt)}
                 unread={message.status === "RECEIVED"}
                 selected={activeConversation?.id === message.id}
@@ -215,11 +218,34 @@ export function MessageList() {
               <InboxHealthRow
                 icon={<ShieldCheck className="size-4" aria-hidden="true" />}
                 label="Review status"
-                value={unansweredCount > 0 ? `${unansweredCount} waiting` : "Clear"}
-                tone={unansweredCount > 0 ? "attention" : "success"}
+                value={failedCount > 0 ? `${failedCount} setup issue` : unansweredCount > 0 ? `${unansweredCount} waiting` : "Clear"}
+                tone={failedCount > 0 || unansweredCount > 0 ? "attention" : "success"}
               />
             </div>
           </section>
+
+          {failedCount > 0 ? (
+            <section className="rounded-[22px] border border-wa-error-bg bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-wa-error-bg text-wa-error">
+                  <AlertCircle className="size-5" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="text-body-sm font-semibold text-wa-gray-900">Automatic reply needs setup</p>
+                  <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
+                    The last reply could not be sent. Check OpenAI billing/quota and, while using a Meta test number, make
+                    sure the customer phone is added as a test recipient.
+                  </p>
+                  <Link
+                    href="/whatsapp"
+                    className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
+                  >
+                    Check setup
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">Daily workflow</p>

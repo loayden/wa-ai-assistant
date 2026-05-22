@@ -16,6 +16,7 @@ import {
   Bot,
   Clock3,
   CreditCard,
+  AlertCircle,
   MessageSquareText,
   RadioTower,
   ShieldCheck,
@@ -154,6 +155,7 @@ export function DashboardPageClient({
 
   const recentMessages = messages.slice(0, 5);
   const unansweredCount = messages.filter((message) => message.status === "RECEIVED").length;
+  const failedCount = messages.filter((message) => message.status === "FAILED").length;
   const todayCount = messages.filter((message) => isToday(message.createdAt)).length;
   const inboundCount = messages.filter((message) => message.direction === "INBOUND").length;
   const planLimit = PLAN_LIMITS[user.planTier].includedRepliesPerMonth;
@@ -242,10 +244,22 @@ export function DashboardPageClient({
 
       <section className="mt-4 grid gap-2 sm:mt-5 sm:gap-3 md:grid-cols-4">
         <DashboardStatusCard
-          label="Needs review"
-          value={String(unansweredCount)}
-          hint={unansweredCount > 0 ? "Customer messages waiting in the inbox" : "No customer messages need action"}
-          icon={<MessageSquareText className="size-4 text-wa-blue-600" aria-hidden="true" />}
+          label={failedCount > 0 ? "Needs setup" : "Needs review"}
+          value={String(failedCount > 0 ? failedCount : unansweredCount)}
+          hint={
+            failedCount > 0
+              ? "A reply could not be sent. Check setup before inviting customers."
+              : unansweredCount > 0
+                ? "Customer messages waiting in the inbox"
+                : "No customer messages need action"
+          }
+          icon={
+            failedCount > 0 ? (
+              <AlertCircle className="size-4 text-wa-error" aria-hidden="true" />
+            ) : (
+              <MessageSquareText className="size-4 text-wa-blue-600" aria-hidden="true" />
+            )
+          }
         />
         <DashboardStatusCard
           label="Today"
@@ -283,10 +297,11 @@ export function DashboardPageClient({
             recentMessages.map((message) => (
               <ConversationCard
                 key={message.id}
-                aiGenerated={!!message.aiReplyText}
+                aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
                 contactName={message.connection?.displayName}
+                failed={message.status === "FAILED"}
                 phoneNumber={message.fromNumber}
-                preview={message.aiReplyText ?? message.bodyText}
+                preview={message.status === "FAILED" ? "Reply did not send. Open this thread to see what needs setup." : message.aiReplyText ?? message.bodyText}
                 timestamp={formatTimestamp(message.createdAt)}
                 unread={message.status === "RECEIVED"}
                 selected={activeConversation?.id === message.id}

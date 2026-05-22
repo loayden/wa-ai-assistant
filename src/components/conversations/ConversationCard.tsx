@@ -6,7 +6,7 @@
  * Decision: Conversations replace technical table rows with a compact contact,
  * preview, status, and timestamp surface optimized for one-handed scanning.
  */
-import { Bot, MessageCircle } from "lucide-react";
+import { AlertCircle, Bot, MessageCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,7 @@ export interface ConversationCardProps {
   preview: string;
   timestamp: string;
   aiGenerated?: boolean;
+  failed?: boolean;
   unread?: boolean;
   selected?: boolean;
   className?: string;
@@ -30,6 +31,7 @@ export function ConversationCard({
   aiGenerated = false,
   contactName,
   className,
+  failed = false,
   onClick,
   phoneNumber,
   preview,
@@ -58,7 +60,12 @@ export function ConversationCard({
           <time className="shrink-0 text-xs font-medium text-wa-gray-400 sm:text-body-sm">{timestamp}</time>
         </div>
         <p className="mt-1.5 flex min-w-0 items-center gap-2 truncate text-xs text-wa-gray-600 sm:mt-2 sm:text-body-sm">
-          {aiGenerated ? (
+          {failed ? (
+            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa-error-bg px-2 py-0.5 text-[10px] font-semibold text-wa-error">
+              <AlertCircle className="size-3" aria-hidden="true" />
+              Needs setup
+            </span>
+          ) : aiGenerated ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa-blue-50 px-2 py-0.5 text-[10px] font-semibold text-wa-blue-700">
               <Bot className="size-3" aria-hidden="true" />
               AI

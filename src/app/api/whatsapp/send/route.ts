@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -80,6 +81,20 @@ export async function POST(request: Request) {
 
     if (error instanceof InvalidJsonError) {
       return jsonError(error.message, 400);
+    }
+
+    if (error instanceof WhatsAppClientError) {
+      const metaCode = error.response?.error?.code;
+      const details = error.response?.error?.error_data?.details;
+
+      if (metaCode === 131030) {
+        return jsonError(
+          "This Meta test number can only message approved test recipients. Add this phone as a test recipient in Meta, or connect a production WhatsApp Business number.",
+          400,
+        );
+      }
+
+      return jsonError(details || "Meta rejected this WhatsApp send. Check the number and connection permissions.", 502);
     }
 
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.whatsapp.send", error);

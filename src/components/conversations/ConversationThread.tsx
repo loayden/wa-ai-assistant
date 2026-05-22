@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 export interface ConversationThreadMessage {
   id: string;
   direction: "INBOUND" | "OUTBOUND";
+  status?: "RECEIVED" | "PROCESSING" | "REPLIED" | "FAILED" | "IGNORED";
   bodyText: string;
   createdAt: string;
   aiReplyText?: string | null;
@@ -85,6 +86,15 @@ export function ConversationThread({ connectionId, contactName, messages, onBack
           <div className="mx-auto w-fit rounded-full border border-wa-gray-100 bg-white px-3 py-1 text-label font-semibold uppercase tracking-widest text-wa-gray-400">
             Conversation
           </div>
+          {messages.some((message) => message.status === "FAILED") ? (
+            <div className="rounded-2xl border border-wa-error-bg bg-white p-4 text-body-sm leading-6 text-wa-gray-700 shadow-[0_10px_24px_rgba(13,20,33,0.04)]">
+              <p className="font-semibold text-wa-error">Automatic reply did not send</p>
+              <p className="mt-1">
+                kallem received the customer message, but the reply path needs setup. Check OpenAI billing/quota and, if
+                this is a Meta test number, add the customer phone as an approved test recipient.
+              </p>
+            </div>
+          ) : null}
           {messages.length === 0 ? (
             <div className="rounded-2xl border border-wa-gray-100 bg-white p-6 text-center sm:rounded-3xl sm:p-8">
               <p className="text-body font-semibold text-wa-gray-900">No thread history yet</p>

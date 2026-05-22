@@ -10,7 +10,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Bot, CheckCircle2, MessageSquareText, RadioTower, Settings2 } from "lucide-react";
+import { Bot, CheckCircle2, Info, MessageSquareText, RadioTower, Settings2 } from "lucide-react";
 
 import { AIToggle } from "@/components/ai/AIToggle";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
@@ -90,6 +90,7 @@ export function WhatsAppPageClient({
       value: autoReplyEnabled ? "Replying to customers" : "Paused by owner",
     },
   ];
+  const isMetaTestConnection = /test number/i.test(connection.displayName ?? "");
 
   return (
     <div className="mx-auto max-w-[1120px] space-y-4 px-3 pb-8 pt-4 sm:space-y-6 sm:px-6 sm:pt-8">
@@ -97,6 +98,17 @@ export function WhatsAppPageClient({
         <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
           <AlertTitle>Mock Mode Active</AlertTitle>
           <AlertDescription>No real WhatsApp messages will be sent from this environment.</AlertDescription>
+        </Alert>
+      ) : null}
+
+      {isMetaTestConnection ? (
+        <Alert className="border-wa-blue-100 bg-wa-blue-50 text-wa-gray-800">
+          <Info className="size-4 text-wa-blue-600" aria-hidden="true" />
+          <AlertTitle>Test number mode</AlertTitle>
+          <AlertDescription>
+            kallem is connected to a Meta test number. It can receive messages now, but Meta only allows replies to
+            approved test recipients. Connect a production WhatsApp Business number before inviting real customers.
+          </AlertDescription>
         </Alert>
       ) : null}
 

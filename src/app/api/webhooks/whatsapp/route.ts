@@ -273,6 +273,7 @@ async function processInboundMessage(params: {
     };
   } catch (error) {
     const fallbackMessage = buildFallbackMessage(settings);
+    let fallbackSent = false;
 
     logger.error("api.webhooks.whatsapp", "AI reply processing failed; sending fallback when possible.", {
       error,
@@ -289,6 +290,7 @@ async function processInboundMessage(params: {
       const outboundWaMessageId = sendResponse.messages[0]?.id;
 
       if (outboundWaMessageId) {
+        fallbackSent = true;
         await prisma.message.create({
           data: {
             userId: connection.userId,
@@ -313,15 +315,19 @@ async function processInboundMessage(params: {
     await prisma.message.update({
       where: { id: inboundMessage.id },
       data: {
-        status: MessageStatus.FAILED,
+        status: fallbackSent ? MessageStatus.REPLIED : MessageStatus.FAILED,
         aiReplyText: fallbackMessage,
         processedAt: new Date(),
       },
     });
 
+    if (fallbackSent) {
+      await incrementReplyCount(connection.userId);
+    }
+
     return {
       waMessageId: inboundMessage.waMessageId,
-      status: MessageStatus.FAILED,
+      status: fallbackSent ? MessageStatus.REPLIED : MessageStatus.FAILED,
       aiReplyText: fallbackMessage,
     };
   }

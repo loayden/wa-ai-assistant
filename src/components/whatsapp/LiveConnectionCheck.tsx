@@ -141,9 +141,8 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
               <div className="rounded-2xl border border-wa-warning-bg bg-wa-warning-bg p-4 text-wa-warning">
                 <p className="text-body-sm font-semibold">You are using a Meta test number</p>
                 <p className="mt-2 text-body-sm leading-6">
-                  This is good for testing, but Meta only lets it send replies to phones approved in the API Setup test
-                  recipient list. Real customers do not need that step after you connect a production WhatsApp Business
-                  number.
+                  This is why Meta asks for Add recipient phone number. It is only a test-number rule. For real customers,
+                  connect a production WhatsApp Business number and kallem can reply when customers message it.
                 </p>
               </div>
             ) : null}

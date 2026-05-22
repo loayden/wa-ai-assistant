@@ -233,8 +233,11 @@ export function MessageList() {
                 <div>
                   <p className="text-body-sm font-semibold text-wa-gray-900">Automatic reply needs setup</p>
                   <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
-                    The last reply could not be sent. Check OpenAI billing/quota and, while using a Meta test number, make
-                    sure the customer phone is added as a test recipient.
+                    The message arrived, but the reply was blocked before delivery. Make sure OpenAI has active quota, then
+                    use a production WhatsApp Business number for real customers.
+                  </p>
+                  <p className="mt-2 rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
+                    If this is still a Meta test number, Meta only allows replies to approved test phones.
                   </p>
                   <Link
                     href="/whatsapp"

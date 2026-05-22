@@ -7,6 +7,7 @@
  * discard dashboard query state or force a separate navigation step.
  */
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
 import { AlertCircle, ArrowLeft, Send } from "lucide-react";
 
@@ -88,11 +89,32 @@ export function ConversationThread({ connectionId, contactName, messages, onBack
           </div>
           {messages.some((message) => message.status === "FAILED") ? (
             <div className="rounded-2xl border border-wa-error-bg bg-white p-4 text-body-sm leading-6 text-wa-gray-700 shadow-[0_10px_24px_rgba(13,20,33,0.04)]">
-              <p className="font-semibold text-wa-error">Automatic reply did not send</p>
-              <p className="mt-1">
-                kallem received the customer message, but the reply path needs setup. Check OpenAI billing/quota and, if
-                this is a Meta test number, add the customer phone as an approved test recipient.
-              </p>
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-wa-error-bg text-wa-error">
+                  <AlertCircle className="size-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <p className="font-semibold text-wa-error">Reply is blocked by setup</p>
+                  <p className="mt-1">
+                    The customer message arrived in kallem. The outbound reply was blocked before WhatsApp could deliver it.
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    <p className="rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
+                      Fix AI: add active OpenAI billing/quota or replace the OpenAI key.
+                    </p>
+                    <p className="rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
+                      Fix WhatsApp test mode: approve this customer phone as a Meta test recipient, or connect a production
+                      WhatsApp Business number.
+                    </p>
+                  </div>
+                  <Link
+                    href="/whatsapp"
+                    className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
+                  >
+                    Open WhatsApp setup
+                  </Link>
+                </div>
+              </div>
             </div>
           ) : null}
           {messages.length === 0 ? (

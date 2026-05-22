@@ -104,10 +104,10 @@ export function WhatsAppPageClient({
       {isMetaTestConnection ? (
         <Alert className="border-wa-blue-100 bg-wa-blue-50 text-wa-gray-800">
           <Info className="size-4 text-wa-blue-600" aria-hidden="true" />
-          <AlertTitle>Test number mode</AlertTitle>
+          <AlertTitle>Meta test number mode</AlertTitle>
           <AlertDescription>
-            kallem is connected to a Meta test number. It can receive messages now, but Meta only allows replies to
-            approved test recipients. Connect a production WhatsApp Business number before inviting real customers.
+            This number is only for testing. It can receive messages, but Meta only allows replies to approved test phones.
+            Real customers do not need that step after you connect a production WhatsApp Business number.
           </AlertDescription>
         </Alert>
       ) : null}

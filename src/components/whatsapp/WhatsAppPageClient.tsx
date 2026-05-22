@@ -16,6 +16,7 @@ import { AIToggle } from "@/components/ai/AIToggle";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
 import { SetupFlow } from "@/components/whatsapp/SetupFlow";
 import { ConnectionStatus, type WhatsAppConnectionSummary } from "@/components/whatsapp/ConnectionStatus";
+import { LiveConnectionCheck } from "@/components/whatsapp/LiveConnectionCheck";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { apiData } from "@/lib/api/client";
@@ -149,6 +150,17 @@ export function WhatsAppPageClient({
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <p className="text-body-sm font-semibold text-wa-gray-900">Next actions</p>
             <div className="mt-4 grid gap-3">
+              <button
+                className="flex items-center justify-between rounded-2xl border border-wa-blue-100 bg-wa-blue-50 px-4 py-3 text-left text-body-sm font-medium text-wa-gray-800 transition hover:border-wa-blue-200 hover:bg-white"
+                type="button"
+                onClick={() => document.getElementById("live-whatsapp-check")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                <span className="flex items-center gap-2">
+                  <RadioTower className="size-4 text-wa-blue-600" aria-hidden="true" />
+                  Run live check
+                </span>
+                <span className="text-wa-blue-600">Verify</span>
+              </button>
               <Link
                 className="flex items-center justify-between rounded-2xl border border-wa-gray-100 bg-wa-gray-50 px-4 py-3 text-body-sm font-medium text-wa-gray-800 transition hover:border-wa-blue-200 hover:bg-wa-blue-50"
                 href="/messages"
@@ -186,6 +198,10 @@ export function WhatsAppPageClient({
           }}
         />
       </div>
+
+      <section id="live-whatsapp-check" className="scroll-mt-24">
+        <LiveConnectionCheck connectionId={connection.id} />
+      </section>
 
       {mockMode ? (
         <MockMessageSender

@@ -148,7 +148,7 @@ export async function createPaymobCheckoutSession(params: CreatePaymobCheckoutPa
     },
     special_reference: reference,
     notification_url: `${appEnv.NEXT_PUBLIC_APP_URL}/api/webhooks/paymob`,
-    redirection_url: `${appEnv.NEXT_PUBLIC_APP_URL}/billing?checkout=paymob-return`,
+    redirection_url: `${appEnv.NEXT_PUBLIC_APP_URL}/api/billing/paymob-return`,
   };
 
   const response = await fetch(`${PAYMOB_API_BASE_URL}/v1/intention/`, {

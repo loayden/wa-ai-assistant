@@ -11,10 +11,11 @@ import { NextResponse } from "next/server";
 import { createPublicMiddlewareResponse, updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/auth", "/api/health"];
+const PUBLIC_API_PATHS = new Set(["/api/billing/paymob-return"]);
 const DASHBOARD_PAGE_PREFIXES = ["/dashboard", "/messages", "/settings", "/billing", "/whatsapp"];
 
 function isPublicApiPath(pathname: string): boolean {
-  return PUBLIC_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return PUBLIC_API_PATHS.has(pathname) || PUBLIC_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 function isApiPath(pathname: string): boolean {

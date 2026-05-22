@@ -154,6 +154,14 @@ export function BillingPageClient() {
           <AlertDescription>No billing changes were made. You can choose a plan again whenever you are ready.</AlertDescription>
         </Alert>
       ) : null}
+      {checkoutStatus === "failed" ? (
+        <Alert className="border-wa-error bg-wa-error-bg">
+          <AlertTitle>Payment was not completed</AlertTitle>
+          <AlertDescription>
+            Paymob did not confirm a successful payment. No plan changes were made, and you can retry checkout safely.
+          </AlertDescription>
+        </Alert>
+      ) : null}
       {mutationError ? (
         <Alert className="border-wa-error bg-wa-error-bg">
           <AlertTitle>Paymob checkout failed</AlertTitle>

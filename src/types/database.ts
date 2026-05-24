@@ -6,6 +6,10 @@
  */
 import type {
   Message as PrismaMessage,
+  KnowledgeBaseEntry as PrismaKnowledgeBaseEntry,
+  MessageTemplate as PrismaMessageTemplate,
+  Broadcast as PrismaBroadcast,
+  BroadcastRecipient as PrismaBroadcastRecipient,
   SubscriptionEvent as PrismaSubscriptionEvent,
   User as PrismaUser,
   UserSettings as PrismaUserSettings,
@@ -16,6 +20,10 @@ import type {
 export type User = PrismaUser;
 export type WhatsAppConnection = PrismaWhatsAppConnection;
 export type Message = PrismaMessage;
+export type KnowledgeBaseEntry = PrismaKnowledgeBaseEntry;
+export type MessageTemplate = PrismaMessageTemplate;
+export type Broadcast = PrismaBroadcast;
+export type BroadcastRecipient = PrismaBroadcastRecipient;
 export type UserSettings = PrismaUserSettings;
 export type SubscriptionEvent = PrismaSubscriptionEvent;
 
@@ -36,4 +44,13 @@ export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken" | "o
   ownerPhoneNumberMasked: string | null;
 };
 
-export type DatabaseRecord = User | WhatsAppConnection | Message | UserSettings | SubscriptionEvent;
+export type DatabaseRecord =
+  | User
+  | WhatsAppConnection
+  | Message
+  | KnowledgeBaseEntry
+  | MessageTemplate
+  | Broadcast
+  | BroadcastRecipient
+  | UserSettings
+  | SubscriptionEvent;

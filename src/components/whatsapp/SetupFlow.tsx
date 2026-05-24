@@ -7,7 +7,17 @@
  */
 import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Bot, Building2, CheckCircle2, KeyRound, LockKeyhole, MessageSquareText, RadioTower, ShieldCheck } from "lucide-react";
+import {
+  AlertTriangle,
+  Bot,
+  Building2,
+  CheckCircle2,
+  KeyRound,
+  LockKeyhole,
+  MessageSquareText,
+  RadioTower,
+  ShieldCheck,
+} from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -65,23 +75,21 @@ export function SetupFlow({
       <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
         <div className="grid gap-4 p-4 sm:gap-6 sm:p-8 lg:grid-cols-[1fr_0.74fr] lg:items-end">
           <div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">WhatsApp setup</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">إعداد واتساب</p>
             <h1 className="mt-2 max-w-[640px] text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[54px] sm:leading-[1.06]">
-              Connect the business number customers already use.
+              اربطي رقم النشاط الذي يراسله العملاء بالفعل.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              {BRAND_NAME} verifies the Meta details before saving them, keeps the token encrypted, and uses the same
-              connection for AI replies and conversation tracking.
+              يتحقق {BRAND_NAME} من بيانات Meta قبل حفظها، ويخزّن التوكن بشكل مشفر، ثم يستخدم نفس الربط للردود الذكية وتتبع المحادثات.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
-            <p className="text-body-sm font-semibold text-wa-blue-600">Reliable setup path</p>
+            <p className="text-body-sm font-semibold text-wa-blue-600">طريقة الربط المضمونة الآن</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700">
-              Meta one-click signup requires BSP or Tech Provider eligibility. This page uses the working API credential
-              setup and explains every field in business language.
+              الربط بضغطة واحدة من Meta يحتاج حساب BSP أو Tech Provider. إلى أن يتاح ذلك، هذا المسار اليدوي هو المسار الآمن للإنتاج.
             </p>
             <div className="mt-4 grid gap-2">
-              {["Verified before saving", "Encrypted after validation", "Webhook prepared automatically"].map((item) => (
+              {["الأرقام الإنتاجية ترد على العملاء الحقيقيين", "يتم التحقق قبل الحفظ", "يتم التشفير بعد نجاح التحقق"].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-body-sm font-medium text-wa-gray-800">
                   <CheckCircle2 className="size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
                   {item}
@@ -94,39 +102,54 @@ export function SetupFlow({
 
       {mockMode ? (
         <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
-          <AlertTitle>Mock Mode Active</AlertTitle>
-          <AlertDescription>This environment skips real WhatsApp sends, but the setup flow below stays the same.</AlertDescription>
+          <AlertTitle>وضع الاختبار المحلي مفعّل</AlertTitle>
+          <AlertDescription>هذه البيئة لا ترسل رسائل واتساب حقيقية، لكن خطوات الإعداد نفسها.</AlertDescription>
         </Alert>
       ) : null}
 
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.32fr_0.68fr]">
         <div className="space-y-4 sm:space-y-5">
+          <section className="grid gap-3 sm:grid-cols-2">
+            <ConnectionModeCard
+              active
+              badge="الأفضل للمستخدمين"
+              body="استخدمي رقم النشاط الحقيقي الذي سيراسله العملاء. بعد اعتماد الرقم من Meta لن تحتاجي لإضافة كل عميل يدويًا."
+              icon={CheckCircle2}
+              title="رقم واتساب إنتاجي"
+            />
+            <ConnectionModeCard
+              badge="للتجربة فقط"
+              body="مفيد لاختبار الـ webhook، لكن Meta تسمح بالرد فقط على الأرقام المضافة كمستلمين تجريبيين."
+              icon={AlertTriangle}
+              title="رقم Meta التجريبي"
+            />
+          </section>
+
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <div className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
               <StepSummary
                 icon={RadioTower}
-                step="1. Business number"
-                description="Identify the WhatsApp number this assistant should control."
+                step="١. رقم النشاط"
+                description="حددي رقم واتساب الذي سيديره المساعد."
               />
               <StepSummary
                 icon={KeyRound}
-                step="2. Meta details"
-                description="Paste the Phone Number ID, Business Account ID, and access token from Meta."
+                step="٢. بيانات Meta"
+                description="ضعي معرّف الرقم، معرّف حساب واتساب التجاري، والتوكن."
               />
               <StepSummary
                 icon={ShieldCheck}
-                step="3. Verify and save"
-                description="kallem validates the account, prepares the webhook, and stores the token securely."
+                step="٣. تحقق وحفظ"
+                description="يتحقق kallem من الحساب، يجهّز استقبال الرسائل، ويحفظ التوكن بأمان."
               />
             </div>
           </section>
 
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <div className="space-y-2">
-              <p className="text-body-sm font-semibold text-wa-gray-900">Owner phone number <span className="font-medium text-wa-gray-400">(optional)</span></p>
+              <p className="text-body-sm font-semibold text-wa-gray-900">رقم صاحب النشاط <span className="font-medium text-wa-gray-400">(اختياري)</span></p>
               <p className="text-body-sm text-wa-gray-600">
-                Save the owner&apos;s phone only if you want owner commands like <code>stop</code> and <code>resume</code> to map
-                cleanly to the connected business number.
+                احفظي رقم صاحب النشاط فقط إذا أردتِ أوامر المالك مثل <code className="ltr inline-block">stop</code> و <code className="ltr inline-block">resume</code> أن تعمل بوضوح مع الرقم المتصل.
               </p>
               <Input
                 id="ownerPhoneNumber"
@@ -142,11 +165,10 @@ export function SetupFlow({
 
           {embeddedSignupAvailable ? (
             <details className="rounded-2xl border border-wa-gray-100 bg-white p-4 sm:p-5">
-              <summary className="cursor-pointer text-body-sm font-medium text-wa-blue-600">Use Meta guided onboarding instead</summary>
+              <summary className="cursor-pointer text-body-sm font-medium text-wa-blue-600">استخدام إعداد Meta الموجّه بدلًا من ذلك</summary>
               <div className="mt-4 space-y-4">
                 <div className="rounded-xl bg-wa-gray-50 p-4 text-body-sm text-wa-gray-600">
-                  This environment also supports Meta&apos;s guided popup. The manual setup above is still the most direct and
-                  explicit path if you already have the credentials open in Meta.
+                  هذه البيئة تدعم نافذة Meta الموجّهة إذا كان الحساب مؤهلًا. الإعداد اليدوي بالأعلى هو المسار الأكثر وضوحًا إذا كانت بيانات Meta متاحة لديك.
                 </div>
                 <EmbeddedSignupLauncher
                   apiVersion={apiVersion}
@@ -166,12 +188,13 @@ export function SetupFlow({
                 <Building2 className="size-4 sm:size-5" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-body-sm font-semibold text-wa-gray-900">What the business needs</p>
+                <p className="text-body-sm font-semibold text-wa-gray-900">ما الذي يحتاجه النشاط؟</p>
                 <div className="mt-3 space-y-3">
                   {[
-                    "Access to the Meta app that owns the WhatsApp number.",
-                    "The Phone Number ID and WhatsApp Business Account ID from Meta.",
-                    "An access token with WhatsApp Business permissions.",
+                    "صلاحية الوصول إلى تطبيق Meta الذي يملك رقم واتساب.",
+                    "Phone Number ID و WhatsApp Business Account ID من Meta.",
+                    "Access Token بصلاحيات واتساب للأعمال.",
+                    "للعملاء الحقيقيين: رقم واتساب إنتاجي، وليس رقم Meta التجريبي +1 555.",
                   ].map((item) => (
                     <p key={item} className="flex gap-2 text-body-sm leading-6 text-wa-gray-600">
                       <CheckCircle2 className="mt-1 size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
@@ -185,26 +208,24 @@ export function SetupFlow({
 
           <section className="rounded-[22px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[28px] sm:p-5">
             <LockKeyhole className="size-5 text-wa-blue-600 sm:size-6" aria-hidden="true" />
-            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">Why this setup is safe</p>
+            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">لماذا هذا الإعداد آمن؟</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700">
-              The app checks the number and account first, stores the token encrypted only after verification succeeds, and
-              prepares the webhook so the inbox can start receiving messages.
+              التطبيق يتحقق من الرقم والحساب أولًا، ولا يحفظ التوكن مشفرًا إلا بعد نجاح التحقق، ثم يجهّز استقبال الرسائل داخل صندوق الوارد.
             </p>
           </section>
 
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <Bot className="size-5 text-wa-blue-600 sm:size-6" aria-hidden="true" />
-            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">What happens next</p>
+            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">ماذا بعد الربط؟</p>
             <p className="mt-2 text-body-sm text-wa-gray-600">
-              After the connection is verified, you land on a status screen for this number. From there you can turn AI replies
-              on, review messages, and adjust assistant behavior from one place.
+              بعد التحقق ستظهر شاشة حالة الرقم. من هناك يمكنك تشغيل أو إيقاف الردود الذكية، مراجعة الرسائل، وتعديل سلوك المساعد من مكان واحد.
             </p>
           </section>
 
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
             <MessageSquareText className="size-5 text-wa-blue-600 sm:size-6" aria-hidden="true" />
-            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">Webhook target</p>
-            <code className="mt-3 block overflow-x-auto rounded-xl border border-wa-gray-100 bg-wa-gray-50 px-3 py-3 font-mono text-mono text-wa-gray-600">
+            <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">رابط استقبال الرسائل</p>
+            <code className="ltr mt-3 block overflow-x-auto rounded-xl border border-wa-gray-100 bg-wa-gray-50 px-3 py-3 text-left font-mono text-mono text-wa-gray-600">
               {webhookUrl}
             </code>
           </section>
@@ -228,6 +249,39 @@ function StepSummary({ description, icon: Icon, step }: StepSummaryProps) {
       </div>
       <p className="text-body-sm font-semibold text-wa-gray-900">{step}</p>
       <p className="mt-1 text-body-sm text-wa-gray-600">{description}</p>
+    </div>
+  );
+}
+
+type ConnectionModeCardProps = {
+  active?: boolean;
+  badge: string;
+  body: string;
+  icon: typeof Building2;
+  title: string;
+};
+
+function ConnectionModeCard({ active = false, badge, body, icon: Icon, title }: ConnectionModeCardProps) {
+  return (
+    <div
+      className={
+        active
+          ? "rounded-[22px] border border-wa-blue-100 bg-wa-blue-50 p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5"
+          : "rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5"
+      }
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.05)]">
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <div>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-wa-blue-700">
+            {badge}
+          </span>
+          <p className="mt-3 text-body font-semibold text-wa-gray-900">{title}</p>
+          <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">{body}</p>
+        </div>
+      </div>
     </div>
   );
 }

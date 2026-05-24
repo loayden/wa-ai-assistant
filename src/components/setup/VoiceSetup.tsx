@@ -47,14 +47,14 @@ export function VoiceSetup({ isProcessing = false, onAudioReady, onSkip }: Voice
       <div className="mb-6 flex size-12 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
         <Mic className="size-6" aria-hidden="true" />
       </div>
-      <h1 className="text-h1 font-medium text-wa-gray-900">Tell us about your business</h1>
-      <p className="mt-3 max-w-[360px] text-body text-wa-gray-600">Say what you sell, who you help, and how you want the assistant to sound.</p>
+      <h1 className="text-h1 font-medium text-wa-gray-900">عرّفي المساعد بنشاطك</h1>
+      <p className="mt-3 max-w-[360px] text-body text-wa-gray-600">قولي ماذا تبيعين، من تخدمين، وكيف تريدين أن يكون أسلوب رد المساعد.</p>
       <Button className="mt-8 w-full" isLoading={isProcessing} onClick={toggleRecording}>
         {recording ? <Square className="size-4" aria-hidden="true" /> : <Mic className="size-4" aria-hidden="true" />}
-        {recording ? "Stop recording" : "Record voice note"}
+        {recording ? "إيقاف التسجيل" : "تسجيل ملاحظة صوتية"}
       </Button>
       <button className="mt-4 text-body-sm text-wa-blue-600" type="button" onClick={onSkip}>
-        Skip for now
+        تخطي الآن
       </button>
     </section>
   );

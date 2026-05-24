@@ -18,16 +18,16 @@ export function Navbar() {
           <BrandLogo wordmarkSize="sm" />
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          <Link href="/#features">Features</Link>
-          <Link href="/#pricing">Pricing</Link>
-          <Link href="/whatsapp">WhatsApp</Link>
+          <Link href="/#features">المميزات</Link>
+          <Link href="/#pricing">الأسعار</Link>
+          <Link href="/whatsapp">واتساب</Link>
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/login" className={cn(buttonVariants({ variant: "ghost" }))}>
-            Login
+            تسجيل الدخول
           </Link>
           <Link href="/signup" className={cn(buttonVariants())}>
-            Get Started
+            ابدأ الآن
           </Link>
         </div>
       </div>

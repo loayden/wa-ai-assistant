@@ -13,8 +13,8 @@ import { cookies } from "next/headers";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
-export function createClient() {
-  const cookieStore = cookies();
+export async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(appEnv.NEXT_PUBLIC_SUPABASE_URL, appEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
@@ -35,7 +35,7 @@ export function createClient() {
 }
 
 export async function getUser(): Promise<User | null> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
     error,

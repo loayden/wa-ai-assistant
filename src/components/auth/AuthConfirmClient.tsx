@@ -96,9 +96,9 @@ export function AuthConfirmClient() {
     <Card className="w-full max-w-[420px] rounded-2xl border-wa-gray-100 bg-white p-8">
       <CardHeader className="items-center p-0 text-center">
         <BrandLogo className="mb-6" layout="stacked" wordmarkSize="md" />
-        <CardTitle className="text-h1 font-medium text-wa-gray-900">Confirming your email</CardTitle>
+        <CardTitle className="text-h1 font-medium text-wa-gray-900">جارٍ تأكيد بريدك</CardTitle>
         <CardDescription className="mt-2 text-body text-wa-gray-600">
-          We are finishing your secure sign-in and will continue to WhatsApp setup automatically.
+          نكمل تسجيل الدخول الآمن، ثم ننتقل إلى إعداد واتساب تلقائياً.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 pt-8">

@@ -34,10 +34,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <Alert className="border-destructive/40">
-          <AlertTitle>Something went wrong</AlertTitle>
-          <AlertDescription className="mb-3">Refresh the page or return to the dashboard.</AlertDescription>
+          <AlertTitle>حدث خطأ غير متوقع</AlertTitle>
+          <AlertDescription className="mb-3">جرّب مرة أخرى أو ارجع إلى لوحة التحكم.</AlertDescription>
           <Button size="sm" onClick={() => this.setState({ hasError: false })}>
-            Try again
+            حاول مرة أخرى
           </Button>
         </Alert>
       );

@@ -12,19 +12,18 @@ export default function BillingPage() {
       <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
         <div className="grid gap-4 p-4 sm:gap-5 sm:p-8 lg:grid-cols-[1fr_0.58fr] lg:items-end">
           <div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Billing</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الفوترة</p>
             <h1 className="mt-2 max-w-[680px] text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[54px] sm:leading-[1.06]">
-              Pick the reply volume that matches your business.
+              اختاري حجم الردود المناسب لنشاطك.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              Plans are based on included AI replies and connected WhatsApp numbers. Payment details stay in Paymob.
+              الخطط مبنية على عدد ردود الذكاء الاصطناعي وأرقام واتساب المتصلة. بيانات الدفع تبقى داخل Paymob.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
-            <p className="text-body-sm font-semibold text-wa-blue-600">Clear monthly limits</p>
+            <p className="text-body-sm font-semibold text-wa-blue-600">حدود شهرية واضحة</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700">
-              FREE includes 50 replies. PRO includes 2,000 replies. BUSINESS includes 10,000 replies. Paid plans continue
-              with tracked overage after the included replies.
+              الخطة المجانية تشمل 50 رد. Pro تشمل 2,000 رد. Business تشمل 10,000 رد. الخطط المدفوعة تتابع الاستخدام بوضوح بعد الحد المتاح.
             </p>
           </div>
         </div>

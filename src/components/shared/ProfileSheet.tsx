@@ -27,25 +27,25 @@ export function ProfileSheet({ onBilling, onClose, onSignOut, open, planTier, us
   const { enabled: elderEnabled, toggle: toggleElder } = useElderMode();
 
   return (
-    <BottomSheet open={open} title="Account" onClose={onClose}>
+    <BottomSheet open={open} title="الحساب" onClose={onClose}>
       <div className="space-y-5">
         <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
-          <p className="text-body font-medium text-wa-gray-900">{userName || "Account"}</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">{userEmail || "Signed in"}</p>
+          <p className="text-body font-medium text-wa-gray-900">{userName || "الحساب"}</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">{userEmail || "تم تسجيل الدخول"}</p>
           <div className="mt-3 flex items-center justify-between gap-3">
             <StatusBadge label={planTier} variant={planTier === "FREE" ? "free" : "pro"} />
-            <p className="text-body-sm text-wa-gray-600">{planTier === "FREE" ? "Starter access" : "Paid plan active"}</p>
+            <p className="text-body-sm text-wa-gray-600">{planTier === "FREE" ? "بداية مجانية" : "الخطة المدفوعة مفعّلة"}</p>
           </div>
         </div>
         <div className="flex items-center justify-between rounded-xl border border-wa-gray-100 bg-white px-5 py-4">
           <div>
-            <p className="text-body font-medium text-wa-gray-800">Large text mode</p>
-            <p className="mt-0.5 text-body-sm text-wa-gray-400">Bigger text and buttons for easier reading</p>
+            <p className="text-body font-medium text-wa-gray-800">وضع النص الكبير</p>
+            <p className="mt-0.5 text-body-sm text-wa-gray-400">نصوص وأزرار أكبر لتجربة قراءة أسهل</p>
           </div>
           <ElderModeToggle enabled={elderEnabled} onToggle={toggleElder} />
         </div>
-        <Button className="w-full" variant="outline" onClick={onBilling}>View billing</Button>
-        <Button className="w-full text-wa-error" variant="ghost" onClick={onSignOut}>Sign out</Button>
+        <Button className="w-full" variant="outline" onClick={onBilling}>عرض الفوترة</Button>
+        <Button className="w-full text-wa-error" variant="ghost" onClick={onSignOut}>تسجيل الخروج</Button>
       </div>
     </BottomSheet>
   );

@@ -1,9 +1,11 @@
 // FILE: next.config.mjs
+import path from "node:path";
+
 /*
  * [ROLE: DEVOPS ENGINEER]
- * Decision: Next.js 14.2 rejects `next.config.ts`, so this `.mjs` file keeps
- * configuration executable while preserving strict environment validation,
- * image allow-listing, and security headers at the framework boundary.
+ * Decision: This `.mjs` file keeps configuration executable while preserving
+ * strict environment validation, image allow-listing, and security headers at
+ * the framework boundary.
  */
 const REQUIRED_ENV_VARS = [
   "NEXT_PUBLIC_SUPABASE_URL",
@@ -125,6 +127,7 @@ const securityHeaders = [
 ];
 
 const nextConfig = {
+  outputFileTracingRoot: path.resolve(process.cwd()),
   images: {
     remotePatterns: [
       {

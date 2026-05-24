@@ -14,31 +14,31 @@ const authImage =
 
 const setupSteps = [
   {
-    title: "Create account",
-    body: "Use your business email so setup and billing stay connected.",
+    title: "إنشاء الحساب",
+    body: "استخدمي بريد النشاط التجاري حتى تبقى الفوترة والإعدادات في مكان واحد.",
     icon: UserRound,
   },
   {
-    title: "Confirm email",
-    body: "Open the verification link. kallem sends you to WhatsApp setup next.",
+    title: "تأكيد البريد",
+    body: "افتحي رابط التأكيد، وبعدها يفتح kallem شاشة ربط واتساب تلقائياً.",
     icon: MailCheck,
   },
   {
-    title: "Connect WhatsApp",
-    body: "Enter the Meta values once. The app verifies them before saving.",
+    title: "ربط واتساب",
+    body: "أدخلي بيانات Meta مرة واحدة. التطبيق يتحقق منها قبل الحفظ.",
     icon: RadioTower,
   },
   {
-    title: "Start AI replies",
-    body: "Turn the assistant on, review messages, and pause replies anytime.",
+    title: "تشغيل الردود",
+    body: "فعّلي المساعد، راجعي الرسائل، وأوقفي الردود في أي وقت.",
     icon: Bot,
   },
 ];
 
 const authPoints = [
-  "Connect one business number and keep the setup in one place.",
-  "Let AI handle first replies while the owner stays in control.",
-  "Review customer conversations from a calmer inbox, not a technical panel.",
+  "ربط رقم النشاط وإدارته من شاشة واحدة واضحة.",
+  "الذكاء يرد على الرسائل الأولى مع بقاء المالك متحكماً بالكامل.",
+  "مراجعة محادثات العملاء من صندوق رسائل هادئ بدلاً من لوحة تقنية.",
 ];
 
 export default function AuthLayout({
@@ -56,24 +56,24 @@ export default function AuthLayout({
           <div className="relative min-h-[220px] w-full border-b border-wa-gray-100 sm:min-h-[340px]">
             <Image
               src={authImage}
-              alt="Small business team working together around a laptop"
+              alt="فريق صغير يدير رسائل العملاء من جهاز لابتوب"
               fill
               priority
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 56vw"
             />
             <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_52px_rgba(13,20,33,0.10)] backdrop-blur sm:inset-x-5 sm:bottom-5 sm:rounded-[24px] sm:p-5">
-              <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Business-ready setup</p>
-              <p className="mt-2 max-w-[620px] text-body font-medium text-wa-gray-900">A clear way to connect WhatsApp, control AI replies, and keep customers moving.</p>
+              <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">إعداد جاهز للعمل</p>
+              <p className="mt-2 max-w-[620px] text-body font-medium text-wa-gray-900">طريقة واضحة لربط واتساب، تشغيل ردود الذكاء، ومتابعة العملاء بدون تعقيد.</p>
             </div>
           </div>
 
           <div className="grid gap-5 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="lg:pr-3">
-              <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Why teams choose kallem</p>
-              <h1 className="mt-3 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:text-[42px] sm:leading-[1.08]">A quieter control surface for customer conversations.</h1>
+              <p className="text-label font-semibold tracking-widest text-wa-blue-600">لماذا تختار الأنشطة kallem</p>
+              <h1 className="mt-3 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:text-[42px] sm:leading-[1.08]">لوحة هادئة لإدارة محادثات العملاء اليومية.</h1>
               <p className="mt-3 text-body-sm leading-6 text-wa-gray-600 sm:mt-4 sm:text-body-lg">
-                Use this account to connect the business number, manage reply behavior, and keep billing and message status in one place.
+                استخدمي هذا الحساب لربط رقم النشاط، ضبط أسلوب الرد، ومتابعة الرسائل والفوترة من مكان واحد.
               </p>
 
               <div className="mt-5 grid gap-2.5 sm:mt-6 sm:gap-3">
@@ -89,10 +89,10 @@ export default function AuthLayout({
             <div className="rounded-[22px] border border-wa-blue-100 bg-white p-4 shadow-[0_14px_42px_rgba(26,86,255,0.06)] sm:rounded-[28px] sm:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">Setup path</p>
-                  <h2 className="mt-2 text-xl font-semibold text-wa-gray-900 sm:text-2xl">From signup to live replies</h2>
+                  <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">مسار الإعداد</p>
+                  <h2 className="mt-2 text-xl font-semibold text-wa-gray-900 sm:text-2xl">من التسجيل إلى الردود الحية</h2>
                 </div>
-                <span className="rounded-full bg-wa-blue-50 px-3 py-1.5 text-xs font-semibold text-wa-blue-600">4 steps</span>
+                <span className="rounded-full bg-wa-blue-50 px-3 py-1.5 text-xs font-semibold text-wa-blue-600">٤ خطوات</span>
               </div>
               <div className="mt-4 space-y-3 sm:mt-5 sm:space-y-4">
                 {setupSteps.map((step, index) => {
@@ -117,13 +117,13 @@ export default function AuthLayout({
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
                   <ShieldCheck className="size-5 text-wa-blue-600" aria-hidden="true" />
-                  <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">Encrypted storage</p>
-                  <p className="mt-1 text-body-sm text-wa-gray-600">Connection details are protected after verification.</p>
+                  <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">تخزين آمن</p>
+                  <p className="mt-1 text-body-sm text-wa-gray-600">بيانات الربط تُحفظ بعد التحقق منها وتبقى محمية.</p>
                 </div>
                 <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
                   <Sparkles className="size-5 text-wa-blue-600" aria-hidden="true" />
-                  <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">Daily control</p>
-                  <p className="mt-1 text-body-sm text-wa-gray-600">Open dashboard, inbox, settings, and billing from one account.</p>
+                  <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">تحكم يومي</p>
+                  <p className="mt-1 text-body-sm text-wa-gray-600">افتحي الرئيسية والرسائل والإعدادات والفوترة من نفس الحساب.</p>
                 </div>
               </div>
             </div>

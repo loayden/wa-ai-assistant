@@ -21,36 +21,38 @@ export function RecentMessages({ messages }: RecentMessagesProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Recent Messages</CardTitle>
+        <CardTitle>آخر الرسائل</CardTitle>
         <Link href="/messages" className={cn(buttonVariants({ variant: "outline", size: "sm" }))}>
-          View All
+          عرض الكل
         </Link>
       </CardHeader>
       <CardContent>
         {messages.length === 0 ? (
-          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">No messages recorded yet.</div>
+          <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">لا توجد رسائل مسجلة حتى الآن.</div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
-                <TableHead>From</TableHead>
-                <TableHead>Preview</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead className="text-right">الوقت</TableHead>
+                <TableHead className="text-right">من</TableHead>
+                <TableHead className="text-right">المعاينة</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {messages.map((message) => (
                 <TableRow key={message.id}>
                   <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {new Intl.DateTimeFormat(undefined, { timeStyle: "short" }).format(new Date(message.createdAt))}
+                    {new Intl.DateTimeFormat("ar-EG", { timeStyle: "short" }).format(new Date(message.createdAt))}
                   </TableCell>
                   <TableCell className="font-medium">{message.fromNumber}</TableCell>
                   <TableCell>
                     <span className="line-clamp-1">{message.bodyText}</span>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={message.status === "REPLIED" ? "success" : "outline"}>{message.status}</Badge>
+                    <Badge variant={message.status === "REPLIED" ? "success" : "outline"}>
+                      {message.status === "REPLIED" ? "تم الرد" : message.status === "FAILED" ? "فشل" : message.status === "PROCESSING" ? "قيد المعالجة" : "وارد"}
+                    </Badge>
                   </TableCell>
                 </TableRow>
               ))}

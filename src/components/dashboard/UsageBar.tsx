@@ -22,16 +22,16 @@ export function UsageBar({ planTier, used }: UsageBarProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">Monthly AI replies</span>
-        <span className="text-muted-foreground">{`${used}/${includedReplies} included`}</span>
+        <span className="font-medium">ردود الذكاء هذا الشهر</span>
+        <span className="text-muted-foreground">{`${used.toLocaleString("ar-EG")} / ${includedReplies.toLocaleString("ar-EG")} ضمن الخطة`}</span>
       </div>
       <Progress value={percentage} />
       <p className="text-xs text-muted-foreground">
         {overageReplies > 0
-          ? `${overageReplies} overage replies this month.`
+          ? `${overageReplies.toLocaleString("ar-EG")} رد إضافي هذا الشهر.`
           : planLimits.allowsOverage
-            ? `${remainingIncludedReplies} included replies remaining before overage.`
-            : `${remainingIncludedReplies} replies remaining this month.`}
+            ? `${remainingIncludedReplies.toLocaleString("ar-EG")} رد ضمن الخطة قبل احتساب الردود الإضافية.`
+            : `${remainingIncludedReplies.toLocaleString("ar-EG")} رد متبقٍ هذا الشهر.`}
       </p>
     </div>
   );

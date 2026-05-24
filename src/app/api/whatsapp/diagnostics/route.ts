@@ -38,6 +38,12 @@ function createCheck(id: string, label: string, status: DiagnosticStatus, detail
   return { id, label, status, detail };
 }
 
+function isMetaSandboxPhone(displayPhoneNumber?: string, verifiedName?: string): boolean {
+  const digits = displayPhoneNumber?.replace(/\D/g, "") ?? "";
+
+  return /test number/i.test(verifiedName ?? "") || digits === "15551421769";
+}
+
 export async function GET(request: Request) {
   try {
     const user = await requireAppUser();
@@ -60,7 +66,7 @@ export async function GET(request: Request) {
       return jsonSuccess({
         connected: false,
         checks: [
-          createCheck("connection", "WhatsApp connection", "failed", "No WhatsApp number is connected to this account yet."),
+          createCheck("connection", "ربط واتساب", "failed", "لا يوجد رقم واتساب متصل بهذا الحساب حتى الآن."),
         ],
       });
     }
@@ -69,21 +75,21 @@ export async function GET(request: Request) {
     const checks: DiagnosticCheck[] = [
       createCheck(
         "connection",
-        "Saved connection",
+        "الربط المحفوظ",
         connection.isActive && connection.isVerified ? "passed" : "warning",
         connection.isActive && connection.isVerified
-          ? "This number is saved and marked active in kallem."
-          : "This number is saved, but it is not fully active yet.",
+          ? "هذا الرقم محفوظ ومفعّل داخل kallem."
+          : "هذا الرقم محفوظ، لكنه لم يكتمل تفعيله بعد.",
       ),
       createCheck(
         "environment",
-        "Production mode",
+        "وضع التشغيل",
         appEnv.WHATSAPP_MOCK_MODE ? "warning" : "passed",
         appEnv.WHATSAPP_MOCK_MODE
-          ? "Mock mode is enabled, so real WhatsApp sends are disabled."
-          : "Mock mode is off. kallem will call the real WhatsApp Cloud API.",
+          ? "وضع الاختبار مفعّل، لذلك لن يتم إرسال رسائل واتساب حقيقية."
+          : "وضع الاختبار متوقف. kallem سيستخدم WhatsApp Cloud API الحقيقي.",
       ),
-      createCheck("webhook-url", "Webhook URL", "passed", webhookUrl),
+      createCheck("webhook-url", "رابط استقبال الرسائل", "passed", webhookUrl),
     ];
 
     if (appEnv.WHATSAPP_MOCK_MODE) {
@@ -101,13 +107,24 @@ export async function GET(request: Request) {
     checks.push(
       createCheck(
         "phone-profile",
-        "Phone number verified",
+        "التحقق من رقم الهاتف",
         "passed",
         phoneProfile.display_phone_number
-          ? `Meta returned ${phoneProfile.display_phone_number}${phoneProfile.verified_name ? ` (${phoneProfile.verified_name})` : ""}.`
-          : "Meta confirmed this Phone Number ID.",
+          ? `أرجعت Meta الرقم ${phoneProfile.display_phone_number}${phoneProfile.verified_name ? ` (${phoneProfile.verified_name})` : ""}.`
+          : "أكدت Meta صحة Phone Number ID.",
       ),
     );
+
+    if (isMetaSandboxPhone(phoneProfile.display_phone_number, phoneProfile.verified_name)) {
+      checks.push(
+        createCheck(
+          "customer-replies",
+          "الرد على العملاء",
+          "warning",
+          "هذا رقم Meta التجريبي. يمكنه الرد فقط على الأرقام المضافة كمستلمين تجريبيين في Meta. للرد على عملاء حقيقيين تلقائيًا، اربطي رقم واتساب Business إنتاجي.",
+        ),
+      );
+    }
 
     const businessPhone = await getBusinessAccountPhoneNumber(connection.businessAccountId, connection.phoneNumberId, accessToken);
 
@@ -115,9 +132,9 @@ export async function GET(request: Request) {
       checks.push(
         createCheck(
           "business-account",
-          "Business account ownership",
+          "ملكية حساب واتساب التجاري",
           "failed",
-          "This Phone Number ID was not found inside the saved WhatsApp Business Account ID.",
+          "لم يتم العثور على Phone Number ID داخل WhatsApp Business Account ID المحفوظ.",
         ),
       );
 
@@ -132,9 +149,9 @@ export async function GET(request: Request) {
     checks.push(
       createCheck(
         "business-account",
-        "Business account ownership",
+        "ملكية حساب واتساب التجاري",
         "passed",
-        "The saved WhatsApp Business Account owns this phone number.",
+        "حساب واتساب التجاري المحفوظ يملك هذا الرقم.",
       ),
     );
 
@@ -142,9 +159,9 @@ export async function GET(request: Request) {
     checks.push(
       createCheck(
         "webhook-subscription",
-        "Webhook subscription",
+        "اشتراك استقبال الرسائل",
         "passed",
-        "Meta accepted the app subscription for this WhatsApp Business Account.",
+        "قبلت Meta اشتراك التطبيق لهذا الحساب التجاري.",
       ),
     );
 
@@ -171,9 +188,9 @@ export async function GET(request: Request) {
         checks: [
           createCheck(
             "meta-api",
-            "Meta API check",
+            "فحص Meta API",
             "failed",
-            "Meta rejected the saved credentials. Reconnect the number with a fresh token that has WhatsApp management and messaging permissions.",
+            "رفضت Meta بيانات الربط المحفوظة. أعيدي ربط الرقم بتوكن جديد يملك صلاحيات إدارة واتساب وإرسال الرسائل.",
           ),
         ],
       });
@@ -186,6 +203,6 @@ export async function GET(request: Request) {
     }
 
     logger.error("api.whatsapp.diagnostics", "WhatsApp diagnostics failed.", { error });
-    return jsonError("WhatsApp diagnostics failed.", 500);
+    return jsonError("تعذر فحص ربط واتساب.", 500);
   }
 }

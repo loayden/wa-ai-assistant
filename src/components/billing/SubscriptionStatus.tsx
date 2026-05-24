@@ -31,6 +31,19 @@ function getStatusVariant(status: SubscriptionStatusProps["subscriptionStatus"])
   return "paused" as const;
 }
 
+const planNames: Record<PlanTier, string> = {
+  FREE: "مجاني",
+  PRO: "Pro",
+  BUSINESS: "Business",
+};
+
+const statusLabels: Record<SubscriptionStatusProps["subscriptionStatus"], string> = {
+  ACTIVE: "مفعّلة",
+  INACTIVE: "غير مفعّلة",
+  PAST_DUE: "تحتاج دفع",
+  CANCELED: "ملغاة",
+};
+
 export function SubscriptionStatus({ planTier, subscriptionStatus, monthlyReplyCount, nextBillingDate }: SubscriptionStatusProps) {
   const limits = PLAN_LIMITS[planTier];
   const remaining = Math.max(limits.includedRepliesPerMonth - monthlyReplyCount, 0);
@@ -40,29 +53,29 @@ export function SubscriptionStatus({ planTier, subscriptionStatus, monthlyReplyC
       <CardHeader className="border-b border-wa-gray-100 p-4 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Current plan</p>
-        <CardTitle className="mt-2 text-[24px] font-semibold sm:text-[28px]">{planTier}</CardTitle>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الخطة الحالية</p>
+            <CardTitle className="mt-2 text-[24px] font-semibold sm:text-[28px]">{planNames[planTier]}</CardTitle>
           </div>
-          <StatusBadge className="px-3 py-1" label={subscriptionStatus.replace("_", " ")} variant={getStatusVariant(subscriptionStatus)} />
+          <StatusBadge className="px-3 py-1" label={statusLabels[subscriptionStatus]} variant={getStatusVariant(subscriptionStatus)} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6">
         <div className="grid gap-3 md:grid-cols-4">
           <StatusMetric
             icon={<MessageCircle className="size-4" aria-hidden="true" />}
-            label="Replies used"
-            value={`${monthlyReplyCount.toLocaleString()} / ${limits.includedRepliesPerMonth.toLocaleString()}`}
+            label="الردود المستخدمة"
+            value={`${monthlyReplyCount.toLocaleString("ar-EG")} / ${limits.includedRepliesPerMonth.toLocaleString("ar-EG")}`}
           />
           <StatusMetric
             icon={<MessageCircle className="size-4" aria-hidden="true" />}
-            label="Remaining"
-            value={`${remaining.toLocaleString()} included`}
+            label="المتبقي"
+            value={`${remaining.toLocaleString("ar-EG")} رد`}
           />
-          <StatusMetric icon={<Phone className="size-4" aria-hidden="true" />} label="Numbers" value={`${limits.maxConnections} max`} />
+          <StatusMetric icon={<Phone className="size-4" aria-hidden="true" />} label="الأرقام" value={`حد أقصى ${limits.maxConnections.toLocaleString("ar-EG")}`} />
           <StatusMetric
             icon={planTier === "FREE" ? <CreditCard className="size-4" aria-hidden="true" /> : <CalendarClock className="size-4" aria-hidden="true" />}
-            label={planTier === "FREE" ? "Billing" : "Next billing"}
-            value={planTier !== "FREE" ? nextBillingDate ?? "Managed by Paymob" : "No active period"}
+            label={planTier === "FREE" ? "الفوترة" : "الدفع القادم"}
+            value={planTier !== "FREE" ? nextBillingDate ?? "تتم الإدارة عبر Paymob" : "لا توجد فترة دفع نشطة"}
           />
         </div>
         <UsageBar planTier={planTier} used={monthlyReplyCount} />

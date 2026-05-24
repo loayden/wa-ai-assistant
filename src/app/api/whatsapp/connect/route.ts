@@ -78,7 +78,7 @@ export async function GET() {
     }
 
     logger.error("api.whatsapp.connect.get", "Failed to load WhatsApp connections.", { error });
-    return jsonError("Failed to load WhatsApp connections.", 500);
+    return jsonError("فشل تحميل اتصالات واتساب.", 500);
   }
 }
 
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     });
 
     if (conflictingConnection) {
-      return jsonError("This WhatsApp number is already connected to another workspace.", 409);
+      return jsonError("رقم واتساب هذا متصل بالفعل بمساحة عمل أخرى.", 409);
     }
 
     const existingConnection = await prisma.whatsAppConnection.findFirst({
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       });
 
       if (connectionCount >= getMaxConnectionCount(user.planTier)) {
-        return jsonError("WhatsApp connection limit reached for current plan.", 403);
+        return jsonError("وصلت إلى الحد الأقصى لأرقام واتساب في خطتك الحالية.", 403);
       }
     }
 
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
       );
 
       if (!businessPhone) {
-        return jsonError("This Phone Number ID does not belong to the Business Account ID you entered.", 400);
+        return jsonError("Phone Number ID لا يتبع Business Account ID الذي أدخلته.", 400);
       }
 
       await subscribeAppToBusinessAccount(parsed.data.businessAccountId, parsed.data.accessToken);
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
         });
 
     if (appEnv.WHATSAPP_MOCK_MODE) {
-      await whatsappClient.sendMessage(connection.phoneNumberId, "15555550100", "Mock WhatsApp connection verified.");
+      await whatsappClient.sendMessage(connection.phoneNumberId, "15555550100", "تم التحقق من اتصال واتساب الاختباري.");
     }
 
     return jsonSuccess(
@@ -184,7 +184,7 @@ export async function POST(request: Request) {
 
     if (error instanceof EmbeddedSignupError) {
       return jsonError(
-        "The Meta credentials could not be verified. Check the number ID, business account ID, access token, and app permissions in Meta.",
+        "تعذر التحقق من بيانات Meta. راجع Phone Number ID وBusiness Account ID وAccess Token وصلاحيات التطبيق داخل Meta.",
         502,
       );
     }
@@ -196,7 +196,7 @@ export async function POST(request: Request) {
     }
 
     logger.error("api.whatsapp.connect.post", "Failed to create WhatsApp connection.", { error });
-    return jsonError("Failed to create WhatsApp connection.", 500);
+    return jsonError("فشل إنشاء اتصال واتساب.", 500);
   }
 }
 
@@ -218,7 +218,7 @@ export async function DELETE(request: Request) {
     });
 
     if (!connection) {
-      return jsonError("WhatsApp connection not found.", 404);
+      return jsonError("لم يتم العثور على اتصال واتساب.", 404);
     }
 
     await prisma.whatsAppConnection.delete({
@@ -238,6 +238,6 @@ export async function DELETE(request: Request) {
     }
 
     logger.error("api.whatsapp.connect.delete", "Failed to delete WhatsApp connection.", { error });
-    return jsonError("Failed to delete WhatsApp connection.", 500);
+    return jsonError("فشل حذف اتصال واتساب.", 500);
   }
 }

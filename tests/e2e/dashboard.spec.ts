@@ -96,7 +96,7 @@ test("authenticated user can reach dashboard and see the command center", async 
   await login(page);
 
   await expect(page.getByText("Your AI assistant")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Pause AI replies" })).toBeVisible();
-  await expect(page.getByText("Recent conversations")).toBeVisible();
+  await expect(page.getByRole("button", { name: /AI replies/ })).toBeVisible();
+  await expect(page.getByText("Recent WhatsApp conversations")).toBeVisible();
   await expect(page.getByRole("button", { name: "Customize assistant" })).toBeVisible();
 });

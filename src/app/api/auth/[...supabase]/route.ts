@@ -9,6 +9,7 @@ import { handleAuthPost } from "@/lib/api/auth-handlers";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request, context: { params: { supabase: string[] } }) {
-  return handleAuthPost(request, context.params.supabase[0]);
+export async function POST(request: Request, context: { params: Promise<{ supabase: string[] }> }) {
+  const params = await context.params;
+  return handleAuthPost(request, params.supabase[0]);
 }

@@ -9,13 +9,36 @@ import { PlanTier } from "@prisma/client";
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
-import { getOrCreateUserSettings } from "@/lib/api/settings";
-import { prisma } from "@/lib/prisma/client";
+import { getOrCreateUserSettings, updateUserSettings } from "@/lib/api/settings";
+import { normalizeNotificationPrefs } from "@/lib/notifications/preferences";
 import { logger } from "@/lib/utils/logger";
 import { updateSettingsSchema } from "@/lib/validators/settings";
+import type { SettingsResponse } from "@/types/api";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function serializeSettingsUser(user: Awaited<ReturnType<typeof requireAppUser>>): SettingsResponse["user"] {
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    avatarUrl: user.avatarUrl,
+    isAdmin: user.isAdmin,
+    planTier: user.planTier,
+    subscriptionStatus: user.subscriptionStatus,
+    monthlyReplyCount: user.monthlyReplyCount,
+    onboardingCompleted: user.onboardingCompleted,
+    trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+    trialUsed: user.trialUsed,
+    paidAt: user.paidAt?.toISOString() ?? null,
+    usageAlert80SentAt: user.usageAlert80SentAt?.toISOString() ?? null,
+    usageAlert100SentAt: user.usageAlert100SentAt?.toISOString() ?? null,
+    replyCountResetAt: user.replyCountResetAt.toISOString(),
+    paymentCustomerId: user.paymentCustomerId,
+    paymentSubscriptionId: user.paymentSubscriptionId,
+  };
+}
 
 export async function GET() {
   try {
@@ -23,19 +46,11 @@ export async function GET() {
     const settings = await getOrCreateUserSettings(user.id);
 
     return jsonSuccess({
-      settings,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        avatarUrl: user.avatarUrl,
-        planTier: user.planTier,
-        subscriptionStatus: user.subscriptionStatus,
-        monthlyReplyCount: user.monthlyReplyCount,
-        replyCountResetAt: user.replyCountResetAt,
-        paymentCustomerId: user.paymentCustomerId,
-        paymentSubscriptionId: user.paymentSubscriptionId,
+      settings: {
+        ...settings,
+        notificationPrefs: normalizeNotificationPrefs(settings.notificationPrefs),
       },
+      user: serializeSettingsUser(user),
     });
   } catch (error) {
     if (error instanceof UnauthorizedError) {
@@ -67,29 +82,34 @@ export async function PUT(request: Request) {
       return jsonError("Custom prompts are available on the PRO and BUSINESS plans.", 403);
     }
 
-    const settings = await prisma.userSettings.upsert({
-      where: { userId: user.id },
-      update: parsed.data,
-      create: {
-        userId: user.id,
-        ...parsed.data,
-      },
-    });
+    const persistedData = {
+      ...(parsed.data.systemPrompt !== undefined ? { systemPrompt: parsed.data.systemPrompt } : {}),
+      ...(parsed.data.autoReplyEnabled !== undefined ? { autoReplyEnabled: parsed.data.autoReplyEnabled } : {}),
+      ...(parsed.data.language !== undefined ? { language: parsed.data.language } : {}),
+      ...(parsed.data.businessName !== undefined ? { businessName: parsed.data.businessName } : {}),
+      ...(parsed.data.businessContext !== undefined ? { businessContext: parsed.data.businessContext } : {}),
+      ...(parsed.data.fallbackMessage !== undefined ? { fallbackMessage: parsed.data.fallbackMessage } : {}),
+      ...(parsed.data.maxReplyLength !== undefined ? { maxReplyLength: parsed.data.maxReplyLength } : {}),
+      ...(parsed.data.workingHoursEnabled !== undefined ? { workingHoursEnabled: parsed.data.workingHoursEnabled } : {}),
+      ...(parsed.data.workingHoursStart !== undefined ? { workingHoursStart: parsed.data.workingHoursStart } : {}),
+      ...(parsed.data.workingHoursEnd !== undefined ? { workingHoursEnd: parsed.data.workingHoursEnd } : {}),
+      ...(parsed.data.workingDays !== undefined ? { workingDays: parsed.data.workingDays } : {}),
+      ...(parsed.data.offHoursMessage !== undefined ? { offHoursMessage: parsed.data.offHoursMessage } : {}),
+      ...(parsed.data.timezone !== undefined ? { timezone: parsed.data.timezone } : {}),
+      ...(parsed.data.csatEnabled !== undefined ? { csatEnabled: parsed.data.csatEnabled } : {}),
+      ...(parsed.data.notificationPrefs !== undefined
+        ? { notificationPrefs: normalizeNotificationPrefs(parsed.data.notificationPrefs) }
+        : {}),
+    };
+
+    const settings = await updateUserSettings(user.id, persistedData);
 
     return jsonSuccess({
-      settings,
-      user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        avatarUrl: user.avatarUrl,
-        planTier: user.planTier,
-        subscriptionStatus: user.subscriptionStatus,
-        monthlyReplyCount: user.monthlyReplyCount,
-        replyCountResetAt: user.replyCountResetAt,
-        paymentCustomerId: user.paymentCustomerId,
-        paymentSubscriptionId: user.paymentSubscriptionId,
+      settings: {
+        ...settings,
+        notificationPrefs: normalizeNotificationPrefs(settings.notificationPrefs),
       },
+      user: serializeSettingsUser(user),
     });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

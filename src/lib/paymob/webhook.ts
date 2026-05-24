@@ -7,10 +7,14 @@
  */
 import "server-only";
 
-import { PlanTier, SubscriptionStatus } from "@prisma/client";
+import { MessageDirection, MessageStatus, PlanTier, SubscriptionStatus } from "@prisma/client";
 
-import { parsePaymobReference, verifyPaymobTransactionHmac } from "@/lib/paymob/client";
+import { whatsappClient } from "@/lib/api/whatsapp";
+import { getPaymobPlanAmountCents, parsePaymobReference, verifyPaymobTransactionHmac } from "@/lib/paymob/client";
+import { parseOrderPaymentReference } from "@/lib/paymob/order-payment";
 import { prisma } from "@/lib/prisma/client";
+import { decrypt } from "@/lib/utils/encryption";
+import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
 export type UnknownRecord = Record<string, unknown>;
@@ -150,6 +154,13 @@ function getAmount(record: UnknownRecord): number | null {
   return null;
 }
 
+function moneyMatches(record: UnknownRecord, expectedAmount: number, expectedCurrency: string): boolean {
+  const amount = getAmount(record);
+  const currency = getNestedString(record, ["currency"]);
+
+  return amount === expectedAmount && currency === expectedCurrency;
+}
+
 function getTransactionRecord(payload: UnknownRecord): UnknownRecord {
   const obj = getNestedRecord(payload, ["obj"]);
   return obj ?? payload;
@@ -220,10 +231,113 @@ export async function processPaymobCallback(params: {
 
   const reference = getCallbackReference(params.payload, transaction);
   const parsedReference = parsePaymobReference(reference);
+  const parsedOrderReference = parseOrderPaymentReference(reference);
   const eventId = reference ?? `paymob:${getNestedString(transaction, ["id"]) ?? Date.now().toString()}`;
   const success = getNestedBoolean(transaction, ["success"]) === true;
   const pending = getNestedBoolean(transaction, ["pending"]) === true;
   const status = success ? SubscriptionStatus.ACTIVE : pending ? "PENDING" : "FAILED";
+
+  if (parsedOrderReference) {
+    const order = await prisma.order.findUnique({
+      where: {
+        id: parsedOrderReference.orderId,
+      },
+      include: {
+        connection: true,
+      },
+    });
+
+    if (!order) {
+      logger.warn(params.context, "Paymob callback matched an order reference that no longer exists.", {
+        eventId,
+        reference,
+        orderId: parsedOrderReference.orderId,
+      });
+
+      return {
+        received: true,
+        ignored: true,
+        success,
+        pending,
+        eventId,
+        reference,
+      };
+    }
+
+    if (success && !moneyMatches(transaction, order.subtotal, appEnv.PAYMOB_CURRENCY)) {
+      logger.warn(params.context, "Paymob order callback had a valid HMAC but did not match the local order amount or currency.", {
+        eventId,
+        reference,
+        orderId: order.id,
+      });
+
+      return {
+        received: true,
+        ignored: true,
+        success,
+        pending,
+        eventId,
+        reference,
+        userId: order.userId,
+      };
+    }
+
+    if (success && !order.paidAt) {
+      const paidAt = new Date();
+      await prisma.order.update({
+        where: {
+          id: order.id,
+        },
+        data: {
+          paidAt,
+        },
+      });
+
+      if (order.connection.isActive) {
+        const receiptText = "✅ تم استلام دفعتك! شكراً 🎉";
+
+        try {
+          const sendResponse = await whatsappClient.sendMessage(order.connection.phoneNumberId, order.customerPhone, receiptText, {
+            accessToken: appEnv.WHATSAPP_MOCK_MODE ? undefined : decrypt(order.connection.accessToken),
+          });
+          const outboundWaMessageId = sendResponse.messages[0]?.id;
+
+          if (outboundWaMessageId) {
+            await prisma.message.create({
+              data: {
+                userId: order.userId,
+                connectionId: order.connectionId,
+                waMessageId: outboundWaMessageId,
+                direction: MessageDirection.OUTBOUND,
+                fromNumber: order.connection.phoneNumberId,
+                toNumber: order.customerPhone,
+                bodyText: receiptText,
+                status: MessageStatus.REPLIED,
+                aiModelUsed: "order-payment-receipt",
+                processedAt: paidAt,
+              },
+            });
+          }
+        } catch (error) {
+          logger.warn(params.context, "Order payment was marked paid but WhatsApp receipt failed.", {
+            error,
+            eventId,
+            orderId: order.id,
+          });
+        }
+      }
+    }
+
+    return {
+      received: true,
+      success,
+      pending,
+      eventId,
+      reference,
+      userId: order.userId,
+    };
+  }
+
   const existingEvent = await prisma.subscriptionEvent.findUnique({
     where: { paymentEventId: eventId },
   });
@@ -243,6 +357,25 @@ export async function processPaymobCallback(params: {
       pending,
       eventId,
       reference,
+    };
+  }
+
+  if (success && !moneyMatches(transaction, getPaymobPlanAmountCents(planTier), appEnv.PAYMOB_CURRENCY)) {
+    logger.warn(params.context, "Paymob subscription callback had a valid HMAC but did not match the expected plan amount or currency.", {
+      eventId,
+      reference,
+      planTier,
+    });
+
+    return {
+      received: true,
+      ignored: true,
+      success,
+      pending,
+      eventId,
+      reference,
+      userId,
+      planTier,
     };
   }
 
@@ -272,6 +405,8 @@ export async function processPaymobCallback(params: {
           planTier,
           subscriptionStatus: SubscriptionStatus.ACTIVE,
           paymentSubscriptionId: reference,
+          paidAt: new Date(),
+          trialEndsAt: null,
         },
       });
     }

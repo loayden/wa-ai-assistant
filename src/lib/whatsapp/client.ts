@@ -36,6 +36,27 @@ export type WhatsAppSendMessageResponse = {
   messages: Array<{ id: string }>;
 };
 
+export type WhatsAppTemplateComponent =
+  | { type: "HEADER"; format: "TEXT"; text: string }
+  | { type: "BODY"; text: string }
+  | { type: "FOOTER"; text: string }
+  | { type: "BUTTONS"; buttons: Array<{ type: "URL"; text: string; url: string }> };
+
+export type WhatsAppTemplateSubmissionResponse = {
+  id?: string;
+  status?: string;
+  category?: string;
+};
+
+export type WhatsAppTemplateListResponse = {
+  data?: Array<{
+    id?: string;
+    name?: string;
+    status?: string;
+    rejected_reason?: string;
+  }>;
+};
+
 export type WhatsAppMediaUrlResponse = {
   messaging_product?: "whatsapp";
   url: string;
@@ -134,6 +155,84 @@ export async function sendMessage(
         text: {
           preview_url: false,
           body: message,
+        },
+      }),
+    },
+    options,
+  );
+}
+
+export async function submitTemplate(
+  businessAccountId: string,
+  payload: {
+    name: string;
+    language: string;
+    category: string;
+    components: WhatsAppTemplateComponent[];
+  },
+  options?: WhatsAppClientOptions,
+): Promise<WhatsAppTemplateSubmissionResponse> {
+  return requestWhatsApp<WhatsAppTemplateSubmissionResponse>(
+    `${businessAccountId}/message_templates`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    options,
+  );
+}
+
+export async function listTemplates(
+  businessAccountId: string,
+  options?: WhatsAppClientOptions,
+): Promise<WhatsAppTemplateListResponse> {
+  return requestWhatsApp<WhatsAppTemplateListResponse>(
+    `${businessAccountId}/message_templates?fields=id,name,status,rejected_reason`,
+    { method: "GET" },
+    options,
+  );
+}
+
+export async function deleteTemplate(
+  businessAccountId: string,
+  templateName: string,
+  options?: WhatsAppClientOptions,
+): Promise<Record<string, unknown>> {
+  return requestWhatsApp<Record<string, unknown>>(
+    `${businessAccountId}/message_templates?name=${encodeURIComponent(templateName)}`,
+    { method: "DELETE" },
+    options,
+  );
+}
+
+export async function sendTemplateMessage(
+  phoneNumberId: string,
+  to: string,
+  templateName: string,
+  languageCode: string,
+  parameters: string[],
+  options?: WhatsAppClientOptions,
+): Promise<WhatsAppSendMessageResponse> {
+  return requestWhatsApp<WhatsAppSendMessageResponse>(
+    `${phoneNumberId}/messages`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "template",
+        template: {
+          name: templateName,
+          language: { code: languageCode },
+          components:
+            parameters.length > 0
+              ? [
+                  {
+                    type: "body",
+                    parameters: parameters.map((text) => ({ type: "text", text })),
+                  },
+                ]
+              : undefined,
         },
       }),
     },

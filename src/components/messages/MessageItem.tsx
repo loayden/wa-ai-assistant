@@ -37,9 +37,29 @@ function getStatusVariant(status: MessageListItem["status"]) {
   return "outline" as const;
 }
 
+function getDirectionLabel(direction: MessageListItem["direction"]) {
+  return direction === "INBOUND" ? "وارد" : "صادر";
+}
+
+function getStatusLabel(status: MessageListItem["status"]) {
+  if (status === "REPLIED") {
+    return "تم الرد";
+  }
+
+  if (status === "FAILED") {
+    return "فشل";
+  }
+
+  if (status === "PROCESSING") {
+    return "قيد المعالجة";
+  }
+
+  return "وصلت";
+}
+
 export function MessageItem({ message }: MessageItemProps) {
   const [expanded, setExpanded] = useState(false);
-  const timestamp = new Intl.DateTimeFormat(undefined, {
+  const timestamp = new Intl.DateTimeFormat("ar-EG", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(message.createdAt));
@@ -49,7 +69,7 @@ export function MessageItem({ message }: MessageItemProps) {
       <TableRow className="cursor-pointer" onClick={() => setExpanded((value) => !value)}>
         <TableCell className="w-10">
           <Button
-            aria-label={expanded ? "Collapse message" : "Expand message"}
+            aria-label={expanded ? "طي الرسالة" : "توسيع الرسالة"}
             className="size-8"
             size="icon"
             type="button"
@@ -64,10 +84,10 @@ export function MessageItem({ message }: MessageItemProps) {
           <span className="line-clamp-1">{message.bodyText}</span>
         </TableCell>
         <TableCell>
-          <Badge variant={message.direction === "INBOUND" ? "default" : "secondary"}>{message.direction}</Badge>
+          <Badge variant={message.direction === "INBOUND" ? "default" : "secondary"}>{getDirectionLabel(message.direction)}</Badge>
         </TableCell>
         <TableCell>
-          <Badge variant={getStatusVariant(message.status)}>{message.status}</Badge>
+          <Badge variant={getStatusVariant(message.status)}>{getStatusLabel(message.status)}</Badge>
         </TableCell>
       </TableRow>
       {expanded ? (
@@ -75,12 +95,12 @@ export function MessageItem({ message }: MessageItemProps) {
           <TableCell colSpan={6}>
             <div className="grid gap-4 p-2 md:grid-cols-2">
               <div className="rounded-lg border bg-background p-4">
-                <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">Customer Message</p>
+                <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">رسالة العميل</p>
                 <p className="whitespace-pre-wrap text-sm leading-6">{message.bodyText}</p>
               </div>
               <div className={cn("rounded-lg border bg-background p-4", !message.aiReplyText && "text-muted-foreground")}>
-                <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">AI Reply</p>
-                <p className="whitespace-pre-wrap text-sm leading-6">{message.aiReplyText ?? "No AI reply recorded for this message."}</p>
+                <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">رد الذكاء</p>
+                <p className="whitespace-pre-wrap text-sm leading-6">{message.aiReplyText ?? "لا يوجد رد مسجل لهذه الرسالة."}</p>
               </div>
             </div>
           </TableCell>

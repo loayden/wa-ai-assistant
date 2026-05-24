@@ -8,6 +8,9 @@ import type {
   WhatsAppClientOptions,
   WhatsAppMediaUrlResponse,
   WhatsAppSendMessageResponse,
+  WhatsAppTemplateComponent,
+  WhatsAppTemplateListResponse,
+  WhatsAppTemplateSubmissionResponse,
 } from "@/lib/whatsapp/client";
 import { logger } from "@/lib/utils/logger";
 
@@ -64,6 +67,62 @@ export async function getMediaUrl(mediaId: string, _options?: WhatsAppClientOpti
     id: mediaId,
     url: `mock://whatsapp-media/${mediaId}`,
   };
+}
+
+export async function submitTemplate(
+  businessAccountId: string,
+  payload: {
+    name: string;
+    language: string;
+    category: string;
+    components: WhatsAppTemplateComponent[];
+  },
+  _options?: WhatsAppClientOptions,
+): Promise<WhatsAppTemplateSubmissionResponse> {
+  void _options;
+
+  logger.info("whatsapp.mock", "Stored mock WhatsApp template submission.", { businessAccountId, name: payload.name });
+
+  return {
+    id: `mock_template_${payload.name}`,
+    status: "PENDING",
+    category: payload.category,
+  };
+}
+
+export async function listTemplates(
+  _businessAccountId: string,
+  _options?: WhatsAppClientOptions,
+): Promise<WhatsAppTemplateListResponse> {
+  void _businessAccountId;
+  void _options;
+
+  return { data: [] };
+}
+
+export async function deleteTemplate(
+  businessAccountId: string,
+  templateName: string,
+  _options?: WhatsAppClientOptions,
+): Promise<Record<string, unknown>> {
+  void _options;
+
+  logger.info("whatsapp.mock", "Deleted mock WhatsApp template.", { businessAccountId, templateName });
+
+  return { success: true };
+}
+
+export async function sendTemplateMessage(
+  phoneNumberId: string,
+  to: string,
+  templateName: string,
+  _languageCode: string,
+  parameters: string[],
+  _options?: WhatsAppClientOptions,
+): Promise<WhatsAppSendMessageResponse> {
+  void _languageCode;
+
+  return sendMessage(phoneNumberId, to, `Template ${templateName}: ${parameters.join(", ")}`, _options);
 }
 
 // [MOCK] — replace with real WhatsApp client in production

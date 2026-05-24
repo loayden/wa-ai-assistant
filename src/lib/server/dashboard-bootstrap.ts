@@ -4,8 +4,17 @@ import type { MessageResponse, SettingsResponse } from "@/types/api";
 import { ensureAppUser } from "@/lib/api/auth";
 import { getOrCreateUserSettings } from "@/lib/api/settings";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
+import { normalizeNotificationPrefs } from "@/lib/notifications/preferences";
 import { prisma } from "@/lib/prisma/client";
 import { getUser } from "@/lib/supabase/server";
+
+function normalizeMessageMetadata(metadata: unknown): MessageResponse["metadata"] {
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) {
+    return metadata as Record<string, unknown>;
+  }
+
+  return {};
+}
 
 function serializeMessage(message: {
   id: string;
@@ -18,6 +27,7 @@ function serializeMessage(message: {
   bodyText: string;
   mediaUrl: string | null;
   mediaType: string | null;
+  metadata: unknown;
   status: MessageResponse["status"];
   aiReplyText: string | null;
   aiModelUsed: string | null;
@@ -30,13 +40,82 @@ function serializeMessage(message: {
     displayName: string | null;
     phoneNumberId: string;
   } | null;
+  handoffActive?: boolean;
+  handoffAt?: Date | string | null;
+  resolvedAt?: Date | string | null;
+  rating?: number | null;
+  ratingRequestedAt?: Date | string | null;
 }): MessageResponse {
   return {
     ...message,
+    metadata: normalizeMessageMetadata(message.metadata),
     processedAt: message.processedAt?.toISOString() ?? null,
     createdAt: message.createdAt.toISOString(),
     updatedAt: message.updatedAt.toISOString(),
+    handoffActive: message.handoffActive,
+    handoffAt:
+      message.handoffAt instanceof Date
+        ? message.handoffAt.toISOString()
+        : message.handoffAt ?? null,
+    resolvedAt:
+      message.resolvedAt instanceof Date
+        ? message.resolvedAt.toISOString()
+        : message.resolvedAt ?? null,
+    rating: message.rating ?? null,
+    ratingRequestedAt:
+      message.ratingRequestedAt instanceof Date
+        ? message.ratingRequestedAt.toISOString()
+        : message.ratingRequestedAt ?? null,
     connection: message.connection ?? undefined,
+  };
+}
+
+const dashboardMessageSelect = {
+  id: true,
+  userId: true,
+  connectionId: true,
+  waMessageId: true,
+  direction: true,
+  fromNumber: true,
+  toNumber: true,
+  bodyText: true,
+  mediaUrl: true,
+  mediaType: true,
+  status: true,
+  aiReplyText: true,
+  aiModelUsed: true,
+  aiTokensUsed: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  connection: {
+    select: {
+      id: true,
+      displayName: true,
+      phoneNumberId: true,
+    },
+  },
+} as const;
+
+function serializeSettingsUser(user: Awaited<ReturnType<typeof ensureAppUser>>): SettingsResponse["user"] {
+  return {
+    id: user.id,
+    email: user.email,
+    fullName: user.fullName,
+    avatarUrl: user.avatarUrl,
+    isAdmin: user.isAdmin,
+    planTier: user.planTier,
+    subscriptionStatus: user.subscriptionStatus,
+    monthlyReplyCount: user.monthlyReplyCount,
+    onboardingCompleted: user.onboardingCompleted,
+    trialEndsAt: user.trialEndsAt?.toISOString() ?? null,
+    trialUsed: user.trialUsed,
+    paidAt: user.paidAt?.toISOString() ?? null,
+    usageAlert80SentAt: user.usageAlert80SentAt?.toISOString() ?? null,
+    usageAlert100SentAt: user.usageAlert100SentAt?.toISOString() ?? null,
+    replyCountResetAt: user.replyCountResetAt.toISOString(),
+    paymentCustomerId: user.paymentCustomerId,
+    paymentSubscriptionId: user.paymentSubscriptionId,
   };
 }
 
@@ -69,20 +148,10 @@ export async function getWhatsAppPageBootstrap() {
   });
 
   return {
-    user: {
-      id: auth.appUser.id,
-      email: auth.appUser.email,
-      fullName: auth.appUser.fullName,
-      avatarUrl: auth.appUser.avatarUrl,
-      planTier: auth.appUser.planTier,
-      subscriptionStatus: auth.appUser.subscriptionStatus,
-      monthlyReplyCount: auth.appUser.monthlyReplyCount,
-      replyCountResetAt: auth.appUser.replyCountResetAt.toISOString(),
-      paymentCustomerId: auth.appUser.paymentCustomerId,
-      paymentSubscriptionId: auth.appUser.paymentSubscriptionId,
-    } satisfies SettingsResponse["user"],
+    user: serializeSettingsUser(auth.appUser),
     settings: {
       ...settings,
+      notificationPrefs: normalizeNotificationPrefs(settings.notificationPrefs),
       createdAt: settings.createdAt.toISOString(),
       updatedAt: settings.updatedAt.toISOString(),
     } satisfies SettingsResponse["settings"],
@@ -98,7 +167,10 @@ export async function getDashboardBootstrap() {
   }
 
   const settings = await getOrCreateUserSettings(auth.appUser.id);
-  const [connections, messages] = await Promise.all([
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+  const [connections, messages, knowledgeCount, monthlyLeadsCount] = await Promise.all([
     prisma.whatsAppConnection.findMany({
       where: { userId: auth.appUser.id },
       orderBy: { createdAt: "desc" },
@@ -107,37 +179,85 @@ export async function getDashboardBootstrap() {
       where: { userId: auth.appUser.id },
       take: 20,
       orderBy: { createdAt: "desc" },
-      include: {
-        connection: {
-          select: {
-            id: true,
-            displayName: true,
-            phoneNumberId: true,
-          },
-        },
+      select: dashboardMessageSelect,
+    }),
+    prisma.knowledgeBaseEntry.count({
+      where: { userId: auth.appUser.id },
+    }),
+    prisma.lead.count({
+      where: {
+        userId: auth.appUser.id,
+        status: { not: "dismissed" },
+        detectedAt: { gte: monthStart },
       },
     }),
   ]);
 
+  const hasConnection = connections.some((connection) => connection.isActive && connection.isVerified);
+  const handoffPairs = messages.map((message) => ({
+    connectionId: message.connectionId,
+    customerPhone: message.direction === "OUTBOUND" ? message.toNumber : message.fromNumber,
+  }));
+  const handoffs =
+    handoffPairs.length > 0
+      ? await prisma.conversationHandoff.findMany({
+          where: {
+            userId: auth.appUser.id,
+            OR: handoffPairs,
+          },
+          select: {
+            connectionId: true,
+            customerPhone: true,
+            active: true,
+            handoffAt: true,
+            resolvedAt: true,
+            rating: true,
+            ratingRequestedAt: true,
+          },
+        })
+      : [];
+  const handoffMap = new Map(
+    handoffs.map((handoff) => [
+      `${handoff.connectionId}:${handoff.customerPhone}`,
+      {
+        active: handoff.active,
+        handoffAt: handoff.handoffAt,
+        resolvedAt: handoff.resolvedAt,
+        rating: handoff.rating,
+        ratingRequestedAt: handoff.ratingRequestedAt,
+      },
+    ]),
+  );
+
   return {
-    user: {
-      id: auth.appUser.id,
-      email: auth.appUser.email,
-      fullName: auth.appUser.fullName,
-      avatarUrl: auth.appUser.avatarUrl,
-      planTier: auth.appUser.planTier,
-      subscriptionStatus: auth.appUser.subscriptionStatus,
-      monthlyReplyCount: auth.appUser.monthlyReplyCount,
-      replyCountResetAt: auth.appUser.replyCountResetAt.toISOString(),
-      paymentCustomerId: auth.appUser.paymentCustomerId,
-      paymentSubscriptionId: auth.appUser.paymentSubscriptionId,
-    } satisfies SettingsResponse["user"],
+    user: serializeSettingsUser(auth.appUser),
     settings: {
       ...settings,
+      notificationPrefs: normalizeNotificationPrefs(settings.notificationPrefs),
       createdAt: settings.createdAt.toISOString(),
       updatedAt: settings.updatedAt.toISOString(),
     } satisfies SettingsResponse["settings"],
     connections: connections.map(sanitizeConnection),
-    messages: messages.map(serializeMessage),
+    messages: messages.map((message) => {
+      const customerPhone = message.direction === "OUTBOUND" ? message.toNumber : message.fromNumber;
+      const key = `${message.connectionId}:${customerPhone}`;
+      const handoff = handoffMap.get(key);
+
+      return serializeMessage({
+        ...message,
+        metadata: {},
+        handoffActive: Boolean(handoff?.active),
+        handoffAt: handoff?.handoffAt ?? null,
+        resolvedAt: handoff?.resolvedAt ?? null,
+        rating: handoff?.rating ?? null,
+        ratingRequestedAt: handoff?.ratingRequestedAt ?? null,
+      });
+    }),
+    monthlyLeadsCount,
+    onboarding: {
+      completed: auth.appUser.onboardingCompleted,
+      hasConnection,
+      hasKnowledge: knowledgeCount > 0,
+    },
   };
 }

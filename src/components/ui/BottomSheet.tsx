@@ -29,10 +29,10 @@ export function BottomSheet({ children, className, onClose, open, title }: Botto
   }
 
   return (
-    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title ?? "Bottom sheet"}>
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title ?? "لوحة خيارات"}>
       <motion.button
         className="absolute inset-0 bg-black/30"
-        aria-label="Close sheet"
+        aria-label="إغلاق اللوحة"
         initial={reduceMotion ? false : { opacity: 0 }}
         animate={reduceMotion ? undefined : { opacity: 1 }}
         transition={{ duration: 0.18 }}
@@ -50,7 +50,7 @@ export function BottomSheet({ children, className, onClose, open, title }: Botto
         <div className="mx-auto mt-3 h-1 w-9 rounded-full bg-wa-gray-200" />
         <div className="mb-3 mt-3 flex items-center justify-between gap-3 sm:mb-4 sm:gap-4">
           {title ? <h2 className="text-h3 font-medium text-wa-gray-900 sm:text-h2">{title}</h2> : <span />}
-          <IconButton label="Close sheet" onClick={onClose}>
+          <IconButton label="إغلاق اللوحة" onClick={onClose}>
             <X aria-hidden="true" />
           </IconButton>
         </div>

@@ -11,8 +11,30 @@ import { NextResponse } from "next/server";
 import { createPublicMiddlewareResponse, updateSession } from "@/lib/supabase/middleware";
 
 const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/auth", "/api/health"];
-const PUBLIC_API_PATHS = new Set(["/api/billing/paymob-return"]);
-const DASHBOARD_PAGE_PREFIXES = ["/dashboard", "/messages", "/settings", "/billing", "/whatsapp"];
+const PUBLIC_API_PATHS = new Set([
+  "/api/billing/paymob-return",
+  "/api/cron/daily-summary",
+  "/api/cron/weekly-report",
+  "/api/cron/expire-trials",
+]);
+const DASHBOARD_PAGE_PREFIXES = [
+  "/dashboard",
+  "/messages",
+  "/settings",
+  "/billing",
+  "/whatsapp",
+  "/knowledge",
+  "/templates",
+  "/broadcasts",
+  "/products",
+  "/orders",
+  "/corrections",
+  "/leads",
+  "/analytics",
+  "/connect",
+  "/support",
+  "/admin",
+];
 
 function isPublicApiPath(pathname: string): boolean {
   return PUBLIC_API_PATHS.has(pathname) || PUBLIC_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -87,5 +109,23 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/messages/:path*", "/settings/:path*", "/billing/:path*", "/whatsapp/:path*", "/api/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/messages/:path*",
+    "/settings/:path*",
+    "/billing/:path*",
+    "/whatsapp/:path*",
+    "/knowledge/:path*",
+    "/templates/:path*",
+    "/broadcasts/:path*",
+    "/products/:path*",
+    "/orders/:path*",
+    "/corrections/:path*",
+    "/leads/:path*",
+    "/analytics/:path*",
+    "/connect/:path*",
+    "/support/:path*",
+    "/admin/:path*",
+    "/api/:path*",
+  ],
 };

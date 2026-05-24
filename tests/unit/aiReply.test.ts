@@ -31,6 +31,18 @@ const openAiMock = vi.hoisted(() => {
   };
 });
 
+const prismaMock = vi.hoisted(() => ({
+  knowledgeBaseEntry: {
+    findMany: vi.fn(),
+  },
+  product: {
+    findMany: vi.fn(),
+  },
+  aiCorrection: {
+    findMany: vi.fn(),
+  },
+}));
+
 vi.mock("openai", () => ({
   default: vi.fn().mockImplementation(() => ({
     chat: {
@@ -44,6 +56,10 @@ vi.mock("openai", () => ({
   APIError: openAiMock.APIError,
 }));
 
+vi.mock("@/lib/prisma/client", () => ({
+  prisma: prismaMock,
+}));
+
 vi.mock("@/lib/utils/logger", () => ({
   logger: {
     debug: vi.fn(),
@@ -53,7 +69,7 @@ vi.mock("@/lib/utils/logger", () => ({
   },
 }));
 
-import { AIReplyError, generateAIReply } from "@/lib/openai/client";
+import { generateAIReply } from "@/lib/openai/client";
 import { DEFAULT_SYSTEM_PROMPT } from "@/lib/utils/constants";
 
 const settings: UserSettings = {
@@ -66,6 +82,21 @@ const settings: UserSettings = {
   businessContext: "We sell fresh bread and close at 7 PM.",
   fallbackMessage: null,
   maxReplyLength: 80,
+  workingHoursEnabled: false,
+  workingHoursStart: "09:00",
+  workingHoursEnd: "22:00",
+  workingDays: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"],
+  offHoursMessage: "شكراً لتواصلك 🙏 نحن حالياً خارج أوقات العمل. سنرد عليك فور بدء الدوام.",
+  timezone: "Africa/Cairo",
+  csatEnabled: false,
+  notificationPrefs: {
+    angry: true,
+    lead: true,
+    handoff: true,
+    ai_failed: true,
+    daily_summary: false,
+    weekly_report: true,
+  },
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -73,6 +104,12 @@ const settings: UserSettings = {
 describe("generateAIReply", () => {
   beforeEach(() => {
     openAiMock.create.mockReset();
+    prismaMock.knowledgeBaseEntry.findMany.mockReset();
+    prismaMock.product.findMany.mockReset();
+    prismaMock.aiCorrection.findMany.mockReset();
+    prismaMock.knowledgeBaseEntry.findMany.mockResolvedValue([]);
+    prismaMock.product.findMany.mockResolvedValue([]);
+    prismaMock.aiCorrection.findMany.mockResolvedValue([]);
   });
 
   it("generates a clamped reply and returns model usage", async () => {
@@ -116,6 +153,38 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("We sell fresh bread and close at 7 PM.");
   });
 
+  it("adds saved knowledge entries to the system prompt", async () => {
+    prismaMock.knowledgeBaseEntry.findMany.mockResolvedValueOnce([
+      {
+        type: "faq",
+        title: "Delivery",
+        content: "Delivery is available across Cairo until midnight.",
+      },
+    ]);
+    openAiMock.create.mockResolvedValueOnce({
+      choices: [{ message: { content: "Delivery is available across Cairo until midnight." } }],
+      model: "gpt-4o",
+      usage: { total_tokens: 9 },
+    });
+
+    await generateAIReply({
+      systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      userMessage: "Do you deliver?",
+      settings,
+    });
+
+    const request = openAiMock.create.mock.calls[0][0];
+
+    expect(prismaMock.knowledgeBaseEntry.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: settings.userId },
+      }),
+    );
+    expect(request.messages[0].content).toContain("Business Knowledge");
+    expect(request.messages[0].content).toContain("[FAQ: Delivery]");
+    expect(request.messages[0].content).toContain("Delivery is available across Cairo until midnight.");
+  });
+
   it("maps OpenAI rate limits to AIReplyError", async () => {
     openAiMock.create.mockRejectedValueOnce(new openAiMock.RateLimitError("rate limited"));
 
@@ -125,7 +194,7 @@ describe("generateAIReply", () => {
         userMessage: "Hi",
         settings,
       }),
-    ).rejects.toMatchObject<Partial<AIReplyError>>({ code: "OPENAI_RATE_LIMIT", status: 429 });
+    ).rejects.toMatchObject({ code: "OPENAI_RATE_LIMIT", status: 429 });
   });
 
   it("maps OpenAI timeouts to AIReplyError", async () => {
@@ -137,7 +206,7 @@ describe("generateAIReply", () => {
         userMessage: "Hi",
         settings,
       }),
-    ).rejects.toMatchObject<Partial<AIReplyError>>({ code: "OPENAI_TIMEOUT" });
+    ).rejects.toMatchObject({ code: "OPENAI_TIMEOUT" });
   });
 
   it("rejects empty OpenAI responses", async () => {
@@ -153,6 +222,6 @@ describe("generateAIReply", () => {
         userMessage: "Hi",
         settings,
       }),
-    ).rejects.toMatchObject<Partial<AIReplyError>>({ code: "OPENAI_INVALID_RESPONSE" });
+    ).rejects.toMatchObject({ code: "OPENAI_INVALID_RESPONSE" });
   });
 });

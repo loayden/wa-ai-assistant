@@ -28,6 +28,12 @@ type PlanCardProps = {
   onAction: () => void;
 };
 
+const planNames: Record<PlanTier, string> = {
+  FREE: "مجاني",
+  PRO: "Pro",
+  BUSINESS: "Business",
+};
+
 export function PlanCard({
   actionLabel,
   current,
@@ -52,13 +58,13 @@ export function PlanCard({
     >
       {recommended ? (
         <div className="absolute right-4 top-4 rounded-full bg-wa-blue-600 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white sm:right-5 sm:top-5 sm:px-3 sm:text-label">
-          Recommended
+          الأنسب
         </div>
       ) : null}
       <CardHeader className="gap-3 p-4 sm:gap-4 sm:p-6">
         <div className="flex min-h-8 items-center justify-between gap-3 pr-24 sm:pr-28">
-          <CardTitle className="text-[22px] font-semibold">{title}</CardTitle>
-          {current ? <StatusBadge className="px-3 py-1" label="Current" variant="active" /> : null}
+          <CardTitle className="text-[22px] font-semibold">{planNames[title]}</CardTitle>
+          {current ? <StatusBadge className="px-3 py-1" label="خطتك الحالية" variant="active" /> : null}
         </div>
         <div>
           <p className="text-[34px] font-semibold leading-none text-wa-gray-900 sm:text-[42px]">{priceLabel}</p>
@@ -70,11 +76,11 @@ export function PlanCard({
         <div className="grid gap-3">
           <PlanMetric
             icon={<MessageCircle className="size-4" aria-hidden="true" />}
-            label="Included replies"
+            label="الردود المتاحة"
             value={includedRepliesLabel}
           />
-          <PlanMetric icon={<Phone className="size-4" aria-hidden="true" />} label="WhatsApp numbers" value={numberLimitLabel} />
-          <PlanMetric icon={<ReceiptText className="size-4" aria-hidden="true" />} label="Overage" value={overageLabel} />
+          <PlanMetric icon={<Phone className="size-4" aria-hidden="true" />} label="أرقام واتساب" value={numberLimitLabel} />
+          <PlanMetric icon={<ReceiptText className="size-4" aria-hidden="true" />} label="بعد الحد" value={overageLabel} />
         </div>
 
         <div className="space-y-3">
@@ -94,7 +100,7 @@ export function PlanCard({
           variant={current ? "secondary" : recommended ? "default" : "outline"}
           onClick={onAction}
         >
-          {current ? "Current plan" : actionLabel}
+          {current ? "الخطة الحالية" : actionLabel}
         </Button>
       </CardFooter>
     </Card>

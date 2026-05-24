@@ -77,16 +77,16 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
               <ClipboardCheck className="size-5" aria-hidden="true" />
             </span>
             <div>
-              <CardTitle className="text-body font-semibold">Live readiness check</CardTitle>
+              <CardTitle className="text-body font-semibold">فحص جاهزية الاتصال</CardTitle>
               <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
-                Verify the saved Meta credentials, number ownership, and webhook subscription before inviting real customers.
+                تأكدي من صلاحية بيانات Meta وملكية الرقم واشتراك Webhook قبل دعوة العملاء الحقيقيين.
               </p>
             </div>
           </div>
           {overallStatus !== "idle" ? (
             <StatusBadge
               className="self-start px-3 py-1"
-              label={overallStatus === "passed" ? "Ready" : overallStatus === "warning" ? "Needs review" : "Needs fix"}
+              label={overallStatus === "passed" ? "جاهز للعملاء" : overallStatus === "warning" ? "تجربة / مراجعة" : "يحتاج إصلاح"}
               variant={overallStatus === "passed" ? "active" : overallStatus === "warning" ? "paused" : "error"}
             />
           ) : null}
@@ -94,12 +94,15 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:p-5">
         <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-          <p className="text-body-sm font-semibold text-wa-gray-900">How replies work</p>
-          <ol className="mt-3 list-decimal space-y-2 pl-4 text-body-sm leading-6 text-wa-gray-600">
-            <li>Customers message your connected WhatsApp number.</li>
-            <li>kallem receives the message through the webhook.</li>
-            <li>The assistant writes and sends the reply automatically when AI quota and WhatsApp sending are available.</li>
+          <p className="text-body-sm font-semibold text-wa-gray-900">كيف تعمل الردود؟</p>
+          <ol className="mt-3 list-decimal space-y-2 pr-4 text-body-sm leading-6 text-wa-gray-600">
+            <li>العميل يرسل رسالة إلى رقم واتساب المتصل.</li>
+            <li>kallem يستقبل الرسالة من خلال Webhook.</li>
+            <li>المساعد يكتب ويرسل الرد تلقائيًا عندما يكون رصيد AI وإرسال واتساب متاحين.</li>
           </ol>
+          <p className="mt-3 rounded-xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-700">
+            العملاء الحقيقيون يحتاجون رقم WhatsApp Business إنتاجي. أرقام Meta التجريبية للعرض فقط وتحتاج أرقام اختبار معتمدة.
+          </p>
         </div>
 
         <Button
@@ -108,14 +111,14 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
           onClick={() => diagnosticsMutation.mutate()}
         >
           <RefreshCw className="size-4" aria-hidden="true" />
-          {diagnosticsMutation.isPending ? "Checking live connection..." : "Run live check"}
+          {diagnosticsMutation.isPending ? "جارٍ فحص الاتصال..." : "تشغيل الفحص"}
         </Button>
 
         {diagnosticsMutation.error ? (
           <Alert className="border-wa-error bg-wa-error-bg">
-            <AlertTitle>Readiness check failed</AlertTitle>
+            <AlertTitle>فشل فحص الجاهزية</AlertTitle>
             <AlertDescription>
-              {diagnosticsMutation.error instanceof Error ? diagnosticsMutation.error.message : "Could not run WhatsApp diagnostics."}
+              {diagnosticsMutation.error instanceof Error ? diagnosticsMutation.error.message : "تعذر تشغيل فحص واتساب."}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -139,10 +142,10 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
             ))}
             {isMetaTestNumber ? (
               <div className="rounded-2xl border border-wa-warning-bg bg-wa-warning-bg p-4 text-wa-warning">
-                <p className="text-body-sm font-semibold">You are using a Meta test number</p>
+                <p className="text-body-sm font-semibold">تم اكتشاف رقم تجريبي فقط</p>
                 <p className="mt-2 text-body-sm leading-6">
-                  This is why Meta asks for Add recipient phone number. It is only a test-number rule. For real customers,
-                  connect a production WhatsApp Business number and kallem can reply when customers message it.
+                  لذلك تطلب Meta خطوة “Add recipient phone number”. هذه قاعدة اختبار من Meta وليست من kallem.
+                  العملاء الحقيقيون يمكنهم المراسلة واستلام الردود بعد ربط رقم WhatsApp Business إنتاجي.
                 </p>
               </div>
             ) : null}
@@ -151,7 +154,7 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
           <div className="flex items-start gap-3 rounded-2xl border border-wa-blue-100 bg-wa-blue-50 p-4 text-wa-gray-700">
             <RadioTower className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
             <p className="text-body-sm leading-6">
-              This check does not send a customer message. It verifies that kallem can still reach Meta with the saved connection.
+              هذا الفحص لا يرسل رسالة للعميل. هو يتأكد فقط أن kallem يستطيع الوصول إلى Meta باستخدام الاتصال المحفوظ.
             </p>
           </div>
         )}

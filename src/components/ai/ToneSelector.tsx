@@ -19,14 +19,14 @@ export interface ToneSelectorProps {
 }
 
 const options = [
-  { value: "friendly", label: "Friendly", icon: Smile },
-  { value: "professional", label: "Professional", icon: BriefcaseBusiness },
-  { value: "sales", label: "Sales", icon: TrendingUp },
+  { value: "friendly", label: "ودود", icon: Smile },
+  { value: "professional", label: "احترافي", icon: BriefcaseBusiness },
+  { value: "sales", label: "بيعي", icon: TrendingUp },
 ] satisfies Array<{ value: ToneValue; label: string; icon: typeof Smile }>;
 
 export function ToneSelector({ disabled = false, onChange, value }: ToneSelectorProps) {
   return (
-    <div className="grid w-full grid-cols-3 gap-2" role="radiogroup" aria-label="AI tone">
+    <div className="grid w-full grid-cols-3 gap-2" role="radiogroup" aria-label="نبرة المساعد">
       {options.map((option) => {
         const Icon = option.icon;
         const selected = option.value === value;

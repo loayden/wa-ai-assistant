@@ -40,43 +40,42 @@ export function ConnectionStatus({
   webhookUrl,
   onDisconnect,
 }: ConnectionStatusProps) {
-  const statusLabel = connection.isActive ? "Connected" : "Paused";
+  const statusLabel = connection.isActive ? "متصل" : "متوقف";
   const statusVariant = connection.isActive ? "active" : "paused";
-  const replyLabel = autoReplyEnabled ? "Replying" : "Paused";
+  const replyLabel = autoReplyEnabled ? "يرد الآن" : "متوقف";
 
   return (
     <Card className="overflow-hidden rounded-[22px] border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
       <CardContent className="p-0">
         <div className="flex items-start justify-between gap-3 border-b border-wa-gray-100 p-4 sm:gap-4 sm:p-6">
           <div>
-            <p className="text-body font-semibold text-wa-gray-900">{connection.displayName ?? "WhatsApp connected"}</p>
+            <p className="text-body font-semibold text-wa-gray-900">{connection.displayName ?? "رقم واتساب متصل"}</p>
             <p className="mt-2 max-w-[640px] text-body-sm leading-6 text-wa-gray-600">
-              This number is ready for the assistant. Messages can enter the inbox and route through the connected
-              WhatsApp account.
+              هذا الرقم جاهز للمساعد. الرسائل تدخل صندوق الوارد وتخرج الردود من حساب واتساب المتصل.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <StatusBadge className="px-3 py-1" label={statusLabel} variant={statusVariant} />
               <StatusBadge className="px-3 py-1" label={replyLabel} variant={autoReplyEnabled ? "active" : "paused"} />
             </div>
           </div>
-          {isUpdating ? <StatusBadge label="Updating" variant="paused" /> : null}
+          {isUpdating ? <StatusBadge label="جارٍ التحديث" variant="paused" /> : null}
         </div>
 
         <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
           <div className="grid gap-3 sm:grid-cols-3">
             <SummaryCard
-              label="AI status"
-              value={autoReplyEnabled ? "Replying to customers" : "Paused for now"}
+              label="حالة المساعد"
+              value={autoReplyEnabled ? "يرد على العملاء" : "متوقف الآن"}
               icon={<Radio className="size-4 text-wa-blue-600" aria-hidden="true" />}
             />
             <SummaryCard
               label="Webhook"
-              value="Connected and subscribed"
+              value="متصل ومشترك"
               icon={<ShieldCheck className="size-4 text-wa-success" aria-hidden="true" />}
             />
             <SummaryCard
-              label="Owner number"
-              value={connection.ownerPhoneNumberMasked ?? "Not saved"}
+              label="رقم المالك"
+              value={connection.ownerPhoneNumberMasked ?? "غير محفوظ"}
               icon={<KeyRound className="size-4 text-wa-gray-500" aria-hidden="true" />}
             />
           </div>
@@ -84,32 +83,32 @@ export function ConnectionStatus({
           <div className="grid gap-3 md:grid-cols-2">
             <CredentialBlock
               icon={<Radio className="size-4" aria-hidden="true" />}
-              label="Phone Number ID"
+              label="معرّف رقم واتساب"
               value={connection.phoneNumberId}
             />
             <CredentialBlock
               icon={<Building2 className="size-4" aria-hidden="true" />}
-              label="Business account"
+              label="حساب واتساب التجاري"
               value={connection.businessAccountId}
             />
           </div>
 
           <details className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4 sm:rounded-[22px] sm:p-5">
-            <summary className="cursor-pointer text-body-sm font-semibold text-wa-blue-600">Advanced settings</summary>
+            <summary className="cursor-pointer text-body-sm font-semibold text-wa-blue-600">إعدادات متقدمة</summary>
             <div className="mt-4 space-y-4">
               <CredentialBlock
                 icon={<KeyRound className="size-4" aria-hidden="true" />}
-                label="Access token"
+                label="رمز الوصول"
                 value={connection.accessTokenMasked}
               />
               <div className="space-y-2">
-                <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Webhook URL</p>
+                <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">رابط Webhook</p>
                 <div className="flex gap-2">
                   <code className="min-w-0 flex-1 overflow-x-auto rounded-xl border border-wa-gray-100 bg-white px-3 py-3 font-mono text-mono text-wa-gray-600">
                     {webhookUrl}
                   </code>
                   <Button
-                    aria-label="Copy webhook URL"
+                    aria-label="نسخ رابط Webhook"
                     className="shrink-0"
                     size="icon"
                     variant="outline"
@@ -121,7 +120,7 @@ export function ConnectionStatus({
               </div>
               <Button className="w-full rounded-full" variant="destructive" onClick={onDisconnect}>
                 <Trash2 className="size-4" aria-hidden="true" />
-                Disconnect
+                فصل الرقم
               </Button>
             </div>
           </details>

@@ -29,7 +29,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<A
   const payload = (await response.json()) as ApiResponse<T>;
 
   if (!response.ok || !payload.success) {
-    throw new ApiClientError(payload.error ?? "Request failed.", response.status, payload.meta);
+    throw new ApiClientError(payload.error ?? "فشل الطلب. حاول مرة أخرى.", response.status, payload.meta);
   }
 
   return payload;
@@ -39,7 +39,7 @@ export async function apiData<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await apiRequest<T>(path, init);
 
   if (response.data === undefined) {
-    throw new ApiClientError("Response did not include data.", 500);
+    throw new ApiClientError("لم يرجع الخادم بيانات كافية.", 500);
   }
 
   return response.data;

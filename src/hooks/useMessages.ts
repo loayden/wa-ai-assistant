@@ -24,6 +24,7 @@ export type UseMessagesParams = {
   limit?: number;
   direction?: MessageDirectionFilter;
   status?: MessageStatusFilter;
+  connectionId?: string;
 };
 
 export const messagesQueryKey = (params: Required<Pick<UseMessagesParams, "page" | "limit">> & Omit<UseMessagesParams, "page" | "limit">) => [
@@ -31,15 +32,16 @@ export const messagesQueryKey = (params: Required<Pick<UseMessagesParams, "page"
   params,
 ] as const;
 
-export function useMessages({ page = 1, limit = 20, direction, status }: UseMessagesParams = {}) {
+export function useMessages({ page = 1, limit = 20, connectionId, direction, status }: UseMessagesParams = {}) {
   const queryParams = useMemo(
     () => ({
       page,
       limit,
+      connectionId,
       direction,
       status,
     }),
-    [direction, limit, page, status],
+    [connectionId, direction, limit, page, status],
   );
   const query = useQuery({
     queryKey: messagesQueryKey(queryParams),
@@ -55,6 +57,10 @@ export function useMessages({ page = 1, limit = 20, direction, status }: UseMess
 
       if (queryParams.status) {
         params.set("status", queryParams.status);
+      }
+
+      if (queryParams.connectionId) {
+        params.set("connectionId", queryParams.connectionId);
       }
 
       return apiRequest<MessageRecord[]>(`/api/messages?${params.toString()}`);

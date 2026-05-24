@@ -23,6 +23,9 @@ const apiMocks = vi.hoisted(() => {
         findMany: vi.fn(),
         count: vi.fn(),
       },
+      conversationHandoff: {
+        findMany: vi.fn(),
+      },
     },
   };
 });
@@ -81,7 +84,7 @@ const apiRouteContracts: ApiRouteContract[] = [
   {
     route: "/api/messages",
     methods: ["GET"],
-    expectedInputs: ["Supabase session", "page", "limit", "direction", "status"],
+    expectedInputs: ["Supabase session", "page", "limit", "direction", "status", "connectionId"],
     successResponse: "paginated message array with total/page/limit meta",
     expectedErrors: [401, 422, 500, 503],
   },
@@ -121,17 +124,220 @@ const apiRouteContracts: ApiRouteContract[] = [
     expectedErrors: [400, 401, 403, 404, 422, 500, 503],
   },
   {
+    route: "/api/assistant/test",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "message"],
+    successResponse: "replyText/modelUsed/tokensUsed without consuming reply quota",
+    expectedErrors: [400, 401, 422, 500, 503],
+  },
+  {
+    route: "/api/knowledge",
+    methods: ["GET", "POST"],
+    expectedInputs: ["Supabase session", "type/title/content for POST"],
+    successResponse: "knowledge entries list or saved entry",
+    expectedErrors: [400, 401, 422, 500, 503],
+  },
+  {
+    route: "/api/knowledge/[id]",
+    methods: ["PATCH", "DELETE"],
+    expectedInputs: ["Supabase session", "owned knowledge id", "title/content for PATCH"],
+    successResponse: "updated entry or deleted=true",
+    expectedErrors: [400, 401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/onboarding",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session"],
+    successResponse: "onboardingCompleted=true",
+    expectedErrors: [401, 500, 503],
+  },
+  {
     route: "/api/whatsapp/send",
     methods: ["POST"],
     expectedInputs: ["Supabase session", "connectionId", "to", "message"],
     successResponse: "created outbound message",
     expectedErrors: [400, 401, 404, 422, 500, 502, 503],
   },
+  {
+    route: "/api/leads",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session", "status filter", "channel filter"],
+    successResponse: "lead list with masked phone numbers",
+    expectedErrors: [401, 422, 500, 503],
+  },
+  {
+    route: "/api/leads/[id]",
+    methods: ["PATCH"],
+    expectedInputs: ["Supabase session", "owned lead id", "status"],
+    successResponse: "updated lead",
+    expectedErrors: [400, 401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/leads/export",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session"],
+    successResponse: "CSV download of leads",
+    expectedErrors: [401, 500, 503],
+  },
+  {
+    route: "/api/conversations/[id]/handoff",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "message id representing a thread"],
+    successResponse: "handoff active",
+    expectedErrors: [401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/conversations/[id]/resume",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "message id representing a thread"],
+    successResponse: "handoff inactive",
+    expectedErrors: [401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/conversations/[id]/reply",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "message id representing a thread", "manual reply body"],
+    successResponse: "manual WhatsApp reply saved",
+    expectedErrors: [400, 401, 404, 422, 500, 502, 503],
+  },
+  {
+    route: "/api/conversations/[id]/resolve",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "message id representing a thread"],
+    successResponse: "conversation resolved and optional CSAT request sent",
+    expectedErrors: [401, 404, 422, 500, 502, 503],
+  },
+  {
+    route: "/api/analytics/summary",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session", "range=7d|30d"],
+    successResponse: "assistant impact summary",
+    expectedErrors: [401, 422, 500, 503],
+  },
+  {
+    route: "/api/cron/daily-summary",
+    methods: ["GET"],
+    expectedInputs: ["Bearer CRON_SECRET in production"],
+    successResponse: "processed and emailed counts",
+    expectedErrors: [403, 500, 503],
+  },
+  {
+    route: "/api/cron/weekly-report",
+    methods: ["GET"],
+    expectedInputs: ["Bearer CRON_SECRET in production", "weekly_report notification preference"],
+    successResponse: "processed, emailed, and skipped counts",
+    expectedErrors: [403, 500, 503],
+  },
+  {
+    route: "/api/templates",
+    methods: ["GET", "POST"],
+    expectedInputs: ["Supabase session", "template body for POST", "optional status filter"],
+    successResponse: "template list or created Meta-submitted template",
+    expectedErrors: [400, 401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/templates/[id]",
+    methods: ["DELETE"],
+    expectedInputs: ["Supabase session", "owned template id"],
+    successResponse: "deleted=true",
+    expectedErrors: [401, 404, 500, 503],
+  },
+  {
+    route: "/api/templates/sync",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "connected WhatsApp number with WABA id"],
+    successResponse: "templates with refreshed approval statuses",
+    expectedErrors: [401, 500, 503],
+  },
+  {
+    route: "/api/templates/[id]/send",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "approved template id", "to", "parameters"],
+    successResponse: "providerMessageId for template send",
+    expectedErrors: [400, 401, 404, 422, 500, 502, 503],
+  },
+  {
+    route: "/api/broadcasts",
+    methods: ["GET", "POST"],
+    expectedInputs: ["Supabase session", "templateId", "recipients", "parameters"],
+    successResponse: "broadcast list or created broadcast",
+    expectedErrors: [400, 401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/broadcasts/[id]/send",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "owned broadcast id", "paid plan"],
+    successResponse: "sent and failed counts",
+    expectedErrors: [401, 403, 404, 500, 502, 503],
+  },
+  {
+    route: "/api/broadcasts/[id]/status",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session", "owned broadcast id"],
+    successResponse: "broadcast sending progress",
+    expectedErrors: [401, 404, 500, 503],
+  },
+  {
+    route: "/api/products",
+    methods: ["GET", "POST"],
+    expectedInputs: ["Supabase session", "name/price/category for POST"],
+    successResponse: "product catalog list or created product",
+    expectedErrors: [400, 401, 422, 500, 503],
+  },
+  {
+    route: "/api/products/[id]",
+    methods: ["PATCH", "DELETE"],
+    expectedInputs: ["Supabase session", "owned product id", "partial product body for PATCH"],
+    successResponse: "updated product or deleted=true",
+    expectedErrors: [400, 401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/orders",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session", "status filter"],
+    successResponse: "order list with payment status",
+    expectedErrors: [401, 422, 500, 503],
+  },
+  {
+    route: "/api/orders/[id]",
+    methods: ["PATCH"],
+    expectedInputs: ["Supabase session", "owned order id", "status/customer fields"],
+    successResponse: "updated order and optional customer status message",
+    expectedErrors: [400, 401, 404, 422, 500, 502, 503],
+  },
+  {
+    route: "/api/orders/[id]/payment-link",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "owned unpaid order id", "active WhatsApp connection"],
+    successResponse: "Paymob payment link sent to customer",
+    expectedErrors: [400, 401, 404, 422, 500, 502, 503],
+  },
+  {
+    route: "/api/corrections",
+    methods: ["GET"],
+    expectedInputs: ["Supabase session"],
+    successResponse: "saved AI correction examples",
+    expectedErrors: [401, 500, 503],
+  },
+  {
+    route: "/api/corrections/[id]",
+    methods: ["DELETE"],
+    expectedInputs: ["Supabase session", "owned correction id"],
+    successResponse: "deleted=true",
+    expectedErrors: [401, 404, 422, 500, 503],
+  },
+  {
+    route: "/api/messages/[id]/correct",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "owned AI message id", "correctReply"],
+    successResponse: "corrected reply sent and saved as training example",
+    expectedErrors: [400, 401, 404, 422, 500, 502, 503],
+  },
 ];
 
 describe("API route contracts", () => {
   it("documents expected inputs, success responses, and error responses for each route", () => {
-    expect(apiRouteContracts).toHaveLength(10);
+    expect(apiRouteContracts).toHaveLength(39);
 
     for (const contract of apiRouteContracts) {
       expect(contract.route).toMatch(/^\/api\//);
@@ -144,6 +350,7 @@ describe("API route contracts", () => {
 
   it("returns paginated messages for an authenticated user", async () => {
     apiMocks.requireAppUser.mockResolvedValueOnce({ id: "user-1" });
+    apiMocks.prisma.conversationHandoff.findMany.mockResolvedValueOnce([]);
     apiMocks.prisma.$transaction.mockResolvedValueOnce([
       [
         {

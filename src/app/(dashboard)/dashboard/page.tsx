@@ -18,6 +18,8 @@ export default async function DashboardPage() {
     <DashboardPageClient
       initialConnection={bootstrap.connections[0] ?? null}
       initialMessages={bootstrap.messages}
+      initialMonthlyLeadsCount={bootstrap.monthlyLeadsCount}
+      initialOnboarding={bootstrap.onboarding}
       initialSettings={bootstrap.settings}
       initialUser={bootstrap.user}
       mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}

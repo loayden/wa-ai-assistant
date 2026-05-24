@@ -21,9 +21,10 @@ export default async function WhatsAppPage() {
       embeddedSignupAppId={process.env.WHATSAPP_APP_ID ?? null}
       embeddedSignupConfigId={process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null}
       embeddedSignupEnabled={process.env.WHATSAPP_EMBEDDED_SIGNUP_ENABLED === "true"}
-      initialConnection={bootstrap.connections[0] ?? null}
+      initialConnections={bootstrap.connections}
       initialSettings={bootstrap.settings}
       mockMode={process.env.WHATSAPP_MOCK_MODE === "true"}
+      planTier={bootstrap.user.planTier}
     />
   );
 }

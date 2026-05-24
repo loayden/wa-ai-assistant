@@ -18,6 +18,10 @@ vi.mock("@/lib/prisma/client", () => ({
   prisma: prismaMock,
 }));
 
+vi.mock("@/lib/resend/client", () => ({
+  sendEmail: vi.fn(),
+}));
+
 vi.mock("@/lib/utils/logger", () => ({
   logger: {
     debug: vi.fn(),
@@ -114,7 +118,16 @@ describe("subscription utilities", () => {
   });
 
   it("increments the monthly reply count", async () => {
-    prismaMock.user.findUnique.mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() });
+    prismaMock.user.findUnique
+      .mockResolvedValueOnce({ id: USER_ID, replyCountResetAt: currentMonthDate() })
+      .mockResolvedValueOnce({
+        email: "owner@example.com",
+        fullName: "Owner",
+        monthlyReplyCount: 11,
+        planTier: PlanTier.PRO,
+        usageAlert80SentAt: new Date(),
+        usageAlert100SentAt: null,
+      });
     prismaMock.user.update.mockResolvedValueOnce({ monthlyReplyCount: 12 });
 
     await expect(incrementReplyCount(USER_ID)).resolves.toBe(12);
@@ -138,12 +151,14 @@ describe("subscription utilities", () => {
 
     await resetMonthlyCountIfNeeded(USER_ID);
 
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: USER_ID },
-      data: {
-        monthlyReplyCount: 0,
-        replyCountResetAt: expect.any(Date),
-      },
-    });
+    expect(prismaMock.user.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: USER_ID },
+        data: {
+          monthlyReplyCount: 0,
+          replyCountResetAt: expect.any(Date),
+        },
+      }),
+    );
   });
 });

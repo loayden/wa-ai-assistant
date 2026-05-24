@@ -230,45 +230,45 @@ export function EmbeddedSignupLauncher({
 
   return (
     <div className="rounded-xl border border-wa-gray-100 bg-white p-5">
-      <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">Recommended</p>
-      <h2 className="mt-3 text-h2 font-medium text-wa-gray-900">Connect with Meta</h2>
+      <p className="text-label font-medium uppercase tracking-widest text-wa-gray-400">الأسهل للمستخدم</p>
+      <h2 className="mt-3 text-h2 font-medium text-wa-gray-900">الربط عبر Meta</h2>
       <p className="mt-2 max-w-[32rem] text-body text-wa-gray-600">
-        No IDs, tokens, or developer settings. Sign in with Meta, choose your business, and {BRAND_NAME} will finish the secure setup automatically.
+        بدون نسخ أكواد أو إعدادات مطور. سجّل الدخول إلى Meta، اختر نشاطك التجاري، وسيكمل {BRAND_NAME} الإعداد الآمن تلقائياً عند توفر هذه الميزة لحسابك.
       </p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <MessageSquareLock className="size-5 text-wa-blue-600" aria-hidden="true" />
-          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">No technical setup</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">Your customer never sees Phone Number IDs or access tokens.</p>
+          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">بدون إعداد تقني</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">العميل لا يرى Phone Number ID أو Access Token.</p>
         </div>
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <Smartphone className="size-5 text-wa-blue-600" aria-hidden="true" />
-          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">Use the same number</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">Meta handles the number verification steps inside the popup.</p>
+          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">استخدم نفس الرقم</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">Meta تتولى خطوات التحقق من الرقم داخل النافذة.</p>
         </div>
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <CheckCircle2 className="size-5 text-wa-blue-600" aria-hidden="true" />
-          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">Webhook wired for you</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">{BRAND_NAME} stores the connection securely and subscribes the account automatically.</p>
+          <p className="mt-3 text-body-sm font-medium text-wa-gray-900">Webhook جاهز</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">يحفظ {BRAND_NAME} الاتصال بأمان ويشترك في الحساب تلقائياً.</p>
         </div>
       </div>
       {error ? (
         <Alert className="mt-5 border-wa-error bg-wa-error-bg text-wa-error">
-          <AlertTitle>Meta onboarding needs attention</AlertTitle>
+          <AlertTitle>إعداد Meta يحتاج مراجعة</AlertTitle>
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}
       {!embeddedSignupEnabled ? (
         <Alert className="mt-5 border-wa-warning bg-wa-warning-bg text-wa-warning">
-          <AlertTitle>One-click Meta onboarding is not configured yet</AlertTitle>
-          <AlertDescription>Add your Meta Embedded Signup configuration ID to enable this button, or use the advanced API credentials flow below.</AlertDescription>
+          <AlertTitle>الربط المباشر من Meta غير مفعّل حالياً</AlertTitle>
+          <AlertDescription>أضف رقم إعداد Meta Embedded Signup لتفعيل الزر، أو استخدم مسار بيانات API الموجود بالأسفل.</AlertDescription>
         </Alert>
       ) : null}
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button className="sm:min-w-[220px]" isLoading={launchState !== "idle"} onClick={launchEmbeddedSignup}>
-          {launchState === "idle" ? "Continue with Meta" : launchState === "authorizing" ? "Waiting for Meta…" : "Finishing secure setup…"}
+          {launchState === "idle" ? "متابعة عبر Meta" : launchState === "authorizing" ? "بانتظار Meta..." : "جارٍ إنهاء الإعداد الآمن..."}
         </Button>
-        <p className="text-body-sm text-wa-gray-600">Allow the popup and complete Meta’s guided steps. If you already use WhatsApp Business App, Meta may offer to keep that same number.</p>
+        <p className="text-body-sm text-wa-gray-600">اسمح بفتح النافذة وأكمل خطوات Meta. إذا كان رقمك مستخدماً في WhatsApp Business App فقد تطلب Meta نقله أو فصله أولاً.</p>
       </div>
     </div>
   );

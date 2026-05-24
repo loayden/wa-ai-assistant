@@ -6,20 +6,20 @@
  */
 import { z } from "zod";
 
-export const emailSchema = z.string().trim().toLowerCase().email().max(254);
+export const emailSchema = z.string().trim().toLowerCase().email("اكتبي بريد إلكتروني صحيح.").max(254, "البريد طويل جداً.");
 
 export const passwordSchema = z
   .string()
-  .min(8, "Password must be at least 8 characters.")
-  .max(128, "Password must be at most 128 characters.")
-  .regex(/[A-Z]/, "Password must include at least one uppercase letter.")
-  .regex(/[0-9]/, "Password must include at least one number.");
+  .min(8, "كلمة المرور يجب أن تكون ٨ أحرف على الأقل.")
+  .max(128, "كلمة المرور طويلة جداً.")
+  .regex(/[A-Z]/, "كلمة المرور يجب أن تحتوي على حرف إنجليزي كبير واحد على الأقل.")
+  .regex(/[0-9]/, "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل.");
 
 export const signupSchema = z
   .object({
     email: emailSchema,
     password: passwordSchema,
-    fullName: z.string().trim().min(2).max(120),
+    fullName: z.string().trim().min(2, "اكتبي الاسم الكامل.").max(120, "الاسم طويل جداً."),
   })
   .strict();
 

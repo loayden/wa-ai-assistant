@@ -27,8 +27,8 @@ type PromptEditorProps = {
 
 function interpolatePrompt(value: string, businessName: string, language: string, maxReplyLength: number) {
   return value
-    .replaceAll("{businessName}", businessName || "your business")
-    .replaceAll("{language}", language || "en")
+    .replaceAll("{businessName}", businessName || "نشاطك")
+    .replaceAll("{language}", language || "ar")
     .replaceAll("{maxReplyLength}", String(maxReplyLength || 300));
 }
 
@@ -38,18 +38,18 @@ export function PromptEditor({ value, canEditCustomPrompt, businessName, languag
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <Label htmlFor="systemPrompt">System Prompt</Label>
-        <span className="text-xs text-muted-foreground">{characterCount}/2000 characters</span>
+        <Label htmlFor="systemPrompt">تعليمات المساعد</Label>
+        <span className="text-xs text-muted-foreground">{characterCount.toLocaleString("ar-EG")}/٢٠٠٠ حرف</span>
       </div>
       {!canEditCustomPrompt ? (
         <Alert>
           <Lock className="size-4" aria-hidden="true" />
-          <AlertTitle>Custom prompt is a PRO or BUSINESS feature</AlertTitle>
+          <AlertTitle>تعديل التعليمات المتقدمة متاح في Pro و Business</AlertTitle>
           <AlertDescription>
             <Link href="/billing" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
-              Upgrade your plan
+              ترقية الخطة
             </Link>{" "}
-            to edit assistant behavior.
+            لتخصيص سلوك المساعد بشكل أعمق.
           </AlertDescription>
         </Alert>
       ) : null}
@@ -62,7 +62,7 @@ export function PromptEditor({ value, canEditCustomPrompt, businessName, languag
       />
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div className="rounded-lg border bg-muted/30 p-4">
-        <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">Preview</p>
+        <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">معاينة</p>
         <p className="whitespace-pre-wrap text-sm leading-6">{interpolatePrompt(value, businessName, language, maxReplyLength)}</p>
       </div>
     </div>

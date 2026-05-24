@@ -8,8 +8,8 @@ import { z } from "zod";
 
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
+import { updateUserSettings } from "@/lib/api/settings";
 import { openai } from "@/lib/openai/client";
-import { prisma } from "@/lib/prisma/client";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
@@ -102,20 +102,11 @@ export async function POST(request: Request) {
 
     const config = await extractVoiceConfig(transcription);
 
-    await prisma.userSettings.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        systemPrompt: config.systemPrompt,
-        language: config.language,
-        businessName: config.businessName ?? undefined,
-        autoReplyEnabled: true,
-      },
-      update: {
-        systemPrompt: config.systemPrompt,
-        language: config.language,
-        businessName: config.businessName ?? undefined,
-      },
+    await updateUserSettings(user.id, {
+      systemPrompt: config.systemPrompt,
+      language: config.language,
+      businessName: config.businessName,
+      autoReplyEnabled: true,
     });
 
     return jsonSuccess({

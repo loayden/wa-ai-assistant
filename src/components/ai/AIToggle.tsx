@@ -40,7 +40,7 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
         onError: (mutationError) => {
           setLocalEnabled(previous);
           onOptimisticChange?.(previous);
-          setError(mutationError instanceof Error ? mutationError.message : "Could not update AI status.");
+          setError(mutationError instanceof Error ? mutationError.message : "تعذر تحديث حالة المساعد.");
         },
       },
     );
@@ -50,10 +50,10 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
 
   return (
     <section className={cn("w-full rounded-2xl border border-wa-gray-100 bg-white p-4 text-center sm:p-5", className)}>
-      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-wa-gray-400 sm:mb-4 sm:text-label">Your AI assistant</p>
+      <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-wa-gray-400 sm:mb-4 sm:text-label">مساعدك الذكي</p>
       <button
         type="button"
-        aria-label={localEnabled ? "Pause AI replies" : "Resume AI replies"}
+        aria-label={localEnabled ? "إيقاف ردود المساعد" : "تشغيل ردود المساعد"}
         aria-pressed={localEnabled}
         disabled={disabled || loading}
         onClick={handleToggle}
@@ -74,7 +74,7 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
         />
       </button>
       <p className={cn("mt-3 text-body-sm transition duration-200 sm:mt-4", localEnabled ? "font-medium text-wa-success" : "text-wa-gray-400")}>
-        {localEnabled ? "Replying to customers" : "Paused"}
+        {localEnabled ? "يرد على العملاء" : "متوقف"}
       </p>
       {error ? <p className="mt-3 rounded-lg bg-wa-error-bg px-3 py-2 text-body-sm text-wa-error">{error}</p> : null}
     </section>

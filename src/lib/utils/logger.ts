@@ -31,13 +31,30 @@ const consoleByLevel: Record<LogLevel, (message?: unknown, ...optionalParams: un
   error: console.error,
 };
 
-function normalizeValue(value: unknown): unknown {
+const SENSITIVE_METADATA_KEY_PATTERN =
+  /access[_-]?token|authorization|api[_-]?key|secret|password|signature|hmac|cookie|raw[_-]?body|payload|client[_-]?secret/i;
+const REDACTED_VALUE = "[redacted]";
+
+function isSensitiveMetadataKey(key?: string): boolean {
+  return Boolean(key && SENSITIVE_METADATA_KEY_PATTERN.test(key));
+}
+
+function normalizeValue(value: unknown, key?: string): unknown {
+  if (isSensitiveMetadataKey(key)) {
+    return REDACTED_VALUE;
+  }
+
   if (value instanceof Error) {
-    return {
+    const normalizedError: Record<string, string | undefined> = {
       name: value.name,
       message: value.message,
-      stack: value.stack,
     };
+
+    if (process.env.NODE_ENV !== "production") {
+      normalizedError.stack = value.stack;
+    }
+
+    return normalizedError;
   }
 
   if (typeof value === "bigint") {
@@ -45,14 +62,14 @@ function normalizeValue(value: unknown): unknown {
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => normalizeValue(item));
+    return value.map((item) => normalizeValue(item, key));
   }
 
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
       Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
         key,
-        normalizeValue(nestedValue),
+        normalizeValue(nestedValue, key),
       ]),
     );
   }

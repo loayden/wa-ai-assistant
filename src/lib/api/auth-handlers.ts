@@ -125,7 +125,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
   }
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     if (action === "signup") {
       const parsed = signupSchema.safeParse(body);

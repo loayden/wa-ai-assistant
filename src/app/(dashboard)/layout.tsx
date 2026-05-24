@@ -21,7 +21,12 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-wa-gray-50">
-      <TopBar planTier={appUser?.planTier ?? "FREE"} userEmail={user?.email ?? null} userName={fullName} />
+      <TopBar
+        isAdmin={Boolean(appUser?.isAdmin)}
+        planTier={appUser?.planTier ?? "FREE"}
+        userEmail={user?.email ?? null}
+        userName={fullName}
+      />
       <main className="min-h-screen bg-wa-gray-50 pb-24 pt-14 md:pb-10 md:pt-16">
         {children}
       </main>

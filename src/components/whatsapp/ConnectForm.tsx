@@ -32,9 +32,9 @@ type ConnectFormProps = {
 };
 
 const trustPoints = [
-  "kallem verifies the number against the business account before saving anything.",
-  "The access token is stored encrypted after verification succeeds.",
-  "The app attempts to subscribe the webhook automatically during setup.",
+  "يتأكد kallem أن الرقم تابع لحساب واتساب التجاري قبل حفظ أي بيانات.",
+  "يتم حفظ التوكن مشفرًا بعد نجاح التحقق فقط.",
+  "يحاول التطبيق تفعيل استقبال الرسائل تلقائيًا أثناء الإعداد.",
 ];
 
 export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: ConnectFormProps) {
@@ -45,7 +45,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
       phoneNumberId: mockMode ? "123456789012345" : "",
       businessAccountId: mockMode ? "987654321098765" : "",
       accessToken: mockMode ? "mock_access_token_for_development" : "",
-      displayName: mockMode ? "Mock WhatsApp" : "",
+      displayName: mockMode ? "واتساب اختباري" : "",
     },
   });
   const connectMutation = useMutation({
@@ -59,15 +59,15 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
         }),
       }),
     onSuccess: () => {
-      toast.success("WhatsApp connected", {
-        description: "Your assistant can now use this business number.",
+      toast.success("تم ربط واتساب", {
+        description: "المساعد يستطيع الآن استخدام رقم النشاط التجاري.",
       });
       onConnected();
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "WhatsApp connection failed.";
+      const message = error instanceof Error ? error.message : "تعذر ربط واتساب.";
       setFormError(message);
-      toast.error("Connection failed", {
+      toast.error("فشل الربط", {
         description: message,
       });
     },
@@ -86,10 +86,9 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
             <PlugZap className="size-4 sm:size-5" aria-hidden="true" />
           </div>
           <div>
-            <CardTitle>Verify and connect</CardTitle>
+            <CardTitle>تحقق واربط الرقم</CardTitle>
             <CardDescription className="mt-2 max-w-[680px] leading-6">
-              Paste the Meta details once. kallem checks that the number, business account, and token all belong
-              together before storing anything.
+              ضعي بيانات Meta مرة واحدة. يتأكد kallem أن رقم واتساب، حساب الأعمال، والتوكن تابعين لنفس الحساب قبل حفظ أي شيء.
             </CardDescription>
           </div>
         </div>
@@ -97,21 +96,21 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
       <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6">
         {mockMode ? (
           <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
-            <AlertTitle>Mock Mode Active</AlertTitle>
-            <AlertDescription>No real WhatsApp credentials are required for local testing.</AlertDescription>
+            <AlertTitle>وضع الاختبار المحلي مفعّل</AlertTitle>
+            <AlertDescription>لا تحتاجين بيانات واتساب حقيقية أثناء التجربة المحلية.</AlertDescription>
           </Alert>
         ) : null}
 
         <form className="space-y-3.5 sm:space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
           <FieldSection
             icon={Phone}
-            title="Business number"
-            description="This label helps you recognize the connected number inside the app."
+            title="رقم النشاط التجاري"
+            description="هذا الاسم يساعدك على تمييز الرقم داخل التطبيق."
           >
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display name</Label>
-              <Input id="displayName" placeholder="Kallem support" {...form.register("displayName")} />
-              <p className="text-body-sm text-wa-gray-600">Use the business name customers would recognize.</p>
+              <Label htmlFor="displayName">اسم الرقم داخل التطبيق</Label>
+              <Input id="displayName" placeholder="دعم kallem" {...form.register("displayName")} />
+              <p className="text-body-sm text-wa-gray-600">استخدمي اسمًا واضحًا يعرفه فريقك والعملاء.</p>
               {form.formState.errors.displayName ? (
                 <p className="text-body-sm text-wa-error">{form.formState.errors.displayName.message}</p>
               ) : null}
@@ -120,24 +119,24 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
 
           <FieldSection
             icon={Building2}
-            title="Meta connection details"
-            description="These values come from the Meta app that owns the WhatsApp Business number."
+            title="بيانات الربط من Meta"
+            description="هذه القيم تأتي من تطبيق Meta الذي يملك رقم واتساب التجاري."
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="phoneNumberId">Phone Number ID</Label>
-                <Input id="phoneNumberId" placeholder="The WhatsApp number ID from Meta" {...form.register("phoneNumberId")} />
+                <Label htmlFor="phoneNumberId">معرّف رقم واتساب</Label>
+                <Input className="ltr text-left" id="phoneNumberId" placeholder="Phone Number ID من Meta" {...form.register("phoneNumberId")} />
                 <p className="text-body-sm text-wa-gray-600">
-                  The unique Meta identifier for the number customers will message.
+                  رقم تعريفي من Meta للرقم الذي سيراسله العملاء.
                 </p>
                 {form.formState.errors.phoneNumberId ? (
                   <p className="text-body-sm text-wa-error">{form.formState.errors.phoneNumberId.message}</p>
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessAccountId">Business Account ID</Label>
-                <Input id="businessAccountId" placeholder="Your WhatsApp Business account ID" {...form.register("businessAccountId")} />
-                <p className="text-body-sm text-wa-gray-600">The Meta business account that owns this number.</p>
+                <Label htmlFor="businessAccountId">معرّف حساب واتساب التجاري</Label>
+                <Input className="ltr text-left" id="businessAccountId" placeholder="WhatsApp Business Account ID" {...form.register("businessAccountId")} />
+                <p className="text-body-sm text-wa-gray-600">حساب الأعمال في Meta الذي يملك هذا الرقم.</p>
                 {form.formState.errors.businessAccountId ? (
                   <p className="text-body-sm text-wa-error">{form.formState.errors.businessAccountId.message}</p>
                 ) : null}
@@ -147,14 +146,14 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
 
           <FieldSection
             icon={KeyRound}
-            title="Access token"
-            description="kallem uses this token to verify the account and prepare the connection."
+            title="توكن الوصول"
+            description="يستخدم kallem هذا التوكن للتحقق من الحساب وتجهيز الربط."
           >
             <div className="space-y-2">
               <Label htmlFor="accessToken">Access Token</Label>
-              <Input id="accessToken" type="password" placeholder="A Meta token with WhatsApp permissions" {...form.register("accessToken")} />
+              <Input className="ltr text-left" id="accessToken" type="password" placeholder="توكن Meta بصلاحيات واتساب" {...form.register("accessToken")} />
               <p className="text-body-sm text-wa-gray-600">
-                Use a token that can read phone assets, manage WhatsApp business settings, and subscribe the webhook app.
+                استخدمي توكن يملك صلاحيات قراءة أرقام واتساب، إدارة الحساب التجاري، وتفعيل الـ webhook.
               </p>
               {form.formState.errors.accessToken ? (
                 <p className="text-body-sm text-wa-error">{form.formState.errors.accessToken.message}</p>
@@ -166,7 +165,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
               <div>
-                <p className="text-body-sm font-semibold text-wa-gray-900">What happens when you connect</p>
+                <p className="text-body-sm font-semibold text-wa-gray-900">ماذا يحدث عند الربط؟</p>
                 <div className="mt-3 grid gap-2 text-body-sm text-wa-gray-700">
                   {trustPoints.map((point) => (
                     <p key={point} className="flex gap-2">
@@ -181,30 +180,30 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
 
           {formError ? (
             <Alert className="border-wa-error bg-wa-error-bg">
-              <AlertTitle>We couldn&apos;t verify this connection</AlertTitle>
+              <AlertTitle>لم نستطع التحقق من هذا الربط</AlertTitle>
               <AlertDescription>{formError}</AlertDescription>
             </Alert>
           ) : null}
 
           <Button className="w-full rounded-full" disabled={connectMutation.isPending} type="submit">
             <PlugZap className="size-4" aria-hidden="true" />
-            {connectMutation.isPending ? "Verifying connection..." : "Verify and connect"}
+            {connectMutation.isPending ? "جارٍ التحقق من الربط..." : "تحقق واربط الرقم"}
           </Button>
         </form>
 
         <Accordion className="rounded-[22px] border-wa-gray-100 bg-wa-gray-50">
-          <AccordionItem title="Need help finding these values?">
-            <ol className="list-decimal space-y-2 pl-4 text-body-sm text-wa-gray-600">
-              <li>Open your Meta Developer app and add the WhatsApp product.</li>
-              <li>Copy the Phone Number ID and WhatsApp Business Account ID from API Setup.</li>
-              <li>Use an access token with WhatsApp business management and messaging permissions.</li>
-              <li>Return here and let kallem verify the connection before saving it.</li>
+          <AccordionItem title="أين أجد هذه القيم؟">
+            <ol className="list-decimal space-y-2 pr-4 text-body-sm text-wa-gray-600">
+              <li>افتحي تطبيقك في Meta Developers ثم WhatsApp ثم API Setup.</li>
+              <li>انسخي Phone Number ID و WhatsApp Business Account ID من نفس الصفحة.</li>
+              <li>استخدمي توكن بصلاحيات WhatsApp Business Management و Messaging.</li>
+              <li>ارجعي هنا ودعي kallem يتحقق من الربط قبل حفظه.</li>
             </ol>
           </AccordionItem>
           {mockMode ? (
-            <AccordionItem title="Local development">
+            <AccordionItem title="التطوير المحلي">
               <p className="text-body-sm text-wa-gray-600">
-                Mock mode is active for local webhook testing. Turn it off before production deployment.
+                وضع الاختبار المحلي مفعّل لتجربة الـ webhook بدون إرسال حقيقي. يجب إيقافه قبل الإنتاج.
               </p>
             </AccordionItem>
           ) : null}

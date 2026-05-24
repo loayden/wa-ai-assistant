@@ -48,11 +48,19 @@ export function useUpdateSettings() {
       const previousSettings = queryClient.getQueryData<SettingsResponse>(settingsQueryKey);
 
       if (previousSettings) {
+        const nextNotificationPrefs = values.notificationPrefs
+          ? {
+              ...previousSettings.settings.notificationPrefs,
+              ...values.notificationPrefs,
+            }
+          : previousSettings.settings.notificationPrefs;
+
         queryClient.setQueryData<SettingsResponse>(settingsQueryKey, {
           ...previousSettings,
           settings: {
             ...previousSettings.settings,
             ...values,
+            notificationPrefs: nextNotificationPrefs,
           },
         });
       }

@@ -51,23 +51,65 @@ model User {
   email                String               @unique
   fullName             String?              @map("full_name")
   avatarUrl            String?              @map("avatar_url")
+  isAdmin              Boolean              @default(false) @map("is_admin")
   planTier             PlanTier             @default(FREE) @map("plan_tier")
   paymentCustomerId    String?              @unique @map("stripe_customer_id")
   paymentSubscriptionId String?             @map("stripe_subscription_id")
   subscriptionStatus   SubscriptionStatus   @default(INACTIVE) @map("subscription_status")
   monthlyReplyCount    Int                  @default(0) @map("monthly_reply_count")
+  onboardingCompleted  Boolean              @default(false) @map("onboarding_completed")
+  trialEndsAt          DateTime?            @map("trial_ends_at")
+  trialUsed            Boolean              @default(false) @map("trial_used")
+  paidAt               DateTime?            @map("paid_at")
+  usageAlert80SentAt   DateTime?            @map("usage_alert_80_sent_at")
+  usageAlert100SentAt  DateTime?            @map("usage_alert_100_sent_at")
   replyCountResetAt    DateTime             @default(now()) @map("reply_count_reset_at")
   createdAt            DateTime             @default(now()) @map("created_at")
   updatedAt            DateTime             @updatedAt @map("updated_at")
   connections          WhatsAppConnection[]
+  conversationHandoffs ConversationHandoff[]
+  aiCorrections        AiCorrection[]
+  orders               Order[]
+  products             Product[]
+  routingRules         RoutingRule[]
+  leads                Lead[]
+  knowledgeBaseEntries KnowledgeBaseEntry[]
   messages             Message[]
+  messageTemplates     MessageTemplate[]
+  broadcasts           Broadcast[]
   settings             UserSettings?
   subscriptionEvents   SubscriptionEvent[]
+  supportTickets       SupportTicket[]
+  adminOutreach        AdminOutreach[]
+  customerProfiles     CustomerProfile[]
+  whatsappFlows        WhatsAppFlow[]
+  flowResponses        FlowResponse[]
+  appointments         Appointment[]
 
   @@index([createdAt])
   @@index([planTier])
   @@index([subscriptionStatus])
+  @@index([isAdmin])
+  @@index([trialEndsAt])
   @@map("users")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Knowledge entries are tenant-owned by the app user instead of a new
+// business table, preserving the current production schema and auth model.
+model KnowledgeBaseEntry {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      String
+  title     String
+  content   String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, type])
+  @@map("knowledge_base")
 }
 
 // [ROLE: BACKEND ENGINEER]
@@ -89,6 +131,12 @@ model WhatsAppConnection {
   updatedAt          DateTime  @updatedAt @map("updated_at")
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages           Message[]
+  conversationHandoffs ConversationHandoff[]
+  leads              Lead[]
+  messageTemplates   MessageTemplate[]
+  broadcasts         Broadcast[]
+  orders             Order[]
+  flowResponses      FlowResponse[]
 
   @@index([userId])
   @@index([createdAt])
@@ -115,11 +163,13 @@ model Message {
   aiReplyText  String?            @map("ai_reply_text")
   aiModelUsed  String?            @map("ai_model_used")
   aiTokensUsed Int?               @map("ai_tokens_used")
+  metadata     Json               @default("{}")
   processedAt  DateTime?          @map("processed_at")
   createdAt    DateTime           @default(now()) @map("created_at")
   updatedAt    DateTime           @updatedAt @map("updated_at")
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   connection   WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  leads        Lead[]
 
   @@index([userId, createdAt])
   @@index([userId, status])
@@ -128,6 +178,152 @@ model Message {
   @@index([status])
   @@index([waMessageId])
   @@map("messages")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Products are user-owned catalog items that the assistant can use to
+// quote prices and create lightweight WhatsApp orders without adding a separate
+// business table.
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String
+  nameEn      String?  @map("name_en")
+  description String?
+  price       Int
+  category    String?
+  isAvailable Boolean @default(true) @map("is_available")
+  sortOrder   Int     @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sortOrder])
+  @@index([userId, isAvailable])
+  @@map("products")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Orders are tied to the current WhatsApp connection and customer
+// phone because the production schema derives threads from messages rather than
+// a conversations table.
+model Order {
+  id                String              @id @default(uuid()) @db.Uuid
+  userId            String              @map("user_id") @db.Uuid
+  connectionId      String              @map("connection_id") @db.Uuid
+  customerPhone     String              @map("customer_phone")
+  customerName      String?             @map("customer_name")
+  customerAddress   String?             @map("customer_address")
+  items             Json
+  subtotal          Int
+  status            String              @default("new")
+  notes             String?
+  paymentLink       String?             @map("payment_link")
+  paymentLinkSentAt DateTime?           @map("payment_link_sent_at")
+  paidAt            DateTime?           @map("paid_at")
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection        WhatsAppConnection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([connectionId, customerPhone])
+  @@map("orders")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Corrections are stored as business-specific examples, letting future
+// AI prompts learn from owner edits without changing previous message records.
+model AiCorrection {
+  id                      String   @id @default(uuid()) @db.Uuid
+  userId                  String   @map("user_id") @db.Uuid
+  originalCustomerMessage String   @map("original_customer_message")
+  wrongAiReply            String   @map("wrong_ai_reply")
+  correctReply            String   @map("correct_reply")
+  createdAt               DateTime @default(now()) @map("created_at")
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("ai_corrections")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Routing rules are explicit owner-controlled automation rules, kept
+// user-scoped so message classification can pause AI, notify staff, or add
+// extra instructions without introducing new permission boundaries.
+model RoutingRule {
+  id                  String   @id @default(uuid()) @db.Uuid
+  userId              String   @map("user_id") @db.Uuid
+  name                String
+  topic               String
+  keywords            String[] @default([])
+  action              String
+  targetPhone         String?  @map("target_phone")
+  targetEmail         String?  @map("target_email")
+  customAiInstruction String?  @map("custom_ai_instruction")
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@index([userId, topic])
+  @@map("routing_rules")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Leads are attached to the current tenant user and optionally to the
+// message that triggered detection, preserving the existing flat message model.
+model Lead {
+  id            String              @id @default(uuid()) @db.Uuid
+  userId        String              @map("user_id") @db.Uuid
+  messageId     String?             @map("message_id") @db.Uuid
+  connectionId  String?             @map("connection_id") @db.Uuid
+  customerPhone String              @map("customer_phone")
+  customerName  String?             @map("customer_name")
+  interest      String
+  channel       String              @default("whatsapp")
+  status        String              @default("new")
+  detectedAt    DateTime            @default(now()) @map("detected_at")
+  createdAt     DateTime            @default(now()) @map("created_at")
+  updatedAt     DateTime            @updatedAt @map("updated_at")
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  message       Message?            @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, detectedAt])
+  @@index([userId, status])
+  @@index([userId, channel])
+  @@index([connectionId, customerPhone])
+  @@map("leads")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Handoff is stored per customer thread derived from connection and
+// phone number because the production schema has no separate conversations table.
+model ConversationHandoff {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @map("user_id") @db.Uuid
+  connectionId  String             @map("connection_id") @db.Uuid
+  customerPhone String             @map("customer_phone")
+  active        Boolean            @default(false)
+  handoffAt     DateTime?          @map("handoff_at")
+  resumedAt     DateTime?          @map("resumed_at")
+  resolvedAt    DateTime?          @map("resolved_at")
+  rating        Int?
+  ratingRequestedAt DateTime?      @map("rating_requested_at")
+  notifiedEvents String[]          @default([]) @map("notified_events")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, connectionId, customerPhone])
+  @@index([userId, active])
+  @@index([userId, resolvedAt])
+  @@index([connectionId, customerPhone])
+  @@map("conversation_handoffs")
 }
 
 // [ROLE: BACKEND ENGINEER]
@@ -143,6 +339,14 @@ model UserSettings {
   businessContext  String?  @map("business_context")
   fallbackMessage  String?  @map("fallback_message")
   maxReplyLength   Int      @default(300) @map("max_reply_length")
+  workingHoursEnabled Boolean @default(false) @map("working_hours_enabled")
+  workingHoursStart String   @default("09:00") @map("working_hours_start")
+  workingHoursEnd String     @default("22:00") @map("working_hours_end")
+  workingDays      String[] @default(["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"]) @map("working_days")
+  offHoursMessage  String   @default("شكراً لتواصلك 🙏 نحن حالياً خارج أوقات العمل. سنرد عليك فور بدء الدوام.") @map("off_hours_message")
+  timezone         String   @default("Africa/Cairo")
+  csatEnabled      Boolean  @default(false) @map("csat_enabled")
+  notificationPrefs Json    @default("{\"angry\":true,\"lead\":true,\"handoff\":true,\"daily_summary\":false,\"weekly_report\":true,\"ai_failed\":true}") @map("notification_prefs")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
   user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -174,4 +378,239 @@ model SubscriptionEvent {
   @@index([planTier])
   @@index([status])
   @@map("subscription_events")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Templates are tenant-owned and optionally scoped to one WhatsApp
+// connection. Status/category stay as text so production can adopt the feature
+// without enum migrations fighting existing Supabase ownership.
+model MessageTemplate {
+  id             String              @id @default(uuid()) @db.Uuid
+  userId         String              @map("user_id") @db.Uuid
+  connectionId   String?             @map("connection_id") @db.Uuid
+  name           String
+  displayName    String              @map("display_name")
+  category       String
+  language       String              @default("ar")
+  headerText     String?             @map("header_text")
+  bodyText       String              @map("body_text")
+  footerText     String?             @map("footer_text")
+  buttonText     String?             @map("button_text")
+  buttonUrl      String?             @map("button_url")
+  metaTemplateId String?             @map("meta_template_id")
+  status         String              @default("draft")
+  rejectionReason String?            @map("rejection_reason")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection     WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  broadcasts     Broadcast[]
+
+  @@unique([userId, name])
+  @@index([userId, status])
+  @@index([connectionId])
+  @@map("message_templates")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Broadcasts keep campaign metadata separate from each recipient so
+// progress can be shown without losing per-phone send errors.
+model Broadcast {
+  id             String               @id @default(uuid()) @db.Uuid
+  userId         String               @map("user_id") @db.Uuid
+  connectionId   String?              @map("connection_id") @db.Uuid
+  templateId     String?              @map("template_id") @db.Uuid
+  name           String
+  parameters     Json                 @default("[]")
+  recipientCount Int                  @default(0) @map("recipient_count")
+  sentCount      Int                  @default(0) @map("sent_count")
+  failedCount    Int                  @default(0) @map("failed_count")
+  status         String               @default("draft")
+  scheduledAt    DateTime?            @map("scheduled_at")
+  startedAt      DateTime?            @map("started_at")
+  completedAt    DateTime?            @map("completed_at")
+  createdAt      DateTime             @default(now()) @map("created_at")
+  updatedAt      DateTime             @updatedAt @map("updated_at")
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection     WhatsAppConnection?  @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  template       MessageTemplate?     @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  recipients     BroadcastRecipient[]
+
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([connectionId])
+  @@index([templateId])
+  @@map("broadcasts")
+}
+
+model BroadcastRecipient {
+  id           String    @id @default(uuid()) @db.Uuid
+  broadcastId  String    @map("broadcast_id") @db.Uuid
+  phone        String
+  name         String?
+  status       String    @default("pending")
+  errorMessage String?   @map("error_message")
+  sentAt       DateTime? @map("sent_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  broadcast    Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+
+  @@index([broadcastId, status])
+  @@index([phone])
+  @@map("broadcast_recipients")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Support tickets are first-party product support records scoped to
+// the same tenant user model as the rest of the app, while admins can review
+// and answer them through server-side authorization.
+model SupportTicket {
+  id         String          @id @default(uuid()) @db.Uuid
+  userId     String          @map("user_id") @db.Uuid
+  subject    String
+  category   String
+  priority   String          @default("normal")
+  status     String          @default("open")
+  createdAt  DateTime        @default(now()) @map("created_at")
+  updatedAt  DateTime        @updatedAt @map("updated_at")
+  resolvedAt DateTime?       @map("resolved_at")
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages   TicketMessage[]
+
+  @@index([userId, createdAt])
+  @@index([status, priority])
+  @@map("support_tickets")
+}
+
+model TicketMessage {
+  id        String        @id @default(uuid()) @db.Uuid
+  ticketId  String        @map("ticket_id") @db.Uuid
+  sender    String
+  content   String
+  createdAt DateTime      @default(now()) @map("created_at")
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_messages")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Admin outreach is a lightweight audit trail for manual owner
+// messages sent from the private admin surface.
+model AdminOutreach {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  message   String
+  sentAt    DateTime @default(now()) @map("sent_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
+  @@map("admin_outreach")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Customer profiles aggregate WhatsApp/Instagram customer context per
+// tenant without changing the existing message ingestion model.
+model CustomerProfile {
+  id                 String                @id @default(uuid()) @db.Uuid
+  userId             String                @map("user_id") @db.Uuid
+  phone              String
+  name               String?
+  channel            String                @default("whatsapp")
+  instagramId        String?               @map("instagram_id")
+  firstContactAt     DateTime              @default(now()) @map("first_contact_at")
+  lastContactAt      DateTime              @default(now()) @map("last_contact_at")
+  totalConversations Int                   @default(0) @map("total_conversations")
+  totalMessagesSent  Int                   @default(0) @map("total_messages_sent")
+  totalOrders        Int                   @default(0) @map("total_orders")
+  totalSpentPiastres Int                   @default(0) @map("total_spent_piastres")
+  dominantMood       String                @default("neutral") @map("dominant_mood")
+  moodHistory        Json                  @default("[]") @map("mood_history")
+  commonTopics       String[]              @default([]) @map("common_topics")
+  notes              String?
+  tags               String[]              @default([])
+  isBlocked          Boolean               @default(false) @map("is_blocked")
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  facts              CustomerProfileFact[]
+
+  @@unique([userId, phone])
+  @@index([userId, lastContactAt])
+  @@index([userId, channel])
+  @@map("customer_profiles")
+}
+
+model CustomerProfileFact {
+  id        String          @id @default(uuid()) @db.Uuid
+  profileId String          @map("profile_id") @db.Uuid
+  fact      String
+  source    String          @default("ai")
+  createdAt DateTime        @default(now()) @map("created_at")
+  profile   CustomerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt])
+  @@map("customer_profile_facts")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: WhatsApp flows are tenant-owned definitions; responses are stored
+// separately so future automation can process appointments or forms safely.
+model WhatsAppFlow {
+  id              String         @id @default(uuid()) @db.Uuid
+  userId          String         @map("user_id") @db.Uuid
+  name            String
+  type            String
+  description     String?
+  flowJson        Json           @default("{}") @map("flow_json")
+  metaFlowId      String?        @map("meta_flow_id")
+  status          String         @default("draft")
+  triggerKeywords String[]       @default([]) @map("trigger_keywords")
+  autoTrigger     Boolean        @default(false) @map("auto_trigger")
+  responseCount   Int            @default(0) @map("response_count")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  responses       FlowResponse[]
+
+  @@index([userId, status])
+  @@index([userId, autoTrigger])
+  @@map("whatsapp_flows")
+}
+
+model FlowResponse {
+  id            String              @id @default(uuid()) @db.Uuid
+  flowId        String              @map("flow_id") @db.Uuid
+  userId        String              @map("user_id") @db.Uuid
+  connectionId  String?             @map("connection_id") @db.Uuid
+  customerPhone String              @map("customer_phone")
+  responseData  Json                @default("{}") @map("response_data")
+  processed     Boolean             @default(false)
+  createdAt     DateTime            @default(now()) @map("created_at")
+  flow          WhatsAppFlow        @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  appointments  Appointment[]
+
+  @@index([userId, createdAt])
+  @@index([flowId, createdAt])
+  @@index([userId, processed])
+  @@map("flow_responses")
+}
+
+model Appointment {
+  id             String        @id @default(uuid()) @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+  customerPhone  String        @map("customer_phone")
+  customerName   String?       @map("customer_name")
+  service        String
+  date           DateTime      @db.Date
+  time           String
+  notes          String?
+  status         String        @default("pending")
+  flowResponseId String?       @map("flow_response_id") @db.Uuid
+  createdAt      DateTime      @default(now()) @map("created_at")
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flowResponse   FlowResponse? @relation(fields: [flowResponseId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+  @@index([userId, status])
+  @@map("appointments")
 }

@@ -63,7 +63,7 @@ function getPaymentMethods(): PaymobPaymentMethod[] {
     .map((method) => (/^\d+$/.test(method) ? Number(method) : method));
 }
 
-function getPlanAmountCents(planTier: Extract<PlanTier, "PRO" | "BUSINESS">): number {
+export function getPaymobPlanAmountCents(planTier: Extract<PlanTier, "PRO" | "BUSINESS">): number {
   return planTier === "BUSINESS" ? appEnv.PAYMOB_BUSINESS_AMOUNT_CENTS : appEnv.PAYMOB_PRO_AMOUNT_CENTS;
 }
 
@@ -108,7 +108,7 @@ export async function createPaymobCheckoutSession(params: CreatePaymobCheckoutPa
   amountCents: number;
   currency: string;
 }> {
-  const amountCents = getPlanAmountCents(params.planTier);
+  const amountCents = getPaymobPlanAmountCents(params.planTier);
   const reference = createPaymobReference({ userId: params.userId, planTier: params.planTier });
   const { firstName, lastName } = splitName(params.fullName, params.email);
 

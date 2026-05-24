@@ -62,9 +62,9 @@ export function LoginForm() {
     <Card className="w-full max-w-[500px] rounded-[24px] border-wa-gray-100 bg-white p-5 shadow-[0_18px_56px_rgba(13,20,33,0.08)] sm:rounded-[30px] sm:p-8">
       <CardHeader className="items-center p-0 text-center">
         <BrandLogo className="mb-4 sm:mb-6" layout="stacked" wordmarkSize="md" />
-        <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">Welcome back</CardTitle>
+        <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">مرحباً بعودتك</CardTitle>
         <CardDescription className="mt-2 max-w-[390px] text-body-sm leading-6 text-wa-gray-600 sm:mt-3 sm:text-body">
-          Sign in to manage your connected number, AI replies, conversations, and billing.
+          سجّلي الدخول لإدارة رقم واتساب، ردود الذكاء، المحادثات، والفوترة.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 pt-5 sm:pt-7">
@@ -72,9 +72,9 @@ export function LoginForm() {
           <div className="flex items-start gap-3">
             <ShieldCheck className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
             <div>
-              <p className="text-body-sm font-semibold text-wa-gray-900">After sign in</p>
+              <p className="text-body-sm font-semibold text-wa-gray-900">بعد تسجيل الدخول</p>
               <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
-                We open WhatsApp setup first so the business number is ready before daily use.
+                نفتح شاشة واتساب أولاً حتى يكون رقم النشاط جاهزاً قبل الاستخدام اليومي.
               </p>
             </div>
           </div>
@@ -88,21 +88,21 @@ export function LoginForm() {
           ) : null}
           {authError === "confirmation_failed" ? (
             <Alert className="border-wa-error bg-wa-error-bg">
-              <AlertDescription>The confirmation link could not sign you in. Request a fresh confirmation email and try again.</AlertDescription>
+              <AlertDescription>رابط التأكيد لم يستطع تسجيل الدخول. اطلبي رسالة تأكيد جديدة وحاولي مرة أخرى.</AlertDescription>
             </Alert>
           ) : null}
           {authError === "confirmation_required" ? (
             <Alert className="border-wa-warning bg-wa-warning-bg">
-              <AlertDescription>Your email was confirmed, but the session was not recovered. Sign in once to continue.</AlertDescription>
+              <AlertDescription>تم تأكيد البريد، لكن الجلسة لم تفتح تلقائياً. سجّلي الدخول مرة واحدة للمتابعة.</AlertDescription>
             </Alert>
           ) : null}
           <div className="flex flex-col gap-1.5">
-            <Label className="text-body-sm font-medium text-wa-gray-800" htmlFor="email">Email</Label>
+            <Label className="text-body-sm font-medium text-wa-gray-800" htmlFor="email">البريد الإلكتروني</Label>
             <Input id="email" type="email" autoComplete="email" aria-invalid={!!form.formState.errors.email} hasError={!!form.formState.errors.email} {...form.register("email")} />
             {form.formState.errors.email ? <p className="text-body-sm text-wa-error">{form.formState.errors.email.message}</p> : null}
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label className="text-body-sm font-medium text-wa-gray-800" htmlFor="password">Password</Label>
+            <Label className="text-body-sm font-medium text-wa-gray-800" htmlFor="password">كلمة المرور</Label>
             <div className="relative">
               <Input
                 className="pr-14"
@@ -115,7 +115,7 @@ export function LoginForm() {
               />
               <IconButton
                 className="absolute right-1 top-1 size-10 bg-transparent sm:size-11"
-                label={showPassword ? "Hide password" : "Show password"}
+                label={showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"}
                 onClick={() => setShowPassword((current) => !current)}
               >
                 {showPassword ? <EyeOff aria-hidden="true" /> : <Eye aria-hidden="true" />}
@@ -124,7 +124,7 @@ export function LoginForm() {
             {form.formState.errors.password ? <p className="text-body-sm text-wa-error">{form.formState.errors.password.message}</p> : null}
           </div>
           <div className="grid gap-2 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-            {["Connected number status", "AI reply control", "Inbox and billing"].map((item) => (
+            {["حالة الرقم المتصل", "التحكم في ردود الذكاء", "الرسائل والفوترة"].map((item) => (
               <div key={item} className="flex items-center gap-2 text-body-sm font-medium text-wa-gray-700">
                 <CheckCircle2 className="size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
                 {item}
@@ -132,18 +132,18 @@ export function LoginForm() {
             ))}
           </div>
           <Button className="rounded-full" disabled={!isHydrated} isLoading={mutation.isPending} type="submit">
-            Sign in
+            تسجيل الدخول
             {!mutation.isPending ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
           </Button>
           <div className="flex items-center gap-3 text-body-sm text-wa-gray-400">
             <span className="h-px flex-1 bg-wa-gray-100" />
-            or
+            أو
             <span className="h-px flex-1 bg-wa-gray-100" />
           </div>
           <p className="text-center text-body-sm text-wa-gray-600">
-            New here?{" "}
+            ليس لديك حساب؟{" "}
             <Link href="/signup" className="text-wa-blue-600 hover:underline">
-              Create an account
+              إنشاء حساب
             </Link>
           </p>
         </form>

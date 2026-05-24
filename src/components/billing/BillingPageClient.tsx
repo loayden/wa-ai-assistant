@@ -8,8 +8,9 @@
 
 import type { ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { LockKeyhole, ReceiptText, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Gift, LockKeyhole, Minus, ReceiptText, ShieldCheck } from "lucide-react";
 
 import { PlanCard } from "@/components/billing/PlanCard";
 import { SubscriptionStatus } from "@/components/billing/SubscriptionStatus";
@@ -37,29 +38,48 @@ const planCopy: Record<
   }
 > = {
   FREE: {
-    description: "For testing the assistant with a small message volume.",
-    features: ["Default assistant behavior", "Basic inbox access", "Manual setup support"],
-    useCase: "Best for trying kallem",
-    overageLabel: "Stops at 50 replies",
+    description: "مناسبة لتجربة المساعد على عدد قليل من الرسائل.",
+    features: ["سلوك مساعد افتراضي", "وصول أساسي لصندوق الرسائل", "إعداد واتساب موجّه"],
+    useCase: "الأفضل للتجربة الأولى",
+    overageLabel: "يتوقف بعد 50 رد",
   },
   PRO: {
-    description: "For active small businesses that need daily AI replies.",
-    features: ["Custom assistant instructions", "Multiple WhatsApp numbers", "Tracked overage after included replies"],
-    useCase: "Best for growing businesses",
-    overageLabel: "Overage allowed after 2,000",
+    description: "للأنشطة الصغيرة النشطة التي تحتاج ردود يومية من المساعد.",
+    features: ["تعليمات خاصة للمساعد", "حتى 3 أرقام واتساب", "متابعة واضحة بعد الردود المتاحة"],
+    useCase: "الأفضل للنشاط المتنامي",
+    overageLabel: "متابعة بعد 2,000 رد",
     recommended: true,
   },
   BUSINESS: {
-    description: "For higher-volume teams that manage more customer conversations.",
-    features: ["Higher reply allowance", "More connected numbers", "Priority support and operational headroom"],
-    useCase: "Best for busy teams",
-    overageLabel: "Overage allowed after 10,000",
+    description: "للفِرق التي تدير حجم محادثات أعلى وتحتاج مساحة تشغيل أكبر.",
+    features: ["حد ردود أعلى", "حتى 10 أرقام متصلة", "أولوية دعم ومساحة تشغيل للفِرق"],
+    useCase: "الأفضل للفِرق المشغولة",
+    overageLabel: "متابعة بعد 10,000 رد",
   },
 };
 
 function formatReplies(count: number) {
-  return `${count.toLocaleString()} replies / month`;
+  return `${count.toLocaleString("ar-EG")} رد / شهر`;
 }
+
+function getTrialDaysRemaining(trialEndsAt: string | null | undefined) {
+  if (!trialEndsAt) {
+    return 0;
+  }
+
+  return Math.max(Math.ceil((new Date(trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)), 0);
+}
+
+const comparisonRows = [
+  { label: "الردود شهرياً", free: "50", pro: "2,000", business: "10,000" },
+  { label: "أرقام واتساب", free: "1", pro: "3", business: "10" },
+  { label: "قاعدة المعرفة", free: true, pro: true, business: true },
+  { label: "التحليلات", free: false, pro: true, business: true },
+  { label: "استخراج العملاء المحتملين", free: false, pro: true, business: true },
+  { label: "ساعات العمل", free: false, pro: true, business: true },
+  { label: "قوالب الرسائل والحملات", free: false, pro: true, business: true },
+  { label: "إدارة الطلبات", free: false, pro: true, business: true },
+];
 
 export function BillingPageClient() {
   const subscription = useSubscription();
@@ -91,7 +111,7 @@ export function BillingPageClient() {
   if (subscription.error) {
     return (
       <Alert className="border-wa-error bg-wa-error-bg">
-        <AlertTitle>Billing unavailable</AlertTitle>
+        <AlertTitle>الفوترة غير متاحة الآن</AlertTitle>
         <AlertDescription>{subscription.error.message}</AlertDescription>
       </Alert>
     );
@@ -100,8 +120,8 @@ export function BillingPageClient() {
   if (!subscription.user) {
     return (
       <Alert className="border-wa-error bg-wa-error-bg">
-        <AlertTitle>Billing unavailable</AlertTitle>
-        <AlertDescription>The settings response did not include plan data.</AlertDescription>
+        <AlertTitle>الفوترة غير متاحة الآن</AlertTitle>
+        <AlertDescription>استجابة الإعدادات لا تحتوي على بيانات الخطة.</AlertDescription>
       </Alert>
     );
   }
@@ -112,6 +132,7 @@ export function BillingPageClient() {
   const mutationError = checkoutMutation.error;
   const billingBusy = checkoutMutation.isPending;
   const checkoutStatus = searchParams.get("checkout");
+  const trialDaysRemaining = getTrialDaysRemaining(user.trialEndsAt);
 
   function handlePlanAction(targetPlan: PlanTier) {
     if (targetPlan === currentPlan) {
@@ -132,53 +153,76 @@ export function BillingPageClient() {
         subscriptionStatus={user.subscriptionStatus}
         monthlyReplyCount={user.monthlyReplyCount}
       />
+      {trialDaysRemaining > 0 ? (
+        <section className="rounded-[22px] border border-wa-blue-100 bg-wa-blue-50 p-4 shadow-[0_14px_42px_rgba(37,99,235,0.08)] sm:rounded-[28px] sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.05)]">
+                <Gift className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <p className="text-body font-semibold text-wa-gray-900">تجربة Pro المجانية شغالة الآن</p>
+                <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
+                  باقي {trialDaysRemaining} {trialDaysRemaining === 1 ? "يوم" : "أيام"} على انتهاء التجربة. Pro يفتح 2,000 رد شهرياً، التحليلات، العملاء المحتملين، وساعات العمل.
+                </p>
+              </div>
+            </div>
+            <Link
+              href="#plans"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-wa-blue-600 px-5 text-body-sm font-semibold text-white shadow-[0_14px_32px_rgba(37,99,235,0.22)] transition hover:bg-wa-blue-700"
+            >
+              تثبيت Pro بـ 999 جنيه
+            </Link>
+          </div>
+        </section>
+      ) : null}
       {checkoutStatus === "success" ? (
         <Alert className="border-wa-success/30 bg-wa-success-bg text-wa-success">
-          <AlertTitle>Plan update started</AlertTitle>
+          <AlertTitle>بدأ تحديث الخطة</AlertTitle>
           <AlertDescription>
-            Paymob confirmed checkout. Your plan will update as soon as the payment webhook finishes processing.
+            Paymob أكد عملية الدفع. سيتم تحديث خطتك تلقائياً بعد انتهاء معالجة webhook.
           </AlertDescription>
         </Alert>
       ) : null}
       {checkoutStatus === "paymob-return" ? (
         <Alert className="border-wa-blue-100 bg-wa-blue-50 text-wa-blue-700">
-          <AlertTitle>Payment is being confirmed</AlertTitle>
+          <AlertTitle>جارٍ تأكيد الدفع</AlertTitle>
           <AlertDescription>
-            Paymob sent you back to kallem. Your plan updates automatically after Paymob confirms the payment.
+            رجعت من Paymob إلى kallem. سيتم تحديث الخطة تلقائياً بعد تأكيد الدفع.
           </AlertDescription>
         </Alert>
       ) : null}
       {checkoutStatus === "cancelled" ? (
         <Alert className="border-wa-gray-100 bg-white text-wa-gray-700">
-          <AlertTitle>Checkout was cancelled</AlertTitle>
-          <AlertDescription>No billing changes were made. You can choose a plan again whenever you are ready.</AlertDescription>
+          <AlertTitle>تم إلغاء الدفع</AlertTitle>
+          <AlertDescription>لم يتم تغيير الخطة. يمكنك اختيار خطة مرة أخرى في أي وقت.</AlertDescription>
         </Alert>
       ) : null}
       {checkoutStatus === "failed" ? (
         <Alert className="border-wa-error bg-wa-error-bg">
-          <AlertTitle>Payment was not completed</AlertTitle>
+          <AlertTitle>لم يكتمل الدفع</AlertTitle>
           <AlertDescription>
-            Paymob did not confirm a successful payment. No plan changes were made, and you can retry checkout safely.
+            Paymob لم يؤكد عملية دفع ناجحة. لم يتم تغيير الخطة ويمكنك المحاولة مرة أخرى بأمان.
           </AlertDescription>
         </Alert>
       ) : null}
       {mutationError ? (
         <Alert className="border-wa-error bg-wa-error-bg">
-          <AlertTitle>Paymob checkout failed</AlertTitle>
+          <AlertTitle>فشل فتح دفع Paymob</AlertTitle>
           <AlertDescription>{mutationError.message}</AlertDescription>
         </Alert>
       ) : null}
 
-      <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-6">
+      <section id="plans" className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Plans</p>
-            <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">Choose how much AI should handle.</h2>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الخطط</p>
+            <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">اختاري حجم العمل الذي يديره المساعد.</h2>
             <p className="mt-2 max-w-[640px] text-body-sm leading-6 text-wa-gray-600">
-              Prices are set in EGP for Egyptian small businesses. Upgrade opens a secure Paymob checkout page, and kallem never stores card numbers.
+              الأسعار بالجنيه المصري ومناسبة للأعمال الصغيرة. الترقية تفتح صفحة دفع آمنة من Paymob، وkallem لا يخزن أرقام البطاقات.
             </p>
           </div>
-          {isPaidPlan ? <p className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-4 py-2 text-body-sm font-medium text-wa-gray-600">Current plan is active</p> : null}
+          {isPaidPlan ? <p className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-4 py-2 text-body-sm font-medium text-wa-gray-600">الخطة الحالية مفعّلة</p> : null}
         </div>
 
         <div className="mt-5 grid gap-4 xl:grid-cols-3">
@@ -188,28 +232,28 @@ export function BillingPageClient() {
             const isCurrent = currentPlan === plan;
             const isPaidTarget = plan !== "FREE";
             const actionLabel = isCurrent
-              ? "Current plan"
+              ? "الخطة الحالية"
               : plan === "FREE" && isPaidPlan
-                ? "Contact support"
+                ? "تواصل مع الدعم"
                 : isPaidTarget
                   ? isPaidPlan
-                    ? `Switch to ${plan}`
-                    : `Upgrade to ${plan}`
-                  : "Current plan";
+                    ? `التبديل إلى ${plan}`
+                    : `الترقية إلى ${plan}`
+                  : "الخطة الحالية";
 
             return (
               <PlanCard
                 key={plan}
                 title={plan}
-                priceLabel={limits.monthlyPriceEgp === 0 ? "EGP 0" : `EGP ${limits.monthlyPriceEgp.toLocaleString("en-US")}/mo`}
+                priceLabel={limits.monthlyPriceEgp === 0 ? "مجاناً" : `${limits.monthlyPriceEgp.toLocaleString("ar-EG")} جنيه/شهر`}
                 description={`${copy.useCase}. ${copy.description}`}
                 includedRepliesLabel={formatReplies(limits.includedRepliesPerMonth)}
-                numberLimitLabel={`${limits.maxConnections} ${limits.maxConnections === 1 ? "number" : "numbers"}`}
+                numberLimitLabel={`${limits.maxConnections.toLocaleString("ar-EG")} ${limits.maxConnections === 1 ? "رقم" : "أرقام"}`}
                 overageLabel={copy.overageLabel}
                 features={copy.features}
                 current={isCurrent}
                 recommended={copy.recommended}
-                actionLabel={billingBusy ? "Opening Paymob..." : actionLabel}
+                actionLabel={billingBusy ? "جارٍ فتح Paymob..." : actionLabel}
                 disabled={billingBusy || (plan === "FREE" && isPaidPlan)}
                 onAction={() => handlePlanAction(plan)}
               />
@@ -218,21 +262,53 @@ export function BillingPageClient() {
         </div>
       </section>
 
+      <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
+        <div className="border-b border-wa-gray-100 p-4 sm:p-6">
+          <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مقارنة الخطط</p>
+          <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">اعرف بالضبط ماذا تفتح كل خطة</h2>
+          <p className="mt-2 max-w-[760px] text-body-sm leading-6 text-wa-gray-600">
+            الفرق بين Free و Pro أقل من تكلفة عميل واحد إضافي في الشهر لمعظم الأنشطة. الهدف هو ألا يتوقف المساعد وقت ما الرسائل تزيد.
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead className="bg-wa-gray-50 text-wa-gray-600">
+              <tr>
+                <th className="px-4 py-4 text-right font-semibold sm:px-6">الميزة</th>
+                <th className="px-4 py-4 text-center font-semibold">مجاني</th>
+                <th className="px-4 py-4 text-center font-semibold text-wa-blue-700">Pro — 999 جنيه</th>
+                <th className="px-4 py-4 text-center font-semibold">Business — 2,499 جنيه</th>
+              </tr>
+            </thead>
+            <tbody>
+              {comparisonRows.map((row) => (
+                <tr key={row.label} className="border-t border-wa-gray-100">
+                  <td className="px-4 py-4 font-medium text-wa-gray-900 sm:px-6">{row.label}</td>
+                  <ComparisonCell value={row.free} active={currentPlan === "FREE"} />
+                  <ComparisonCell value={row.pro} active={currentPlan === "PRO"} highlight />
+                  <ComparisonCell value={row.business} active={currentPlan === "BUSINESS"} />
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <TrustCard
           icon={<ShieldCheck className="size-5" aria-hidden="true" />}
-          title="Payment handled by Paymob"
-          description="Card details stay on Paymob-hosted checkout. kallem only receives the payment confirmation."
+          title="الدفع يتم عبر Paymob"
+          description="بيانات البطاقة تبقى داخل صفحة Paymob الآمنة. kallem يستقبل تأكيد الدفع فقط."
         />
         <TrustCard
           icon={<ReceiptText className="size-5" aria-hidden="true" />}
-          title="Overage stays visible"
-          description="Paid plans keep replying after included replies and track overage so you can review usage clearly."
+          title="الاستخدام واضح"
+          description="الخطط المدفوعة تتابع الاستخدام بعد الردود المتاحة حتى تعرفي حجم الرسائل بدقة."
         />
         <TrustCard
           icon={<LockKeyhole className="size-5" aria-hidden="true" />}
-          title="Plan limits are enforced"
-          description="Reply limits and WhatsApp number limits are checked by the backend, not only by the UI."
+          title="الحدود محمية من الخلفية"
+          description="حدود الردود وأرقام واتساب يتم التحقق منها من الخادم وليس من الواجهة فقط."
         />
       </div>
 
@@ -240,8 +316,8 @@ export function BillingPageClient() {
         <CardHeader className="border-b border-wa-gray-100 p-4 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Invoices</p>
-              <CardTitle className="mt-2 text-[24px] font-semibold">Billing history</CardTitle>
+              <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الإيصالات</p>
+              <CardTitle className="mt-2 text-[24px] font-semibold">سجل الفوترة</CardTitle>
             </div>
           </div>
         </CardHeader>
@@ -253,12 +329,12 @@ export function BillingPageClient() {
               </span>
               <div>
                 <p className="text-body-sm font-semibold text-wa-gray-900">
-                  {isPaidPlan ? "Payment receipts are handled by Paymob." : "No paid receipts yet."}
+                  {isPaidPlan ? "إيصالات الدفع تتم عبر Paymob." : "لا توجد إيصالات مدفوعة بعد."}
                 </p>
                 <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
                   {isPaidPlan
-                    ? "Paymob confirms payments through a secure webhook. Formal invoices can be added later if the business needs tax invoicing."
-                    : "Invoices will appear after the account upgrades to a paid plan."}
+                    ? "Paymob يؤكد المدفوعات عبر webhook آمن. يمكن إضافة فواتير ضريبية لاحقاً إذا احتاج النشاط لذلك."
+                    : "ستظهر الإيصالات بعد ترقية الحساب إلى خطة مدفوعة."}
                 </p>
               </div>
             </div>
@@ -266,6 +342,24 @@ export function BillingPageClient() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function ComparisonCell({ active, highlight = false, value }: { active?: boolean; highlight?: boolean; value: boolean | string }) {
+  return (
+    <td className={["px-4 py-4 text-center", highlight ? "bg-wa-blue-50/50" : "", active ? "font-semibold text-wa-blue-700" : "text-wa-gray-700"].join(" ")}>
+      <span className={["inline-flex min-h-8 items-center justify-center gap-1 rounded-full px-3", active ? "bg-white ring-1 ring-wa-blue-200" : ""].join(" ")}>
+        {typeof value === "boolean" ? (
+          value ? (
+            <CheckCircle2 className="size-4 text-wa-success" aria-label="Included" />
+          ) : (
+            <Minus className="size-4 text-wa-gray-300" aria-label="Not included" />
+          )
+        ) : (
+          value
+        )}
+      </span>
+    </td>
   );
 }
 

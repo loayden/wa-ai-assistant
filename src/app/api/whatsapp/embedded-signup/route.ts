@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     });
 
     if (conflictingConnection) {
-      return jsonError("This WhatsApp number is already connected to another workspace.", 409);
+      return jsonError("رقم واتساب هذا متصل بالفعل بمساحة عمل أخرى.", 409);
     }
 
     const existingConnection = await prisma.whatsAppConnection.findFirst({
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
       });
 
       if (connectionCount >= getMaxConnectionCount(user.planTier)) {
-        return jsonError("WhatsApp connection limit reached for current plan.", 403);
+        return jsonError("وصلت إلى الحد الأقصى لأرقام واتساب في خطتك الحالية.", 403);
       }
     }
 

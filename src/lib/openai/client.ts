@@ -10,6 +10,8 @@ import "server-only";
 import type { UserSettings } from "@prisma/client";
 import OpenAI, { APIConnectionTimeoutError, APIError, RateLimitError } from "openai";
 
+import { buildKnowledgeBlock } from "@/lib/api/knowledge";
+import { prisma } from "@/lib/prisma/client";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
@@ -17,6 +19,8 @@ export type GenerateAIReplyParams = {
   systemPrompt: string;
   userMessage: string;
   settings: UserSettings;
+  extraInstructions?: string[];
+  forceEgyptianArabic?: boolean;
 };
 
 export type GenerateAIReplyResult = {
@@ -47,7 +51,98 @@ const openai = new OpenAI({
   timeout: 30_000,
 });
 
-function interpolateSystemPrompt(systemPrompt: string, settings: UserSettings): string {
+async function getKnowledgePromptBlock(userId: string): Promise<string> {
+  const entries = await prisma.knowledgeBaseEntry.findMany({
+    where: { userId },
+    select: {
+      type: true,
+      title: true,
+      content: true,
+    },
+    orderBy: [{ type: "asc" }, { updatedAt: "desc" }],
+  });
+
+  return buildKnowledgeBlock(entries);
+}
+
+async function getCatalogPromptBlock(userId: string): Promise<string> {
+  const products = await prisma.product.findMany({
+    where: {
+      userId,
+      isAvailable: true,
+    },
+    select: {
+      id: true,
+      name: true,
+      nameEn: true,
+      description: true,
+      price: true,
+      category: true,
+    },
+    orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+    take: 100,
+  });
+
+  if (!products.length) {
+    return "";
+  }
+
+  const productLines = products.map((product) => {
+    const priceEGP = (product.price / 100).toFixed(0);
+    const description = product.description ? ` - ${product.description}` : "";
+    const englishName = product.nameEn ? ` / ${product.nameEn}` : "";
+    const category = product.category ? ` (${product.category})` : "";
+
+    return `- ${product.name}${englishName}${category}: ${priceEGP} EGP${description}`;
+  });
+
+  return [
+    "Available product catalog:",
+    ...productLines,
+    "",
+    "Order handling rule:",
+    "If the customer clearly wants to order available products, reply with a short order summary, total, and ask for delivery address if needed.",
+    'At the very end of your reply, add this hidden machine-readable line exactly: [[ORDER: { "items": [{ "name": "Product name", "qty": 1, "unit_price": 10000 }], "subtotal": 10000 }]]',
+    "Use integer piastres for unit_price and subtotal. Do not add the ORDER line unless there is a clear order intent.",
+  ].join("\n");
+}
+
+async function getCorrectionsPromptBlock(userId: string): Promise<string> {
+  const corrections = await prisma.aiCorrection.findMany({
+    where: { userId },
+    select: {
+      originalCustomerMessage: true,
+      wrongAiReply: true,
+      correctReply: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+
+  if (!corrections.length) {
+    return "";
+  }
+
+  return [
+    "Business-specific correction examples. Learn from these and do not repeat the wrong replies:",
+    ...corrections.map(
+      (correction) =>
+        `Customer: "${correction.originalCustomerMessage}"\nWrong reply: "${correction.wrongAiReply}"\nCorrect reply: "${correction.correctReply}"`,
+    ),
+  ].join("\n\n");
+}
+
+function interpolateSystemPrompt(
+  systemPrompt: string,
+  settings: UserSettings,
+  promptSections: {
+    knowledgeBlock: string;
+    catalogBlock: string;
+    correctionsBlock: string;
+    extraInstructions?: string[];
+    forceEgyptianArabic?: boolean;
+  },
+): string {
   const replacements = {
     businessName: settings.businessName?.trim() || "your business",
     language: settings.language,
@@ -59,14 +154,44 @@ function interpolateSystemPrompt(systemPrompt: string, settings: UserSettings): 
     systemPrompt,
   );
 
-  if (!settings.businessContext?.trim()) {
-    return interpolatedPrompt;
+  const sections = [interpolatedPrompt];
+
+  if (settings.businessContext?.trim()) {
+    sections.push(`Business context:\n${settings.businessContext.trim()}`);
   }
 
-  return `${interpolatedPrompt}\n\nBusiness context:\n${settings.businessContext.trim()}`;
+  if (promptSections.forceEgyptianArabic) {
+    sections.push("Reply in friendly Egyptian Arabic. Do not use stiff formal Arabic unless the customer does.");
+  }
+
+  if (promptSections.knowledgeBlock) {
+    sections.push(promptSections.knowledgeBlock.trim());
+  }
+
+  if (promptSections.catalogBlock) {
+    sections.push(promptSections.catalogBlock.trim());
+  }
+
+  if (promptSections.correctionsBlock) {
+    sections.push(promptSections.correctionsBlock.trim());
+  }
+
+  if (promptSections.extraInstructions?.length) {
+    sections.push(`Routing instructions for this message:\n${promptSections.extraInstructions.map((instruction) => `- ${instruction}`).join("\n")}`);
+  }
+
+  return sections.join("\n\n");
 }
 
 function clampReplyLength(replyText: string, maxReplyLength: number): string {
+  const orderTag = replyText.match(/\[\[ORDER:\s*({[\s\S]*?})\s*\]\]/)?.[0];
+
+  if (orderTag) {
+    const visibleReply = replyText.replace(orderTag, "").trim();
+    const clampedVisibleReply = visibleReply.length <= maxReplyLength ? visibleReply : visibleReply.slice(0, maxReplyLength).trim();
+    return `${clampedVisibleReply}\n\n${orderTag}`.trim();
+  }
+
   if (replyText.length <= maxReplyLength) {
     return replyText;
   }
@@ -79,7 +204,18 @@ function resolveMaxTokens(maxReplyLength: number): number {
 }
 
 export async function generateAIReply(params: GenerateAIReplyParams): Promise<GenerateAIReplyResult> {
-  const prompt = interpolateSystemPrompt(params.systemPrompt, params.settings);
+  const [knowledgeBlock, catalogBlock, correctionsBlock] = await Promise.all([
+    getKnowledgePromptBlock(params.settings.userId),
+    getCatalogPromptBlock(params.settings.userId),
+    getCorrectionsPromptBlock(params.settings.userId),
+  ]);
+  const prompt = interpolateSystemPrompt(params.systemPrompt, params.settings, {
+    knowledgeBlock,
+    catalogBlock,
+    correctionsBlock,
+    extraInstructions: params.extraInstructions,
+    forceEgyptianArabic: params.forceEgyptianArabic,
+  });
 
   try {
     const completion = await openai.chat.completions.create({

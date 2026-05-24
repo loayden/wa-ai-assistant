@@ -77,6 +77,6 @@ export async function POST(request: Request) {
     }
 
     logger.error("api.billing.createCheckout", "Failed to create Paymob checkout session.", { error });
-    return jsonError("Failed to create Paymob checkout session.", 500);
+    return jsonError("فشل إنشاء جلسة الدفع عبر Paymob.", 500);
   }
 }

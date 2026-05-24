@@ -121,46 +121,46 @@ export async function handleOwnerCommand(
     case "stop":
       return {
         action: "stop",
-        confirmationMessage: "Paused. Your AI is no longer replying. Send 'resume' to turn it back on.",
+        confirmationMessage: "تم إيقاف المساعد. لن يرد على العملاء الآن. أرسل resume لتشغيله مرة أخرى.",
         settingsUpdate: { autoReplyEnabled: false },
       };
     case "resume":
       return {
         action: "resume",
-        confirmationMessage: "Resumed. Your AI is now replying to customers.",
+        confirmationMessage: "تم تشغيل المساعد. سيرد على العملاء الآن.",
         settingsUpdate: { autoReplyEnabled: true },
       };
     case "friendly":
       return {
         action: "friendly",
-        confirmationMessage: "Tone updated to: Friendly",
+        confirmationMessage: "تم تغيير أسلوب الرد إلى: ودود",
         settingsUpdate: { systemPrompt: await buildTonePrompt(settings, "friendly") },
       };
     case "professional":
       return {
         action: "professional",
-        confirmationMessage: "Tone updated to: Professional",
+        confirmationMessage: "تم تغيير أسلوب الرد إلى: احترافي",
         settingsUpdate: { systemPrompt: await buildTonePrompt(settings, "professional") },
       };
     case "sales":
       return {
         action: "sales",
-        confirmationMessage: "Tone updated to: Sales",
+        confirmationMessage: "تم تغيير أسلوب الرد إلى: بيعي",
         settingsUpdate: { systemPrompt: await buildTonePrompt(settings, "sales") },
       };
     case "status":
       return {
         action: "status",
         confirmationMessage:
-          `Status:\n` +
-          `• AI: ${settings.autoReplyEnabled ? "ON" : "OFF"}\n` +
-          `• Replies this month: ${user.monthlyReplyCount}\n` +
-          `• Tone: ${inferToneFromPrompt(settings.systemPrompt)}`,
+          `الحالة:\n` +
+          `• المساعد: ${settings.autoReplyEnabled ? "يعمل" : "متوقف"}\n` +
+          `• الردود هذا الشهر: ${user.monthlyReplyCount.toLocaleString("ar-EG")}\n` +
+          `• الأسلوب: ${inferToneFromPrompt(settings.systemPrompt) === "friendly" ? "ودود" : inferToneFromPrompt(settings.systemPrompt) === "sales" ? "بيعي" : "احترافي"}`,
       };
     default:
       return {
         action: "unknown",
-        confirmationMessage: `Unknown command: '${command.trim()}'\nAvailable commands: ${AVAILABLE_COMMANDS}`,
+        confirmationMessage: `الأمر غير معروف: '${command.trim()}'\nالأوامر المتاحة: ${AVAILABLE_COMMANDS}`,
       };
   }
 }

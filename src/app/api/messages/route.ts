@@ -26,7 +26,35 @@ const messagesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(20),
   direction: z.nativeEnum(MessageDirection).optional(),
   status: z.nativeEnum(MessageStatus).optional(),
+  connectionId: z.string().uuid().optional(),
 });
+
+const messageListSelect = {
+  id: true,
+  userId: true,
+  connectionId: true,
+  waMessageId: true,
+  direction: true,
+  fromNumber: true,
+  toNumber: true,
+  bodyText: true,
+  mediaUrl: true,
+  mediaType: true,
+  status: true,
+  aiReplyText: true,
+  aiModelUsed: true,
+  aiTokensUsed: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+  connection: {
+    select: {
+      id: true,
+      displayName: true,
+      phoneNumberId: true,
+    },
+  },
+} as const;
 
 export async function GET(request: Request) {
   try {
@@ -40,6 +68,7 @@ export async function GET(request: Request) {
 
     const where: Prisma.MessageWhereInput = {
       userId: user.id,
+      connectionId: parsed.data.connectionId,
       direction: parsed.data.direction,
       status: parsed.data.status,
     };
@@ -51,20 +80,61 @@ export async function GET(request: Request) {
         skip,
         take: parsed.data.limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          connection: {
-            select: {
-              id: true,
-              displayName: true,
-              phoneNumberId: true,
-            },
-          },
-        },
+        select: messageListSelect,
       }),
       prisma.message.count({ where }),
     ]);
 
-    return jsonSuccess(messages, {
+    const handoffPairs = messages.map((message) => ({
+      connectionId: message.connectionId,
+      customerPhone: message.direction === MessageDirection.OUTBOUND ? message.toNumber : message.fromNumber,
+    }));
+    const handoffs =
+      handoffPairs.length > 0
+        ? await prisma.conversationHandoff.findMany({
+            where: {
+              userId: user.id,
+              OR: handoffPairs,
+            },
+            select: {
+              connectionId: true,
+              customerPhone: true,
+              active: true,
+              handoffAt: true,
+              resolvedAt: true,
+              rating: true,
+              ratingRequestedAt: true,
+            },
+          })
+        : [];
+    const handoffMap = new Map(
+      handoffs.map((handoff) => [
+        `${handoff.connectionId}:${handoff.customerPhone}`,
+        {
+          active: handoff.active,
+          handoffAt: handoff.handoffAt?.toISOString() ?? null,
+          resolvedAt: handoff.resolvedAt?.toISOString() ?? null,
+          rating: handoff.rating,
+          ratingRequestedAt: handoff.ratingRequestedAt?.toISOString() ?? null,
+        },
+      ]),
+    );
+    const messagesWithHandoff = messages.map((message) => {
+      const customerPhone = message.direction === MessageDirection.OUTBOUND ? message.toNumber : message.fromNumber;
+      const handoff = handoffMap.get(`${message.connectionId}:${customerPhone}`);
+
+      return {
+        ...message,
+        metadata: {},
+        handoffActive: Boolean(handoff?.active),
+        handoffAt: handoff?.handoffAt ?? null,
+        resolvedAt: handoff?.resolvedAt ?? null,
+        rating: handoff?.rating ?? null,
+        ratingRequestedAt: handoff?.ratingRequestedAt ?? null,
+      };
+    });
+
+    return jsonSuccess(messagesWithHandoff, {
       meta: {
         total,
         page: parsed.data.page,

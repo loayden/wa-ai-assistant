@@ -33,14 +33,14 @@ type MockWebhookResponse = {
 
 export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "15555550199", onSent }: MockMessageSenderProps) {
   const [customerPhoneNumber, setCustomerPhoneNumber] = useState("15555550100");
-  const [messageText, setMessageText] = useState("Hi, are you open today?");
+  const [messageText, setMessageText] = useState("مرحباً، هل أنتم متاحون اليوم؟");
   const [responseText, setResponseText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
   async function handleSend() {
     if (!phoneNumberId) {
-      setError("Connect a mock WhatsApp number before sending a test message.");
+      setError("اربط رقم واتساب الاختباري قبل إرسال رسالة تجربة.");
       return;
     }
 
@@ -65,7 +65,7 @@ export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "1555555
                 },
                 contacts: [
                   {
-                    profile: { name: "Mock Customer" },
+                    profile: { name: "عميل اختبار" },
                     wa_id: customerPhoneNumber,
                   },
                 ],
@@ -95,10 +95,10 @@ export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "1555555
       });
       const firstResult = data.processed[0];
 
-      setResponseText(firstResult?.aiReplyText ?? `Webhook processed with status ${firstResult?.status ?? "UNKNOWN"}.`);
+      setResponseText(firstResult?.aiReplyText ?? `تمت معالجة الويبهوك بالحالة ${firstResult?.status ?? "غير معروفة"}.`);
       onSent?.();
     } catch (sendError) {
-      setError(sendError instanceof Error ? sendError.message : "Mock message failed.");
+      setError(sendError instanceof Error ? sendError.message : "فشل إرسال رسالة الاختبار.");
     } finally {
       setIsSending(false);
     }
@@ -107,12 +107,12 @@ export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "1555555
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Send Test Message</CardTitle>
+        <CardTitle>إرسال رسالة اختبار</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="mock-customer-phone">Customer phone number</Label>
+            <Label htmlFor="mock-customer-phone">رقم العميل</Label>
             <Input
               id="mock-customer-phone"
               value={customerPhoneNumber}
@@ -120,12 +120,12 @@ export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "1555555
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="mock-phone-number-id">Phone Number ID</Label>
-            <Input id="mock-phone-number-id" disabled value={phoneNumberId ?? "Connect mock WhatsApp first"} />
+            <Label htmlFor="mock-phone-number-id">معرّف رقم واتساب</Label>
+            <Input id="mock-phone-number-id" disabled value={phoneNumberId ?? "اربط واتساب الاختباري أولاً"} />
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="mock-message-text">Message text</Label>
+          <Label htmlFor="mock-message-text">نص الرسالة</Label>
           <Textarea
             id="mock-message-text"
             rows={4}
@@ -135,17 +135,17 @@ export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "1555555
         </div>
         <Button disabled={isSending || !messageText.trim()} onClick={handleSend} type="button">
           <SendHorizontal className="size-4" aria-hidden="true" />
-          {isSending ? "Sending..." : "Send"}
+          {isSending ? "جار الإرسال..." : "إرسال"}
         </Button>
         {error ? (
           <Alert>
-            <AlertTitle>Mock send failed</AlertTitle>
+            <AlertTitle>فشل اختبار الإرسال</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : null}
         {responseText ? (
           <Alert>
-            <AlertTitle>AI reply generated</AlertTitle>
+            <AlertTitle>تم توليد رد المساعد</AlertTitle>
             <AlertDescription>{responseText}</AlertDescription>
           </Alert>
         ) : null}

@@ -8,7 +8,7 @@
  */
 import { useDeferredValue, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck, UserRoundCheck } from "lucide-react";
 import Link from "next/link";
 
 import { ConversationCard } from "@/components/conversations/ConversationCard";
@@ -22,10 +22,11 @@ import { cn } from "@/lib/utils";
 
 type DirectionOption = "ALL" | MessageDirectionFilter;
 type StatusOption = "ALL" | MessageStatusFilter;
-type SimpleFilter = "ALL" | "UNANSWERED" | "TODAY";
+type SimpleFilter = "ALL" | "UNANSWERED" | "HANDOFF" | "TODAY";
+type ConnectionFilter = "ALL" | string;
 
 function formatTimestamp(value: string) {
-  return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
+  return new Intl.DateTimeFormat("ar-EG", { day: "numeric", hour: "2-digit", minute: "2-digit", month: "short" }).format(new Date(value));
 }
 
 function isToday(value: string) {
@@ -34,11 +35,16 @@ function isToday(value: string) {
   return date.toDateString() === now.toDateString();
 }
 
+function getCustomerPhone(message: MessageRecord) {
+  return message.direction === "OUTBOUND" ? message.toNumber : message.fromNumber;
+}
+
 export function MessageList() {
   const [page, setPage] = useState(1);
   const [direction] = useState<DirectionOption>("ALL");
   const [status, setStatus] = useState<StatusOption>("ALL");
   const [simpleFilter, setSimpleFilter] = useState<SimpleFilter>("ALL");
+  const [connectionFilter, setConnectionFilter] = useState<ConnectionFilter>("ALL");
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [activeConversation, setActiveConversation] = useState<MessageRecord | null>(null);
@@ -46,10 +52,21 @@ export function MessageList() {
   const messagesResult = useMessages({
     page,
     limit,
+    connectionId: connectionFilter === "ALL" ? undefined : connectionFilter,
     direction: direction === "ALL" ? undefined : direction,
     status: status === "ALL" ? undefined : status,
   });
+  const connectionOptionsResult = useMessages({ page: 1, limit: 100 });
   const totalPages = Math.max(1, Math.ceil(messagesResult.total / limit));
+  const connectionOptions = useMemo(() => {
+    const options = new Map<string, string>();
+
+    for (const message of connectionOptionsResult.messages) {
+      options.set(message.connectionId, message.connection?.displayName ?? message.connection?.phoneNumberId ?? "رقم واتساب");
+    }
+
+    return Array.from(options, ([id, label]) => ({ id, label }));
+  }, [connectionOptionsResult.messages]);
 
   const filteredMessages = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
@@ -58,6 +75,7 @@ export function MessageList() {
       const matchesSimpleFilter =
         simpleFilter === "ALL" ||
         (simpleFilter === "UNANSWERED" && message.status === "RECEIVED") ||
+        (simpleFilter === "HANDOFF" && Boolean(message.handoffActive)) ||
         (simpleFilter === "TODAY" && isToday(message.createdAt));
       const matchesSearch =
         !normalizedSearch ||
@@ -74,18 +92,20 @@ export function MessageList() {
       return [];
     }
 
-    const phone = activeConversation.fromNumber;
-    return messagesResult.messages.filter((message) => message.fromNumber === phone || message.toNumber === phone);
+    const phone = getCustomerPhone(activeConversation);
+    return messagesResult.messages.filter((message) => getCustomerPhone(message) === phone);
   }, [activeConversation, messagesResult.messages]);
 
   const chips: Array<{ value: SimpleFilter; label: string }> = [
-    { value: "ALL", label: "All" },
-    { value: "UNANSWERED", label: "Unanswered" },
-    { value: "TODAY", label: "Today" },
+    { value: "ALL", label: "الكل" },
+    { value: "UNANSWERED", label: "تحتاج رد" },
+    { value: "HANDOFF", label: "تدخل بشري" },
+    { value: "TODAY", label: "اليوم" },
   ];
   const unansweredCount = messagesResult.messages.filter((message) => message.status === "RECEIVED").length;
   const aiRepliesCount = messagesResult.messages.filter((message) => message.status === "REPLIED" && Boolean(message.aiReplyText)).length;
   const failedCount = messagesResult.messages.filter((message) => message.status === "FAILED").length;
+  const handoffCount = messagesResult.messages.filter((message) => message.handoffActive).length;
   const todayCount = messagesResult.messages.filter((message) => isToday(message.createdAt)).length;
 
   return (
@@ -98,19 +118,20 @@ export function MessageList() {
               href="/dashboard"
             >
               <ArrowLeft className="size-4" aria-hidden="true" />
-              Dashboard
+              الرئيسية
             </Link>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">Messages</p>
-            <h1 className="mt-2 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[46px]">Customer inbox built for daily review.</h1>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الرسائل</p>
+            <h1 className="mt-2 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[46px]">صندوق وارد واضح لمتابعة العملاء يوميًا.</h1>
             <p className="mt-3 text-body-sm leading-6 text-wa-gray-600 sm:mt-4 sm:text-body-lg">
-              Search conversations, find messages that need attention, and open any thread without leaving the operational inbox.
+              ابحثي في المحادثات، تابعي الرسائل التي تحتاج اهتمام، وافتحي أي محادثة بدون الخروج من صفحة العمل.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3 lg:w-[380px] lg:grid-cols-1">
-            <InboxHeroStat label="Visible" value={String(filteredMessages.length)} />
-            <InboxHeroStat label="Needs reply" value={String(unansweredCount)} tone={unansweredCount > 0 ? "attention" : "calm"} />
-            <InboxHeroStat label="AI replies" value={String(aiRepliesCount)} />
-            {failedCount > 0 ? <InboxHeroStat label="Needs setup" value={String(failedCount)} tone="attention" /> : null}
+            <InboxHeroStat label="المعروض" value={String(filteredMessages.length)} />
+            <InboxHeroStat label="تحتاج رد" value={String(unansweredCount)} tone={unansweredCount > 0 ? "attention" : "calm"} />
+            <InboxHeroStat label="تدخل بشري" value={String(handoffCount)} tone={handoffCount > 0 ? "attention" : "calm"} />
+            <InboxHeroStat label="ردود AI" value={String(aiRepliesCount)} />
+            {failedCount > 0 ? <InboxHeroStat label="تحتاج إعداد" value={String(failedCount)} tone="attention" /> : null}
           </div>
         </div>
       </header>
@@ -118,12 +139,51 @@ export function MessageList() {
       <section className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
           <div className="border-b border-wa-gray-100 p-4 sm:p-5">
+            {connectionOptions.length > 1 ? (
+              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  className={cn(
+                    "min-h-9 shrink-0 rounded-full border px-3 text-body-sm font-semibold transition-colors",
+                    connectionFilter === "ALL"
+                      ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
+                      : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
+                  )}
+                  onClick={() => {
+                    setConnectionFilter("ALL");
+                    setActiveConversation(null);
+                    setPage(1);
+                  }}
+                >
+                  كل الأرقام
+                </button>
+                {connectionOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    className={cn(
+                      "min-h-9 shrink-0 rounded-full border px-3 text-body-sm font-semibold transition-colors",
+                      connectionFilter === option.id
+                        ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
+                        : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
+                    )}
+                    onClick={() => {
+                      setConnectionFilter(option.id);
+                      setActiveConversation(null);
+                      setPage(1);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400 sm:left-4" aria-hidden="true" />
+                <Search className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400 sm:right-4" aria-hidden="true" />
                 <Input
-                  className="h-11 rounded-2xl bg-wa-gray-50 pl-10 sm:h-12 sm:pl-11"
-                  placeholder="Search by message or phone number"
+                  className="h-11 rounded-2xl bg-wa-gray-50 pr-10 sm:h-12 sm:pr-11"
+                  placeholder="ابحثي بالرسالة أو رقم الهاتف"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
@@ -157,14 +217,14 @@ export function MessageList() {
           ) : messagesResult.error ? (
             <div className="p-5">
               <Alert>
-                <AlertTitle>Messages unavailable</AlertTitle>
+                <AlertTitle>تعذر تحميل الرسائل</AlertTitle>
                 <AlertDescription>{messagesResult.error.message}</AlertDescription>
               </Alert>
             </div>
           ) : filteredMessages.length === 0 ? (
             <InboxEmptyState
-              title={search || simpleFilter !== "ALL" ? "No conversations match this view" : "No messages yet"}
-              body={search || simpleFilter !== "ALL" ? "Try a different search or clear the filters to see more conversations." : "Once customers message your connected WhatsApp number, conversations will appear here."}
+              title={search || simpleFilter !== "ALL" ? "لا توجد محادثات مطابقة" : "لا توجد رسائل بعد"}
+              body={search || simpleFilter !== "ALL" ? "جرّبي بحثًا مختلفًا أو أزيلي الفلاتر لعرض محادثات أكثر." : "عندما يرسل العملاء إلى رقم واتساب المتصل ستظهر المحادثات هنا."}
             />
           ) : (
             filteredMessages.map((message) => (
@@ -173,8 +233,15 @@ export function MessageList() {
                 aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
                 contactName={message.connection?.displayName}
                 failed={message.status === "FAILED"}
-                phoneNumber={message.fromNumber}
-                preview={message.status === "FAILED" ? "Reply did not send. Open this thread to see what needs setup." : message.aiReplyText ?? message.bodyText}
+                handoff={message.handoffActive}
+                resolved={Boolean(message.resolvedAt)}
+                rating={message.rating}
+                phoneNumber={getCustomerPhone(message)}
+                preview={
+                  message.status === "FAILED"
+                    ? message.aiReplyText ?? "لم يتم إرسال الرد. افتحي المحادثة لمعرفة المطلوب."
+                    : message.aiReplyText ?? message.bodyText
+                }
                 timestamp={formatTimestamp(message.createdAt)}
                 unread={message.status === "RECEIVED"}
                 selected={activeConversation?.id === message.id}
@@ -185,15 +252,15 @@ export function MessageList() {
 
           <div className="flex flex-col gap-3 border-t border-wa-gray-100 p-4 text-body-sm text-wa-gray-600 sm:flex-row sm:items-center sm:justify-between">
             <span>
-              Page {page} of {totalPages}
-              {messagesResult.query.isFetching ? <span className="ml-2 text-wa-blue-600">Updating...</span> : null}
+              صفحة {page} من {totalPages}
+              {messagesResult.query.isFetching ? <span className="mr-2 text-wa-blue-600">جارٍ التحديث...</span> : null}
             </span>
             <div className="flex gap-2">
               <Button disabled={page <= 1} size="sm" variant="outline" onClick={() => setPage((value) => Math.max(1, value - 1))}>
-                Previous
+                السابق
               </Button>
               <Button disabled={page >= totalPages} size="sm" variant="outline" onClick={() => setPage((value) => Math.min(totalPages, value + 1))}>
-                Next
+                التالي
               </Button>
             </div>
           </div>
@@ -201,25 +268,31 @@ export function MessageList() {
 
         <aside className="space-y-4">
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">Inbox health</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">حالة الصندوق</p>
             <div className="mt-4 grid gap-3">
               <InboxHealthRow
                 icon={<CheckCircle2 className="size-4" aria-hidden="true" />}
-                label="Today"
-                value={`${todayCount} messages`}
+                label="اليوم"
+                value={`${todayCount} رسالة`}
                 tone={todayCount > 0 ? "blue" : "neutral"}
               />
               <InboxHealthRow
                 icon={<Bot className="size-4" aria-hidden="true" />}
-                label="AI assisted"
-                value={`${aiRepliesCount} replies`}
+                label="مساعدة AI"
+                value={`${aiRepliesCount} رد`}
                 tone="blue"
               />
               <InboxHealthRow
                 icon={<ShieldCheck className="size-4" aria-hidden="true" />}
-                label="Review status"
-                value={failedCount > 0 ? `${failedCount} setup issue` : unansweredCount > 0 ? `${unansweredCount} waiting` : "Clear"}
-                tone={failedCount > 0 || unansweredCount > 0 ? "attention" : "success"}
+                label="حالة المراجعة"
+                value={failedCount > 0 ? `${failedCount} مشكلة إعداد` : handoffCount > 0 ? `${handoffCount} محادثة بشرية` : unansweredCount > 0 ? `${unansweredCount} تنتظر` : "واضح"}
+                tone={failedCount > 0 || unansweredCount > 0 || handoffCount > 0 ? "attention" : "success"}
+              />
+              <InboxHealthRow
+                icon={<UserRoundCheck className="size-4" aria-hidden="true" />}
+                label="التدخل البشري"
+                value={handoffCount > 0 ? `${handoffCount} نشطة` : "لا يوجد"}
+                tone={handoffCount > 0 ? "attention" : "neutral"}
               />
             </div>
           </section>
@@ -231,19 +304,18 @@ export function MessageList() {
                   <AlertCircle className="size-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-body-sm font-semibold text-wa-gray-900">Automatic reply needs setup</p>
+                  <p className="text-body-sm font-semibold text-wa-gray-900">الرد التلقائي يحتاج إعداد</p>
                   <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
-                    The message arrived, but the reply was blocked before delivery. Make sure OpenAI has active quota, then
-                    use a production WhatsApp Business number for real customers.
+                    وصلت رسالة العميل، لكن الرد توقف قبل الإرسال. افتحي المحادثة لمعرفة السبب المسجل في kallem.
                   </p>
                   <p className="mt-2 rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-                    If this is still a Meta test number, Meta only allows replies to approved test phones.
+                    إذا كان الرقم ما زال رقم اختبار من Meta، فالردود مسموحة فقط لأرقام الاختبار المعتمدة.
                   </p>
                   <Link
                     href="/whatsapp"
                     className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
                   >
-                    Check setup
+                    مراجعة الإعداد
                   </Link>
                 </div>
               </div>
@@ -251,17 +323,17 @@ export function MessageList() {
           ) : null}
 
           <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">Daily workflow</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">طريقة العمل اليومية</p>
             <div className="mt-4 space-y-3">
-              <WorkflowRow icon={<Inbox className="size-4" aria-hidden="true" />} title="Check unread messages" body="Start with conversations marked Needs reply." />
-              <WorkflowRow icon={<MessageSquareText className="size-4" aria-hidden="true" />} title="Open a thread" body="Review the customer message and AI response in context." />
-              <WorkflowRow icon={<Clock3 className="size-4" aria-hidden="true" />} title="Follow up manually" body="Send a direct message when the owner should handle the answer." />
+              <WorkflowRow icon={<Inbox className="size-4" aria-hidden="true" />} title="راجعي الرسائل الجديدة" body="ابدئي بالمحادثات المعلّمة بأنها تحتاج رد." />
+              <WorkflowRow icon={<MessageSquareText className="size-4" aria-hidden="true" />} title="افتحي المحادثة" body="راجعي رسالة العميل ورد AI في السياق الكامل." />
+              <WorkflowRow icon={<Clock3 className="size-4" aria-hidden="true" />} title="تابعي يدويًا" body="ارسلي ردًا مباشرًا عندما يحتاج الأمر تدخل صاحب النشاط." />
             </div>
             <Link
               href="/whatsapp"
               className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-wa-gray-200 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 sm:mt-5 sm:min-h-11"
             >
-              Check WhatsApp setup
+              مراجعة إعداد واتساب
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </section>
@@ -270,11 +342,19 @@ export function MessageList() {
       {activeConversation ? (
         <ConversationThread
           connectionId={activeConversation.connectionId}
-          contactName={activeConversation.connection?.displayName ?? activeConversation.fromNumber}
-          phoneNumber={activeConversation.fromNumber}
+          contactName={activeConversation.connection?.displayName ?? getCustomerPhone(activeConversation)}
+          handoffActive={Boolean(activeConversation.handoffActive)}
+          rating={activeConversation.rating}
+          ratingRequestedAt={activeConversation.ratingRequestedAt}
+          resolvedAt={activeConversation.resolvedAt}
+          phoneNumber={getCustomerPhone(activeConversation)}
+          threadId={activeConversation.id}
           messages={threadMessages}
           onBack={() => setActiveConversation(null)}
           onSent={() => messagesResult.refetch().then(() => undefined)}
+          onThreadUpdated={(updates) => {
+            setActiveConversation((current) => (current ? { ...current, ...updates } : current));
+          }}
         />
       ) : null}
     </div>

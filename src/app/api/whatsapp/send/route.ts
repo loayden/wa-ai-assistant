@@ -89,12 +89,12 @@ export async function POST(request: Request) {
 
       if (metaCode === 131030) {
         return jsonError(
-          "This Meta test number can only message approved test recipients. Add this phone as a test recipient in Meta, or connect a production WhatsApp Business number.",
+          "رقم Meta الاختباري يمكنه مراسلة أرقام الاختبار المعتمدة فقط. أضف هذا الرقم كمستلم اختبار في Meta أو اربط رقم WhatsApp Business إنتاجي.",
           400,
         );
       }
 
-      return jsonError(details || "Meta rejected this WhatsApp send. Check the number and connection permissions.", 502);
+      return jsonError(details || "رفضت Meta إرسال رسالة واتساب. راجع الرقم وصلاحيات الاتصال.", 502);
     }
 
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.whatsapp.send", error);
@@ -104,6 +104,6 @@ export async function POST(request: Request) {
     }
 
     logger.error("api.whatsapp.send", "Failed to send WhatsApp message.", { error });
-    return jsonError("Failed to send WhatsApp message.", 500);
+    return jsonError("فشل إرسال رسالة واتساب.", 500);
   }
 }

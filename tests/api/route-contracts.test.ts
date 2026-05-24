@@ -278,6 +278,13 @@ const apiRouteContracts: ApiRouteContract[] = [
     expectedErrors: [401, 403, 404, 500, 502, 503],
   },
   {
+    route: "/api/broadcasts/[id]/process",
+    methods: ["POST"],
+    expectedInputs: ["Supabase session", "owned broadcast id with status=sending"],
+    successResponse: "bounded client-driven processing progress",
+    expectedErrors: [401, 404, 429, 500, 502, 503],
+  },
+  {
     route: "/api/broadcasts/[id]/status",
     methods: ["GET"],
     expectedInputs: ["Supabase session", "owned broadcast id"],
@@ -344,7 +351,7 @@ const apiRouteContracts: ApiRouteContract[] = [
 
 describe("API route contracts", () => {
   it("documents expected inputs, success responses, and error responses for each route", () => {
-    expect(apiRouteContracts).toHaveLength(40);
+    expect(apiRouteContracts).toHaveLength(41);
 
     for (const contract of apiRouteContracts) {
       expect(contract.route).toMatch(/^\/api\//);

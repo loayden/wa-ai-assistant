@@ -341,6 +341,12 @@ export type BroadcastSendResponse = {
   failed: number;
 };
 
+export type BroadcastProcessResponse = {
+  activeBroadcasts: number;
+  processedRecipients: number;
+  completedBroadcasts: number;
+};
+
 export type BroadcastStatusResponse = {
   status: BroadcastStatus;
   recipientCount: number;

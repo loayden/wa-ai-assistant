@@ -24,6 +24,7 @@ type BroadcastWithTemplate = Broadcast & {
 };
 
 type ProcessBroadcastQueueOptions = {
+  broadcastId?: string;
   maxBroadcasts?: number;
   batchSize?: number;
   delayMs?: number;
@@ -127,7 +128,10 @@ export async function processBroadcastQueue(options: ProcessBroadcastQueueOption
   const batchSize = options.batchSize ?? BROADCAST_CRON_BATCH_SIZE;
   const delayMs = options.delayMs ?? BROADCAST_DELAY_MS;
   const activeBroadcasts = await prisma.broadcast.findMany({
-    where: { status: "sending" },
+    where: {
+      status: "sending",
+      ...(options.broadcastId ? { id: options.broadcastId } : {}),
+    },
     orderBy: [{ startedAt: "asc" }, { createdAt: "asc" }],
     take: maxBroadcasts,
     include: { template: true },

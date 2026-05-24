@@ -5,7 +5,7 @@
  * Decision: Broadcast creation stays a guided three-step surface so owners see
  * template approval, variables, and recipient count before sending anything.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Megaphone, RefreshCw, SendHorizonal } from "lucide-react";
@@ -19,6 +19,7 @@ import { extractTemplateVariables, maskTemplateVariables } from "@/lib/templates
 import { cn } from "@/lib/utils";
 import type {
   BroadcastMutationResponse,
+  BroadcastProcessResponse,
   BroadcastResponse,
   BroadcastSendResponse,
   BroadcastStatusResponse,
@@ -161,6 +162,20 @@ export function BroadcastsPageClient() {
       }
     },
   });
+  const processMutation = useMutation({
+    mutationFn: (broadcastId: string) =>
+      apiData<BroadcastProcessResponse>(`/api/broadcasts/${broadcastId}/process`, {
+        method: "POST",
+      }),
+    onSuccess: () => {
+      if (activeBroadcastId) {
+        void queryClient.invalidateQueries({ queryKey: ["broadcast-status", activeBroadcastId] });
+      }
+      void queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
+    },
+  });
+  const processBroadcastBatch = processMutation.mutate;
+  const isProcessingBroadcastBatch = processMutation.isPending;
   const createMutation = useMutation({
     mutationFn: () =>
       apiData<BroadcastMutationResponse>("/api/broadcasts", {
@@ -189,6 +204,23 @@ export function BroadcastsPageClient() {
 
   const canSend = Boolean(form.name.trim() && form.templateId && recipients.length > 0 && !createMutation.isPending && !sendMutation.isPending);
   const latestProgress = activeStatusQuery.data;
+
+  useEffect(() => {
+    if (!activeBroadcastId || latestProgress?.status !== "sending" || isProcessingBroadcastBatch) return;
+
+    const timer = window.setTimeout(() => {
+      processBroadcastBatch(activeBroadcastId);
+    }, 2_000);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    activeBroadcastId,
+    latestProgress?.status,
+    latestProgress?.sentCount,
+    latestProgress?.failedCount,
+    isProcessingBroadcastBatch,
+    processBroadcastBatch,
+  ]);
 
   return (
     <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-8 pt-4 sm:px-6 sm:pt-8">
@@ -317,6 +349,11 @@ export function BroadcastsPageClient() {
                     }}
                   />
                 </div>
+                {latestProgress.status === "sending" ? (
+                  <p className="mt-2 text-label text-wa-blue-700">
+                    اترك هذه الصفحة مفتوحة حتى يكتمل الإرسال. تتم معالجة دفعات صغيرة مناسبة لخطة Vercel المجانية.
+                  </p>
+                ) : null}
               </div>
             ) : null}
             <Button className="mt-4 w-full sm:w-auto" disabled={!canSend} isLoading={createMutation.isPending || sendMutation.isPending} onClick={() => createMutation.mutate()}>

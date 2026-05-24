@@ -140,5 +140,30 @@ describe("broadcast cron processor", () => {
     );
     expect(result.completedBroadcasts).toBe(1);
   });
-});
 
+  it("can process one client-driven broadcast batch by id", async () => {
+    const recipients = createRecipients(5);
+
+    broadcastMocks.prisma.broadcast.findMany.mockResolvedValue([createBroadcast()]);
+    broadcastMocks.prisma.broadcastRecipient.findMany.mockResolvedValue(recipients);
+    broadcastMocks.prisma.broadcastRecipient.count
+      .mockResolvedValueOnce(5)
+      .mockResolvedValueOnce(0)
+      .mockResolvedValueOnce(70);
+
+    const result = await processBroadcastQueue({ broadcastId: "broadcast-1", maxBroadcasts: 1, batchSize: 5, delayMs: 0 });
+
+    expect(broadcastMocks.prisma.broadcast.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 1,
+        where: { id: "broadcast-1", status: "sending" },
+      }),
+    );
+    expect(broadcastMocks.prisma.broadcastRecipient.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        take: 5,
+      }),
+    );
+    expect(result.processedRecipients).toBe(5);
+  });
+});

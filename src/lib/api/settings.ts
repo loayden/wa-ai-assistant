@@ -121,5 +121,5 @@ export async function updateUserSettings(userId: string, data: UserSettingsUpdat
 }
 
 export function buildFallbackMessage(settings: UserSettings): string {
-  return settings.fallbackMessage?.trim() || "Thanks for your message. A team member will follow up soon.";
+  return settings.fallbackMessage?.trim() || "شكراً لتواصلك. سيقوم أحد أفراد الفريق بالرد عليك قريباً.";
 }

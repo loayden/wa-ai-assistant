@@ -8,7 +8,7 @@ import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { getOrCreateUserSettings } from "@/lib/api/settings";
-import { generateAIReply } from "@/lib/openai/client";
+import { AIReplyError, generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
@@ -88,6 +88,24 @@ export async function POST(request: Request) {
       return jsonError(error.message, 400);
     }
 
+    if (error instanceof AIReplyError) {
+      if (error.code === "OPENAI_RATE_LIMIT") {
+        return jsonError(
+          "رصيد OpenAI غير كافٍ أو تم تجاوز حد الاستخدام. أضيفي رصيدًا أو فعّلي Billing في OpenAI ثم جرّبي مرة أخرى.",
+          503,
+          { code: error.code },
+        );
+      }
+
+      if (error.code === "OPENAI_TIMEOUT") {
+        return jsonError("اتصال OpenAI استغرق وقتًا طويلًا. انتظري دقيقة ثم جرّبي مرة أخرى.", 504, { code: error.code });
+      }
+
+      return jsonError("تعذر تشغيل اختبار المساعد من OpenAI الآن. راجعي مفتاح OpenAI والرصيد ثم حاولي مرة أخرى.", 503, {
+        code: error.code,
+      });
+    }
+
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.assistant.test", error);
 
     if (databaseErrorResponse) {
@@ -95,6 +113,6 @@ export async function POST(request: Request) {
     }
 
     logger.error("api.assistant.test", "Failed to test assistant reply.", { error });
-    return jsonError("Failed to test assistant reply.", 500);
+    return jsonError("فشل اختبار المساعد. حاولي مرة أخرى بعد لحظات.", 500);
   }
 }

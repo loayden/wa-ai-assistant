@@ -26,7 +26,7 @@ export const signupSchema = z
 export const loginSchema = z
   .object({
     email: emailSchema,
-    password: z.string().min(1).max(128),
+    password: z.string().min(1, "اكتبي كلمة المرور.").max(128, "كلمة المرور طويلة جداً."),
   })
   .strict();
 

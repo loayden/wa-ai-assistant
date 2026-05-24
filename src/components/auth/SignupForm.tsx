@@ -27,7 +27,7 @@ import { strictZodResolver } from "@/lib/validators/resolver";
 
 const signupFormSchema = signupSchema
   .extend({
-    confirmPassword: z.string().min(1),
+    confirmPassword: z.string().min(1, "أعيدي كتابة كلمة المرور للتأكيد."),
     acceptTerms: z.boolean().refine((value) => value, "يجب الموافقة على الشروط للمتابعة."),
   })
   .refine((value) => value.password === value.confirmPassword, {
@@ -36,6 +36,8 @@ const signupFormSchema = signupSchema
   });
 
 type SignupFormInput = z.infer<typeof signupFormSchema>;
+
+const REMEMBERED_EMAIL_KEY = "kallem:lastEmail";
 
 export function SignupForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -65,7 +67,34 @@ export function SignupForm() {
 
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
+    try {
+      const rememberedEmail = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+
+      if (rememberedEmail && !form.getValues("email")) {
+        form.setValue("email", rememberedEmail, { shouldDirty: false, shouldValidate: false });
+      }
+    } catch {
+      // localStorage can be unavailable in private or locked-down browser contexts.
+    }
+  }, [form]);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const email = value.email?.trim();
+
+      if (!email) {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      } catch {
+        // Ignore storage failures; they should not block signup.
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   if (mutation.isSuccess) {
     return (

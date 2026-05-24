@@ -66,6 +66,7 @@ const appNavItems = [
 ];
 
 const mobilePrimaryHrefs = new Set(["/dashboard", "/whatsapp", "/messages", "/billing"]);
+const desktopPrimaryHrefs = new Set(["/dashboard", "/whatsapp", "/knowledge", "/products", "/orders", "/messages", "/billing"]);
 
 export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE", userEmail, userName }: TopBarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -78,6 +79,9 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const displayPlan = planTier;
   const navItems = isAdmin ? [...appNavItems, { href: "/admin", label: "الإدارة", icon: ShieldCheck }] : appNavItems;
   const mobilePrimaryItems = navItems.filter((item) => mobilePrimaryHrefs.has(item.href));
+  const desktopPrimaryItems = navItems.filter((item) => desktopPrimaryHrefs.has(item.href) || (isAdmin && item.href === "/admin"));
+  const desktopMoreItems = navItems.filter((item) => !desktopPrimaryItems.some((primaryItem) => primaryItem.href === item.href));
+  const moreActive = desktopMoreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
 
   function handleBilling() {
     if (onBilling) {
@@ -106,10 +110,10 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
         <div className="mx-auto flex h-full max-w-[1120px] items-center justify-between gap-3 px-3 sm:px-6">
           <BrandLogo wordmarkSize="sm" />
           <nav
-            className="hidden max-w-[760px] items-center gap-1 overflow-x-auto rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1 md:flex lg:max-w-[860px]"
+            className="hidden items-center gap-1 rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1 md:flex"
             aria-label="تنقل التطبيق"
           >
-            {navItems.map((item) => {
+            {desktopPrimaryItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -128,6 +132,19 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
                 </Link>
               );
             })}
+            {desktopMoreItems.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setMenuOpen(true)}
+                className={cn(
+                  "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
+                  moreActive ? "bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.06)]" : "text-wa-gray-600 hover:bg-white hover:text-wa-gray-900",
+                )}
+              >
+                <Menu className="size-4" aria-hidden="true" />
+                المزيد
+              </button>
+            ) : null}
           </nav>
           <button
             type="button"

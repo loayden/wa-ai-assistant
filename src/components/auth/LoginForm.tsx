@@ -24,6 +24,8 @@ import { apiData } from "@/lib/api/client";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { strictZodResolver } from "@/lib/validators/resolver";
 
+const REMEMBERED_EMAIL_KEY = "kallem:lastEmail";
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,7 +58,48 @@ export function LoginForm() {
 
   useEffect(() => {
     setIsHydrated(true);
-  }, []);
+    try {
+      const rememberedEmail = window.localStorage.getItem(REMEMBERED_EMAIL_KEY);
+
+      if (rememberedEmail && !form.getValues("email")) {
+        form.setValue("email", rememberedEmail, { shouldDirty: false, shouldValidate: false });
+      }
+    } catch {
+      // localStorage can be unavailable in private or locked-down browser contexts.
+    }
+  }, [form]);
+
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      const email = value.email?.trim();
+
+      if (!email) {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+      } catch {
+        // Ignore storage failures; they should not block sign-in.
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
+
+  useEffect(() => {
+    if (mutation.isSuccess) {
+      const email = form.getValues("email").trim();
+
+      if (email) {
+        try {
+          window.localStorage.setItem(REMEMBERED_EMAIL_KEY, email);
+        } catch {
+          // Ignore storage failures; authentication already succeeded.
+        }
+      }
+    }
+  }, [form, mutation.isSuccess]);
 
   return (
     <Card className="w-full max-w-[500px] rounded-[24px] border-wa-gray-100 bg-white p-5 shadow-[0_18px_56px_rgba(13,20,33,0.08)] sm:rounded-[30px] sm:p-8">

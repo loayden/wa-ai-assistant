@@ -7,6 +7,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const apiMocks = vi.hoisted(() => {
+  class AIReplyError extends Error {
+    public readonly code: "OPENAI_RATE_LIMIT" | "OPENAI_TIMEOUT" | "OPENAI_API_ERROR" | "OPENAI_INVALID_RESPONSE";
+
+    constructor(
+      code: "OPENAI_RATE_LIMIT" | "OPENAI_TIMEOUT" | "OPENAI_API_ERROR" | "OPENAI_INVALID_RESPONSE",
+      message: string,
+    ) {
+      super(message);
+      this.name = "AIReplyError";
+      this.code = code;
+    }
+  }
+
   class UnauthorizedError extends Error {
     constructor(message = "Authentication required.") {
       super(message);
@@ -15,6 +28,7 @@ const apiMocks = vi.hoisted(() => {
   }
 
   return {
+    AIReplyError,
     UnauthorizedError,
     requireAppUser: vi.fn(),
     getOrCreateUserSettings: vi.fn(),
@@ -43,6 +57,7 @@ vi.mock("@/lib/api/settings", () => ({
 }));
 
 vi.mock("@/lib/openai/client", () => ({
+  AIReplyError: apiMocks.AIReplyError,
   generateAIReply: apiMocks.generateAIReply,
 }));
 
@@ -122,5 +137,19 @@ describe("assistant test API", () => {
     expect(response.status).toBe(200);
     expect(body.data.onboardingCompleted).toBe(false);
     expect(apiMocks.prisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("returns a clear Arabic error when OpenAI quota is unavailable", async () => {
+    apiMocks.generateAIReply.mockRejectedValueOnce(
+      new apiMocks.AIReplyError("OPENAI_RATE_LIMIT", "Insufficient quota."),
+    );
+
+    const response = await POST(jsonRequest({ message: "هل يوجد توصيل؟" }));
+    const body = await response.json();
+
+    expect(response.status).toBe(503);
+    expect(body.error).toContain("رصيد OpenAI غير كافٍ");
+    expect(body.meta.code).toBe("OPENAI_RATE_LIMIT");
+    expect(apiMocks.prisma.whatsAppConnection.count).not.toHaveBeenCalled();
   });
 });

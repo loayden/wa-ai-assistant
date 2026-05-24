@@ -1,5 +1,6 @@
 // FILE: src/app/layout.tsx
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Cairo, Inter } from "next/font/google";
 import { Providers } from "@/components/shared/Providers";
 import { BRAND_LOCKUP } from "@/lib/utils/brand";
@@ -33,18 +34,20 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html
       lang="ar"
       dir="rtl"
       className={`${inter.variable} ${cairo.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" data-csp-nonce={nonce}>
         <Providers>{children}</Providers>
       </body>
     </html>

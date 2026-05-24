@@ -1,5 +1,6 @@
 // FILE: next.config.mjs
 import path from "node:path";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /*
  * [ROLE: DEVOPS ENGINEER]
@@ -83,27 +84,7 @@ function validateEnv(env = process.env) {
 
 validateEnv();
 
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "img-src 'self' data: blob: https://lookaside.fbsbx.com https://scontent.xx.fbcdn.net https://*.cdn.whatsapp.net https://images.pexels.com",
-  "font-src 'self' data:",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://connect.facebook.net",
-  "style-src 'self' 'unsafe-inline'",
-  "connect-src 'self' https://*.supabase.co https://api.openai.com https://graph.facebook.com https://accept.paymob.com https://*.paymob.com https://connect.facebook.net https://www.facebook.com https://web.facebook.com",
-  "frame-src https://accept.paymob.com https://*.paymob.com https://www.facebook.com https://web.facebook.com",
-  "media-src 'self' blob: https://lookaside.fbsbx.com https://scontent.xx.fbcdn.net https://*.cdn.whatsapp.net",
-  "upgrade-insecure-requests",
-].join("; ");
-
 const securityHeaders = [
-  {
-    key: "Content-Security-Policy",
-    value: contentSecurityPolicy,
-  },
   {
     key: "Referrer-Policy",
     value: "strict-origin-when-cross-origin",
@@ -158,4 +139,14 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  webpack: {
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
+});

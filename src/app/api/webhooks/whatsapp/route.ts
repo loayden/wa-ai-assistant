@@ -7,6 +7,7 @@
  */
 import { MessageDirection, MessageStatus } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import * as Sentry from "@sentry/nextjs";
 
 import { CSAT_THANK_YOU_MESSAGE, parseCsatRating } from "@/lib/assistant/csat";
 import { isWithinWorkingHours } from "@/lib/assistant/working-hours";
@@ -1014,6 +1015,10 @@ export async function POST(request: Request) {
       return databaseErrorResponse;
     }
 
+    Sentry.captureException(error, {
+      extra: { source: "whatsapp_webhook" },
+      level: "error",
+    });
     logger.error("api.webhooks.whatsapp", "WhatsApp webhook processing failed.", { error });
     return jsonError("WhatsApp webhook processing failed.", 500);
   }

@@ -9,10 +9,12 @@ import { NextResponse } from "next/server";
  * before a user has a session.
  */
 import { createPublicMiddlewareResponse, updateSession } from "@/lib/supabase/middleware";
+import { createNonce, getSecurityHeaders } from "@/lib/security/csp";
 
 const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/auth", "/api/health"];
 const PUBLIC_API_PATHS = new Set([
   "/api/billing/paymob-return",
+  "/api/cron/process-broadcasts",
   "/api/cron/daily-summary",
   "/api/cron/weekly-report",
   "/api/cron/expire-trials",
@@ -54,7 +56,25 @@ function isE2EAuthBypassEnabled(request: NextRequest): boolean {
   return process.env.NODE_ENV !== "production" && !!bypassSecret && request.headers.get("x-e2e-auth-bypass") === bypassSecret;
 }
 
-function createUnauthenticatedResponse(request: NextRequest, sessionResponse: NextResponse): NextResponse {
+function createNonceHeaders(request: NextRequest): { nonce: string; requestHeaders: Headers } {
+  const nonce = createNonce();
+  const requestHeaders = new Headers();
+
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-pathname", request.nextUrl.pathname);
+
+  return { nonce, requestHeaders };
+}
+
+function applySecurityHeaders(response: NextResponse, nonce: string): NextResponse {
+  for (const [header, value] of getSecurityHeaders(nonce)) {
+    response.headers.set(header, value);
+  }
+
+  return response;
+}
+
+function createUnauthenticatedResponse(request: NextRequest, sessionResponse: NextResponse, nonce: string): NextResponse {
   if (isApiPath(request.nextUrl.pathname)) {
     const response = NextResponse.json(
       {
@@ -68,7 +88,7 @@ function createUnauthenticatedResponse(request: NextRequest, sessionResponse: Ne
       response.cookies.set(cookie.name, cookie.value, cookie);
     });
 
-    return response;
+    return applySecurityHeaders(response, nonce);
   }
 
   const loginUrl = request.nextUrl.clone();
@@ -81,51 +101,36 @@ function createUnauthenticatedResponse(request: NextRequest, sessionResponse: Ne
     response.cookies.set(cookie.name, cookie.value, cookie);
   });
 
-  return response;
+  return applySecurityHeaders(response, nonce);
 }
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const { nonce, requestHeaders } = createNonceHeaders(request);
 
   if (isPublicApiPath(pathname)) {
-    return createPublicMiddlewareResponse(request);
+    return applySecurityHeaders(createPublicMiddlewareResponse(request, requestHeaders), nonce);
   }
 
   if (!isApiPath(pathname) && !isProtectedPagePath(pathname)) {
-    return createPublicMiddlewareResponse(request);
+    return applySecurityHeaders(createPublicMiddlewareResponse(request, requestHeaders), nonce);
   }
 
   if (isE2EAuthBypassEnabled(request)) {
-    return createPublicMiddlewareResponse(request);
+    return applySecurityHeaders(createPublicMiddlewareResponse(request, requestHeaders), nonce);
   }
 
-  const { response, user } = await updateSession(request);
+  const { response, user } = await updateSession(request, requestHeaders);
 
   if (!user) {
-    return createUnauthenticatedResponse(request, response);
+    return createUnauthenticatedResponse(request, response, nonce);
   }
 
-  return response;
+  return applySecurityHeaders(response, nonce);
 }
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/messages/:path*",
-    "/settings/:path*",
-    "/billing/:path*",
-    "/whatsapp/:path*",
-    "/knowledge/:path*",
-    "/templates/:path*",
-    "/broadcasts/:path*",
-    "/products/:path*",
-    "/orders/:path*",
-    "/corrections/:path*",
-    "/leads/:path*",
-    "/analytics/:path*",
-    "/connect/:path*",
-    "/support/:path*",
-    "/admin/:path*",
-    "/api/:path*",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
 };

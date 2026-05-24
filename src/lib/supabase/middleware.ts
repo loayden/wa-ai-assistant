@@ -28,11 +28,17 @@ function getSupabaseMiddlewareConfig(): { supabaseUrl: string; supabaseAnonKey: 
   return { supabaseUrl, supabaseAnonKey };
 }
 
-function createSanitizedRequestHeaders(request: NextRequest): Headers {
+function createSanitizedRequestHeaders(request: NextRequest, extraHeaders?: HeadersInit): Headers {
   const requestHeaders = new Headers(request.headers);
 
   requestHeaders.delete(USER_ID_HEADER);
   requestHeaders.delete(USER_EMAIL_HEADER);
+
+  if (extraHeaders) {
+    new Headers(extraHeaders).forEach((value, key) => {
+      requestHeaders.set(key, value);
+    });
+  }
 
   return requestHeaders;
 }
@@ -73,13 +79,13 @@ function createMiddlewareResponse(
   return copySessionCookies(previousResponse, response);
 }
 
-export function createPublicMiddlewareResponse(request: NextRequest): NextResponse {
-  return createMiddlewareResponse(request, createSanitizedRequestHeaders(request));
+export function createPublicMiddlewareResponse(request: NextRequest, extraRequestHeaders?: HeadersInit): NextResponse {
+  return createMiddlewareResponse(request, createSanitizedRequestHeaders(request, extraRequestHeaders));
 }
 
-export async function updateSession(request: NextRequest): Promise<UpdateSessionResult> {
+export async function updateSession(request: NextRequest, extraRequestHeaders?: HeadersInit): Promise<UpdateSessionResult> {
   const { supabaseUrl, supabaseAnonKey } = getSupabaseMiddlewareConfig();
-  const requestHeaders = createSanitizedRequestHeaders(request);
+  const requestHeaders = createSanitizedRequestHeaders(request, extraRequestHeaders);
   let response = createMiddlewareResponse(request, requestHeaders);
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {

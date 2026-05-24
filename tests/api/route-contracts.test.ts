@@ -215,6 +215,13 @@ const apiRouteContracts: ApiRouteContract[] = [
     expectedErrors: [401, 422, 500, 503],
   },
   {
+    route: "/api/cron/process-broadcasts",
+    methods: ["GET"],
+    expectedInputs: ["Bearer CRON_SECRET in production", "broadcasts with status=sending"],
+    successResponse: "bounded broadcast queue processing summary",
+    expectedErrors: [403, 500, 503],
+  },
+  {
     route: "/api/cron/daily-summary",
     methods: ["GET"],
     expectedInputs: ["Bearer CRON_SECRET in production"],
@@ -337,7 +344,7 @@ const apiRouteContracts: ApiRouteContract[] = [
 
 describe("API route contracts", () => {
   it("documents expected inputs, success responses, and error responses for each route", () => {
-    expect(apiRouteContracts).toHaveLength(39);
+    expect(apiRouteContracts).toHaveLength(40);
 
     for (const contract of apiRouteContracts) {
       expect(contract.route).toMatch(/^\/api\//);

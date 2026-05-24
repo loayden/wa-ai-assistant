@@ -1,8 +1,12 @@
 {
   "crons": [
     {
+      "path": "/api/cron/process-broadcasts",
+      "schedule": "* * * * *"
+    },
+    {
       "path": "/api/cron/daily-summary",
-      "schedule": "0 7 * * *"
+      "schedule": "0 6 * * *"
     },
     {
       "path": "/api/cron/weekly-report",

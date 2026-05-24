@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { label: "كيف يعمل", href: "#workflow" },
+  { label: "الفيديو", href: "#demo" },
   { label: "المميزات", href: "#features" },
   { label: "واتساب", href: "#connect" },
   { label: "الأسعار", href: "#pricing" },
@@ -300,6 +301,51 @@ function FeatureCard({ feature }: { feature: (typeof featureGroups)[number] }) {
   );
 }
 
+function PromoVideoSection() {
+  return (
+    <section id="demo" className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16" data-cinema-section>
+      <FormalCard className="overflow-hidden p-3 sm:p-5" data-cinema-reveal>
+        <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+          <div className="px-2 py-3 sm:px-4 lg:py-6">
+            <p className="text-sm font-semibold text-wa-blue-600">فيديو تعريفي</p>
+            <h2 className="mt-3 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px] sm:leading-[1.12]">
+              شاهد كيف يربط Kallem واتساب وإنستجرام بالذكاء الاصطناعي.
+            </h2>
+            <p className="mt-4 text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">
+              عرض سريع لمدة ٣٠ ثانية يوضح الربط السهل، الردود التلقائية، الصندوق الموحد، اكتشاف Leads، وتدريب المساعد بالعربية.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {["ربط Meta", "واتساب", "إنستجرام", "Leads", "RTL عربي"].map((item) => (
+                <span key={item} className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-3 py-2 text-xs font-semibold text-wa-gray-600">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative overflow-hidden rounded-[24px] border border-wa-gray-100 bg-wa-gray-900 shadow-[0_24px_70px_rgba(13,20,33,0.16)] sm:rounded-[32px]">
+            <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_24%_0%,rgba(37,211,102,0.22),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_35%)]" />
+            <video
+              className="relative z-0 aspect-video w-full bg-wa-gray-900 object-cover"
+              src="/videos/kallem-promo.mp4"
+              poster="/videos/kallem-promo-poster.png"
+              autoPlay
+              muted
+              loop
+              playsInline
+              controls
+              preload="metadata"
+              aria-label="فيديو تعريفي عن منصة Kallem"
+            >
+              متصفحك لا يدعم تشغيل الفيديو.
+            </video>
+          </div>
+        </div>
+      </FormalCard>
+    </section>
+  );
+}
+
 export default function Home() {
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-white text-wa-gray-900">
@@ -378,6 +424,8 @@ export default function Home() {
 
         <ProductPreview />
       </section>
+
+      <PromoVideoSection />
 
       <section className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16">
         <FormalCard className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">

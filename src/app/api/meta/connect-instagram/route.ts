@@ -4,7 +4,8 @@ import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
-import { getGrantedPermissions, hasRequiredPermissions, upsertInstagramConnection } from "@/lib/meta/social";
+import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
+import { getGrantedPermissions, hasRequiredPermissionGroups, upsertInstagramConnection } from "@/lib/meta/social";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { logger } from "@/lib/utils/logger";
@@ -20,8 +21,6 @@ const connectInstagramSchema = z
     instagramProfilePicture: z.string().url().optional().nullable(),
   })
   .strict();
-
-const REQUIRED_INSTAGRAM_PERMISSIONS = ["instagram_basic", "instagram_manage_messages", "pages_messaging"];
 
 export async function POST(request: Request) {
   try {
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
 
     const pageAccessToken = decrypt(pageConnection.pageAccessTokenEncrypted);
     const permissions = await getGrantedPermissions(pageAccessToken);
-    const hasAllPermissions = hasRequiredPermissions(permissions, REQUIRED_INSTAGRAM_PERMISSIONS);
+    const hasAllPermissions = hasRequiredPermissionGroups(permissions, INSTAGRAM_DM_PERMISSION_REQUIREMENTS);
     const permissionStatus = hasAllPermissions ? "granted" : "partial";
     const connection = await upsertInstagramConnection({
       userId: user.id,
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
       connection: sanitizeConnection(connection),
       permissionStatus,
       permissions,
-      missingPermissions: REQUIRED_INSTAGRAM_PERMISSIONS.filter((permission) => !permissions.includes(permission)),
+      missingPermissions: missingPermissionLabels(permissions, INSTAGRAM_DM_PERMISSION_REQUIREMENTS),
     });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

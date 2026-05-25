@@ -2,11 +2,10 @@ import { MessageDirection, MessageStatus } from "@prisma/client";
 
 import { getOrCreateUserSettings } from "@/lib/api/settings";
 import { instagramAdapter } from "@/lib/channels/adapters/instagram";
+import { INSTAGRAM_COMMENT_PERMISSION_REQUIREMENTS, hasPermissionRequirements } from "@/lib/meta/permissions";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { logger } from "@/lib/utils/logger";
-
-const REQUIRED_COMMENT_PERMISSIONS = ["instagram_basic", "pages_read_engagement", "instagram_manage_comments"];
 
 const BUYING_INTENT_PATTERNS = [
   /\b(how much|price|cost|available|in stock|want|buy|order|ship|shipping)\b/i,
@@ -35,10 +34,7 @@ export function detectInstagramCommentBuyingIntent(text: string): boolean {
 }
 
 function hasCommentPermissions(connection: { permissions: string[]; permissionStatus: string }) {
-  return (
-    connection.permissionStatus === "granted" &&
-    REQUIRED_COMMENT_PERMISSIONS.every((permission) => connection.permissions.includes(permission))
-  );
+  return connection.permissionStatus === "granted" && hasPermissionRequirements(connection.permissions, INSTAGRAM_COMMENT_PERMISSION_REQUIREMENTS);
 }
 
 function commentMessageId(commentId: string) {

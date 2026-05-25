@@ -4,6 +4,7 @@ import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { getGrantedPermissions, hasRequiredPermissions, subscribePageToWebhook, upsertMessengerConnection } from "@/lib/meta/social";
+import { MESSENGER_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
 import { logger } from "@/lib/utils/logger";
 
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
       connection: sanitizeConnection(connection),
       permissionStatus,
       permissions,
-      missingPermissions: REQUIRED_MESSENGER_PERMISSIONS.filter((permission) => !permissions.includes(permission)),
+      missingPermissions: missingPermissionLabels(permissions, MESSENGER_PERMISSION_REQUIREMENTS),
       webhookSubscribed,
     });
   } catch (error) {

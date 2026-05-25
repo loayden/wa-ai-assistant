@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { AlertCircle, Loader2, Lock } from "lucide-react";
 
 import { ChannelIcon, InstagramIcon, MessengerIcon, WhatsAppIcon } from "@/components/icons/ChannelIcons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiData, ApiClientError } from "@/lib/api/client";
+import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, MESSENGER_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
 import { cn } from "@/lib/utils";
 
 type SocialConnection = {
@@ -64,11 +65,6 @@ function statusClass(connection?: SocialConnection | null) {
   if (connection.permissionStatus === "granted" && connection.isActive) return "bg-wa-success-bg text-wa-success";
   if (connection.permissionStatus === "partial") return "bg-wa-warning-bg text-wa-warning";
   return "bg-wa-error-bg text-wa-error";
-}
-
-function missingPermissions(connection: SocialConnection | null | undefined, required: string[]) {
-  const granted = new Set(connection?.permissions ?? []);
-  return required.filter((permission) => !granted.has(permission));
 }
 
 export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: SocialChannelCardsProps) {
@@ -189,7 +185,8 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         }
       },
       {
-        scope: "pages_show_list,pages_messaging,pages_manage_metadata,instagram_basic,instagram_manage_messages",
+        scope:
+          "pages_show_list,pages_messaging,pages_manage_metadata,instagram_business_basic,instagram_business_manage_messages,instagram_manage_comments,pages_read_engagement",
         response_type: "code",
         override_default_response_type: true,
       },
@@ -241,8 +238,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     }
   }
 
-  const messengerMissing = missingPermissions(messengerConnection, ["pages_messaging", "pages_manage_metadata"]);
-  const instagramMissing = missingPermissions(instagramConnection, ["instagram_basic", "instagram_manage_messages", "pages_messaging"]);
+  const messengerMissing = missingPermissionLabels(messengerConnection?.permissions ?? [], MESSENGER_PERMISSION_REQUIREMENTS);
+  const instagramMissing = missingPermissionLabels(instagramConnection?.permissions ?? [], INSTAGRAM_DM_PERMISSION_REQUIREMENTS);
+  const canConnectInstagram = Boolean(messengerConnection);
 
   return (
     <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
@@ -251,7 +249,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">القنوات</p>
           <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط قنوات السوشيال</h2>
           <p className="mt-2 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            كل قناة مرتبطة تظهر في نفس صندوق الرسائل. صلاحيات Messenger وInstagram قد تحتاج App Review من Meta قبل التعامل مع جمهور عام.
+            ابدأ بربط حساب Meta مرة واحدة لقراءة صفحات Facebook وحسابات Instagram Business المرتبطة بها، ثم تظهر المحادثات في نفس صندوق الرسائل.
           </p>
         </div>
         {loadingConnections ? <Loader2 className="size-5 animate-spin text-wa-blue-600" aria-hidden="true" /> : null}
@@ -282,7 +280,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           status={statusLabel(messengerConnection)}
           statusClassName={statusClass(messengerConnection)}
           actionDisabled={connecting === "messenger" || !appId}
-          actionLabel={messengerConnection ? "تحديث الصلاحيات" : "ربط ماسنجر"}
+          actionLabel={messengerConnection ? "تحديث الصلاحيات" : "ربط حساب Meta"}
           onAction={connectMessenger}
         >
           {messengerMissing.length > 0 && messengerConnection ? <MissingPermissions permissions={messengerMissing} /> : null}
@@ -293,8 +291,8 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           description="استقبل ورد على Instagram DMs من نفس الصندوق."
           status={statusLabel(instagramConnection)}
           statusClassName={statusClass(instagramConnection)}
-          actionDisabled={connecting === "instagram" || !messengerConnection}
-          actionLabel={instagramConnection ? "تحديث إنستجرام" : "ربط إنستجرام"}
+          actionDisabled={connecting === "instagram" || !canConnectInstagram}
+          actionLabel={instagramConnection ? "تحديث إنستجرام" : canConnectInstagram ? "ربط إنستجرام" : "ابدأ بربط Meta"}
           onAction={() => {
             const page = availablePages.find((item) => item.id === messengerConnection?.facebookPageId);
             if (page) {
@@ -305,7 +303,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           }}
         >
           {!messengerConnection ? (
-            <p className="mt-3 rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm text-wa-gray-600">اربط صفحة Facebook أولاً حتى نقرأ حساب إنستجرام المرتبط بها.</p>
+            <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
+              اربط حساب Meta/صفحة Facebook أولاً حتى نقرأ حساب Instagram Business المرتبط بها.
+            </p>
           ) : instagramMissing.length > 0 && instagramConnection ? (
             <MissingPermissions permissions={instagramMissing} />
           ) : null}
@@ -334,7 +334,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        للاختبار المجاني: الرسائل تعمل مع حسابات مضافة كمختبرين في Meta App. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_manage_messages`.
+        للاختبار المجاني: الرسائل تعمل مع حسابات مضافة كـ Admin أو Tester في Meta App. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_business_manage_messages`.
       </div>
     </section>
   );
@@ -387,7 +387,7 @@ function ChannelCard({
         </a>
       ) : (
         <Button className={actionClassName} disabled={actionDisabled} type="button" onClick={onAction}>
-          {actionDisabled ? <RefreshCw className="size-4" aria-hidden="true" /> : <ChannelIcon channel={title === "ماسنجر" ? "messenger" : "instagram"} className="size-4" />}
+          {actionDisabled ? <Lock className="size-4" aria-hidden="true" /> : <ChannelIcon channel={title === "ماسنجر" ? "messenger" : "instagram"} className="size-4" />}
           {actionLabel}
         </Button>
       )}

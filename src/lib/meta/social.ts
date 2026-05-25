@@ -5,6 +5,8 @@ import type { WhatsAppConnection } from "@prisma/client";
 import { prisma } from "@/lib/prisma/client";
 import { encrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
+import type { PermissionRequirement } from "@/lib/meta/permissions";
+import { hasPermissionRequirements } from "@/lib/meta/permissions";
 
 export type MetaPermissionStatus = "unknown" | "granted" | "partial" | "pending_review" | "error";
 
@@ -31,6 +33,10 @@ export type MetaInstagramConnectionInput = {
 
 export function hasRequiredPermissions(grantedPerms: string[], requiredPerms: string[]): boolean {
   return requiredPerms.every((permission) => grantedPerms.includes(permission));
+}
+
+export function hasRequiredPermissionGroups(grantedPerms: string[], requirements: PermissionRequirement[]): boolean {
+  return hasPermissionRequirements(grantedPerms, requirements);
 }
 
 export async function getGrantedPermissions(accessToken: string): Promise<string[]> {

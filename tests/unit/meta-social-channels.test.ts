@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { instagramAdapter } from "@/lib/channels/adapters/instagram";
 import { messengerAdapter } from "@/lib/channels/adapters/messenger";
+import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, hasPermissionRequirements, missingPermissionLabels } from "@/lib/meta/permissions";
 import { verifyMetaSignature } from "@/lib/meta/signature";
 
 describe("Meta social channel adapters", () => {
@@ -85,5 +86,25 @@ describe("Meta social webhook signature", () => {
     expect(verifyMetaSignature(rawBody, signature)).toBe(true);
     expect(verifyMetaSignature(rawBody, "sha256=bad")).toBe(false);
     expect(verifyMetaSignature(rawBody, null)).toBe(false);
+  });
+});
+
+describe("Meta permission aliases", () => {
+  it("accepts both legacy and current Instagram messaging permission names", () => {
+    expect(
+      hasPermissionRequirements(
+        ["instagram_business_basic", "instagram_business_manage_messages", "pages_messaging"],
+        INSTAGRAM_DM_PERMISSION_REQUIREMENTS,
+      ),
+    ).toBe(true);
+
+    expect(
+      hasPermissionRequirements(["instagram_basic", "instagram_manage_messages", "pages_messaging"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS),
+    ).toBe(true);
+
+    expect(missingPermissionLabels(["instagram_business_basic"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS)).toEqual([
+      "instagram_business_manage_messages",
+      "pages_messaging",
+    ]);
   });
 });

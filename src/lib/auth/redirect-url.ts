@@ -49,6 +49,21 @@ function joinOrigin(origin: string, path: string) {
   return `${origin.replace(/\/$/, "")}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+export function normalizeAuthNextPath(next: string | null | undefined) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "/connect";
+  }
+
+  return next;
+}
+
+export function buildOAuthRedirectUrl(origin: string, nextPath?: string | null) {
+  const safeNextPath = normalizeAuthNextPath(nextPath);
+  const params = new URLSearchParams({ next: safeNextPath });
+
+  return joinOrigin(origin, `/auth/confirm?${params.toString()}`);
+}
+
 export function resolveSignupRedirectUrl(options: {
   explicitRedirectUrl?: string | null;
   fallbackAppUrl: string;

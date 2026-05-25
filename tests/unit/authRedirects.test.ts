@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveSignupRedirectUrl } from "@/lib/auth/redirect-url";
+import { buildOAuthRedirectUrl, normalizeAuthNextPath, resolveSignupRedirectUrl } from "@/lib/auth/redirect-url";
 
 describe("resolveSignupRedirectUrl", () => {
   it("prefers an explicit redirect override", () => {
@@ -63,5 +63,21 @@ describe("resolveSignupRedirectUrl", () => {
         path: "/auth/confirm?next=/whatsapp",
       }),
     ).toBe("http://localhost:3000/auth/confirm?next=/whatsapp");
+  });
+});
+
+describe("social OAuth redirect helpers", () => {
+  it("builds the Supabase OAuth callback with a safe next path", () => {
+    expect(buildOAuthRedirectUrl("https://kallem.vercel.app", "/dashboard")).toBe(
+      "https://kallem.vercel.app/auth/confirm?next=%2Fdashboard",
+    );
+  });
+
+  it("falls back to connect for unsafe next paths", () => {
+    expect(normalizeAuthNextPath("https://evil.example.com")).toBe("/connect");
+    expect(normalizeAuthNextPath("//evil.example.com")).toBe("/connect");
+    expect(buildOAuthRedirectUrl("https://kallem.vercel.app/", "//evil.example.com")).toBe(
+      "https://kallem.vercel.app/auth/confirm?next=%2Fconnect",
+    );
   });
 });

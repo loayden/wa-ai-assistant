@@ -6,20 +6,13 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { normalizeAuthNextPath } from "@/lib/auth/redirect-url";
 import { createClient } from "@/lib/supabase/client";
 
-function normalizeNextPath(next: string | null) {
-  if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/connect";
-  }
-
-  return next;
-}
-
-function buildLoginRedirect(errorCode: string) {
+function buildLoginRedirect(errorCode: string, nextPath: string) {
   const search = new URLSearchParams({
     authError: errorCode,
-    next: "/connect",
+    next: nextPath,
   });
 
   return `/login?${search.toString()}`;
@@ -31,7 +24,8 @@ export function AuthConfirmClient() {
 
   useEffect(() => {
     const supabase = createClient();
-    const nextPath = normalizeNextPath(searchParams.get("next"));
+    const nextPath = normalizeAuthNextPath(searchParams.get("next"));
+    const code = searchParams.get("code");
     const tokenHash = searchParams.get("token_hash");
     const type = searchParams.get("type") as EmailOtpType | null;
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -41,7 +35,13 @@ export function AuthConfirmClient() {
 
     async function finishAuth() {
       try {
-        if (accessToken && refreshToken) {
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (error) {
+            throw error;
+          }
+        } else if (accessToken && refreshToken) {
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
@@ -65,7 +65,7 @@ export function AuthConfirmClient() {
           } = await supabase.auth.getSession();
 
           if (!session) {
-            router.replace(buildLoginRedirect("confirmation_required"));
+            router.replace(buildLoginRedirect("confirmation_required", nextPath));
             return;
           }
         }
@@ -74,14 +74,14 @@ export function AuthConfirmClient() {
           return;
         }
 
-        window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
+        window.history.replaceState({}, document.title, window.location.pathname);
         router.replace(nextPath);
       } catch {
         if (!active) {
           return;
         }
 
-        router.replace(buildLoginRedirect("confirmation_failed"));
+        router.replace(buildLoginRedirect("confirmation_failed", nextPath));
       }
     }
 

@@ -14,6 +14,7 @@ import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("authError");
+  const nextPath = searchParams.get("next") || "/connect";
   const [showPassword, setShowPassword] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const form = useForm<LoginInput>({
@@ -123,6 +125,14 @@ export function LoginForm() {
           </div>
         </div>
 
+        <SocialAuthButtons className="mb-5 sm:mb-6" mode="login" nextPath={nextPath} />
+
+        <div className="mb-5 flex items-center gap-3 text-body-sm text-wa-gray-400 sm:mb-6">
+          <span className="h-px flex-1 bg-wa-gray-100" />
+          أو استخدم البريد الإلكتروني
+          <span className="h-px flex-1 bg-wa-gray-100" />
+        </div>
+
         <form className="flex flex-col gap-3.5 sm:gap-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
           {mutation.error ? (
             <Alert className="border-wa-error bg-wa-error-bg">
@@ -178,11 +188,6 @@ export function LoginForm() {
             تسجيل الدخول
             {!mutation.isPending ? <ArrowRight className="size-4" aria-hidden="true" /> : null}
           </Button>
-          <div className="flex items-center gap-3 text-body-sm text-wa-gray-400">
-            <span className="h-px flex-1 bg-wa-gray-100" />
-            أو
-            <span className="h-px flex-1 bg-wa-gray-100" />
-          </div>
           <p className="text-center text-body-sm text-wa-gray-600">
             ليس لديك حساب؟{" "}
             <Link href="/signup" className="text-wa-blue-600 hover:underline">

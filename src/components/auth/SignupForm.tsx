@@ -14,6 +14,7 @@ import { ArrowRight, CheckCircle2, Eye, EyeOff, MailCheck, ShieldCheck } from "l
 import { useEffect, useState } from "react";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -144,6 +145,14 @@ export function SignupForm() {
               {item}
             </div>
           ))}
+        </div>
+
+        <SocialAuthButtons className="mb-5 sm:mb-6" mode="signup" nextPath="/connect" />
+
+        <div className="mb-5 flex items-center gap-3 text-body-sm text-wa-gray-400 sm:mb-6">
+          <span className="h-px flex-1 bg-wa-gray-100" />
+          أو استخدم البريد الإلكتروني
+          <span className="h-px flex-1 bg-wa-gray-100" />
         </div>
 
         <form className="flex flex-col gap-3.5 sm:gap-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>

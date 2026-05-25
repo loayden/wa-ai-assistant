@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import { AppFooter } from "@/components/shared/AppFooter";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { CinematicScrollEffects } from "@/components/landing/CinematicScrollEffects";
 import { MagneticLink } from "@/components/landing/MagneticLink";
 import { MotionReveal } from "@/components/landing/MotionReveal";
@@ -406,6 +407,10 @@ export default function Home() {
               <MagneticLink href="#workflow" className="w-full border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50 sm:w-auto">
                 شاهد طريقة العمل
               </MagneticLink>
+            </div>
+            <div className="mt-5 max-w-[420px] rounded-[22px] border border-wa-gray-100 bg-white/92 p-3 shadow-[0_16px_44px_rgba(13,20,33,0.06)] sm:mt-6 sm:p-4">
+              <p className="mb-3 text-center text-body-sm font-semibold text-wa-gray-700">أو ادخل مباشرة بحسابك</p>
+              <SocialAuthButtons mode="signup" nextPath="/connect" />
             </div>
           </MotionReveal>
 

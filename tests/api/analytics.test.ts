@@ -28,6 +28,9 @@ const apiMocks = vi.hoisted(() => {
       message: {
         findMany: vi.fn(),
       },
+      instagramPostStats: {
+        findMany: vi.fn(),
+      },
     },
   };
 });
@@ -61,12 +64,14 @@ describe("analytics summary API", () => {
     apiMocks.prisma.conversationHandoff.count.mockResolvedValue(1);
     apiMocks.prisma.conversationHandoff.findMany.mockResolvedValue([{ rating: 5 }, { rating: 4 }, { rating: 3 }]);
     apiMocks.prisma.lead.count.mockResolvedValue(2);
+    apiMocks.prisma.instagramPostStats.findMany.mockResolvedValue([]);
     apiMocks.prisma.message.findMany.mockResolvedValue([
       {
         id: "inbound-1",
         direction: "INBOUND",
         fromNumber: "201144999221",
         toNumber: "15551421769",
+        channel: "whatsapp",
         createdAt: new Date("2026-05-22T18:00:00.000Z"),
         connection: { id: "connection-1" },
       },
@@ -75,6 +80,7 @@ describe("analytics summary API", () => {
         direction: "OUTBOUND",
         fromNumber: "15551421769",
         toNumber: "201144999221",
+        channel: "whatsapp",
         createdAt: new Date("2026-05-22T18:03:00.000Z"),
         connection: { id: "connection-1" },
       },
@@ -91,7 +97,10 @@ describe("analytics summary API", () => {
     expect(body.data.handoffs).toBe(1);
     expect(body.data.leadsDetected).toBe(2);
     expect(body.data.dailyReplies).toHaveLength(7);
-    expect(body.data.channelSplit.whatsapp).toBe(2);
+    expect(body.data.channelSplit.whatsapp).toBe(1);
+    expect(body.data.channelSplit.instagram).toBe(0);
+    expect(body.data.channelSplit.messenger).toBe(0);
+    expect(body.data.topInstagramPosts).toEqual([]);
     expect(body.data.averageRating).toBe(4);
     expect(body.data.ratingCount).toBe(3);
     expect(body.data.planTier).toBe("PRO");

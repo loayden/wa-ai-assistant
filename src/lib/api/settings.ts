@@ -22,6 +22,20 @@ const persistedUserSettingsSelect = {
   businessContext: true,
   fallbackMessage: true,
   maxReplyLength: true,
+  workingHoursEnabled: true,
+  workingHoursStart: true,
+  workingHoursEnd: true,
+  workingDays: true,
+  offHoursMessage: true,
+  timezone: true,
+  csatEnabled: true,
+  notificationPrefs: true,
+  commentToDmEnabled: true,
+  commentToDmMessage: true,
+  instagramTone: true,
+  messengerTone: true,
+  instagramInstructions: true,
+  messengerInstructions: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.UserSettingsSelect;
@@ -72,6 +86,12 @@ export type UserSettingsUpdateData = Partial<
     | "offHoursMessage"
     | "timezone"
     | "csatEnabled"
+    | "commentToDmEnabled"
+    | "commentToDmMessage"
+    | "instagramTone"
+    | "messengerTone"
+    | "instagramInstructions"
+    | "messengerInstructions"
   >
 > & {
   notificationPrefs?: Prisma.InputJsonValue;
@@ -107,6 +127,20 @@ export async function updateUserSettings(userId: string, data: UserSettingsUpdat
     ...(data.businessContext !== undefined ? { businessContext: data.businessContext } : {}),
     ...(data.fallbackMessage !== undefined ? { fallbackMessage: data.fallbackMessage } : {}),
     ...(data.maxReplyLength !== undefined ? { maxReplyLength: data.maxReplyLength } : {}),
+    ...(data.workingHoursEnabled !== undefined ? { workingHoursEnabled: data.workingHoursEnabled } : {}),
+    ...(data.workingHoursStart !== undefined ? { workingHoursStart: data.workingHoursStart } : {}),
+    ...(data.workingHoursEnd !== undefined ? { workingHoursEnd: data.workingHoursEnd } : {}),
+    ...(data.workingDays !== undefined ? { workingDays: data.workingDays } : {}),
+    ...(data.offHoursMessage !== undefined ? { offHoursMessage: data.offHoursMessage } : {}),
+    ...(data.timezone !== undefined ? { timezone: data.timezone } : {}),
+    ...(data.csatEnabled !== undefined ? { csatEnabled: data.csatEnabled } : {}),
+    ...(data.notificationPrefs !== undefined ? { notificationPrefs: data.notificationPrefs } : {}),
+    ...(data.commentToDmEnabled !== undefined ? { commentToDmEnabled: data.commentToDmEnabled } : {}),
+    ...(data.commentToDmMessage !== undefined ? { commentToDmMessage: data.commentToDmMessage } : {}),
+    ...(data.instagramTone !== undefined ? { instagramTone: data.instagramTone } : {}),
+    ...(data.messengerTone !== undefined ? { messengerTone: data.messengerTone } : {}),
+    ...(data.instagramInstructions !== undefined ? { instagramInstructions: data.instagramInstructions } : {}),
+    ...(data.messengerInstructions !== undefined ? { messengerInstructions: data.messengerInstructions } : {}),
   };
 
   if (Object.keys(persistedData).length > 0) {

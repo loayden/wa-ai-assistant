@@ -73,6 +73,11 @@ export type MessageResponse = {
   bodyText: string;
   mediaUrl: string | null;
   mediaType: string | null;
+  channel: "whatsapp" | "instagram" | "messenger";
+  externalMessageId: string | null;
+  externalThreadId: string | null;
+  senderName: string | null;
+  senderProfilePicUrl: string | null;
   metadata: Record<string, unknown> | null;
   status: MessageStatus;
   aiReplyText: string | null;
@@ -86,10 +91,16 @@ export type MessageResponse = {
   resolvedAt?: string | null;
   rating?: number | null;
   ratingRequestedAt?: string | null;
+  priority?: "low" | "normal" | "high" | string;
+  tags?: string[];
+  socialIntent?: string | null;
   connection?: {
     id: string;
     displayName: string | null;
     phoneNumberId: string;
+    channel?: string;
+    facebookPageName?: string | null;
+    instagramUsername?: string | null;
   };
 };
 
@@ -140,6 +151,12 @@ export type UserSettingsResponse = {
     weekly_report: boolean;
     ai_failed: boolean;
   };
+  commentToDmEnabled: boolean;
+  commentToDmMessage: string;
+  instagramTone: string;
+  messengerTone: string;
+  instagramInstructions: string | null;
+  messengerInstructions: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -189,7 +206,7 @@ export type OnboardingUpdateResponse = {
 
 export type LeadStatus = "new" | "contacted" | "converted" | "dismissed";
 
-export type LeadChannel = "whatsapp" | "instagram";
+export type LeadChannel = "whatsapp" | "instagram" | "messenger";
 
 export type LeadResponse = {
   id: string;
@@ -201,6 +218,9 @@ export type LeadResponse = {
   customerName: string | null;
   interest: string;
   channel: LeadChannel;
+  externalId: string | null;
+  senderName: string | null;
+  source: string;
   status: LeadStatus;
   detectedAt: string;
   createdAt: string;
@@ -209,6 +229,20 @@ export type LeadResponse = {
 
 export type LeadsResponse = {
   leads: LeadResponse[];
+  instagramCommentLeads?: InstagramCommentLeadResponse[];
+};
+
+export type InstagramCommentLeadResponse = {
+  id: string;
+  commentText: string;
+  commenterId: string;
+  commenterName: string | null;
+  postId: string | null;
+  postCaption: string | null;
+  isLead: boolean;
+  dmSent: boolean;
+  leadId: string | null;
+  createdAt: string;
 };
 
 export type LeadMutationResponse = {
@@ -252,7 +286,15 @@ export type AnalyticsSummaryResponse = {
   busiestHour: number | null;
   busiestDay: string | null;
   dailyReplies: Array<{ date: string; count: number }>;
-  channelSplit: { whatsapp: number; instagram: number };
+  channelSplit: { whatsapp: number; instagram: number; messenger: number };
+  topInstagramPosts: Array<{
+    postId: string;
+    postCaption: string | null;
+    postMediaUrl: string | null;
+    commentCount: number;
+    leadCount: number;
+    dmCount: number;
+  }>;
   averageRating: number | null;
   ratingCount: number;
   planTier: PlanTier;

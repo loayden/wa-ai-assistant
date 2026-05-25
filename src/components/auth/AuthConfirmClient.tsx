@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 
 function normalizeNextPath(next: string | null) {
   if (!next || !next.startsWith("/") || next.startsWith("//")) {
-    return "/whatsapp";
+    return "/connect";
   }
 
   return next;
@@ -19,7 +19,7 @@ function normalizeNextPath(next: string | null) {
 function buildLoginRedirect(errorCode: string) {
   const search = new URLSearchParams({
     authError: errorCode,
-    next: "/whatsapp",
+    next: "/connect",
   });
 
   return `/login?${search.toString()}`;
@@ -98,7 +98,7 @@ export function AuthConfirmClient() {
         <BrandLogo className="mb-6" layout="stacked" wordmarkSize="md" />
         <CardTitle className="text-h1 font-medium text-wa-gray-900">جارٍ تأكيد بريدك</CardTitle>
         <CardDescription className="mt-2 text-body text-wa-gray-600">
-          نكمل تسجيل الدخول الآمن، ثم ننتقل إلى إعداد واتساب تلقائياً.
+          نكمل تسجيل الدخول الآمن، ثم ننتقل إلى إعداد قنوات السوشيال تلقائياً.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 pt-8">

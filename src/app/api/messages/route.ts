@@ -27,6 +27,7 @@ const messagesQuerySchema = z.object({
   direction: z.nativeEnum(MessageDirection).optional(),
   status: z.nativeEnum(MessageStatus).optional(),
   connectionId: z.string().uuid().optional(),
+  channel: z.enum(["whatsapp", "instagram", "messenger"]).optional(),
 });
 
 const messageListSelect = {
@@ -40,6 +41,12 @@ const messageListSelect = {
   bodyText: true,
   mediaUrl: true,
   mediaType: true,
+  channel: true,
+  externalMessageId: true,
+  externalThreadId: true,
+  senderName: true,
+  senderProfilePicUrl: true,
+  metadata: true,
   status: true,
   aiReplyText: true,
   aiModelUsed: true,
@@ -52,6 +59,9 @@ const messageListSelect = {
       id: true,
       displayName: true,
       phoneNumberId: true,
+      channel: true,
+      facebookPageName: true,
+      instagramUsername: true,
     },
   },
 } as const;
@@ -71,6 +81,7 @@ export async function GET(request: Request) {
       connectionId: parsed.data.connectionId,
       direction: parsed.data.direction,
       status: parsed.data.status,
+      channel: parsed.data.channel,
     };
     const skip = (parsed.data.page - 1) * parsed.data.limit;
 
@@ -104,6 +115,9 @@ export async function GET(request: Request) {
               resolvedAt: true,
               rating: true,
               ratingRequestedAt: true,
+              priority: true,
+              tags: true,
+              socialIntent: true,
             },
           })
         : [];
@@ -116,6 +130,9 @@ export async function GET(request: Request) {
           resolvedAt: handoff.resolvedAt?.toISOString() ?? null,
           rating: handoff.rating,
           ratingRequestedAt: handoff.ratingRequestedAt?.toISOString() ?? null,
+          priority: handoff.priority,
+          tags: handoff.tags,
+          socialIntent: handoff.socialIntent,
         },
       ]),
     );
@@ -125,12 +142,14 @@ export async function GET(request: Request) {
 
       return {
         ...message,
-        metadata: {},
         handoffActive: Boolean(handoff?.active),
         handoffAt: handoff?.handoffAt ?? null,
         resolvedAt: handoff?.resolvedAt ?? null,
         rating: handoff?.rating ?? null,
         ratingRequestedAt: handoff?.ratingRequestedAt ?? null,
+        priority: handoff?.priority ?? "normal",
+        tags: handoff?.tags ?? [],
+        socialIntent: handoff?.socialIntent ?? null,
       };
     });
 

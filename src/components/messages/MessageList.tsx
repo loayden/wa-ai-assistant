@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 import { AlertCircle, ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck, UserRoundCheck } from "lucide-react";
 import Link from "next/link";
 
+import { ChannelIcon } from "@/components/icons/ChannelIcons";
 import { ConversationCard } from "@/components/conversations/ConversationCard";
 import { ConversationThread } from "@/components/conversations/ConversationThread";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -24,6 +25,7 @@ type DirectionOption = "ALL" | MessageDirectionFilter;
 type StatusOption = "ALL" | MessageStatusFilter;
 type SimpleFilter = "ALL" | "UNANSWERED" | "HANDOFF" | "TODAY";
 type ConnectionFilter = "ALL" | string;
+type ChannelFilter = "all" | "whatsapp" | "instagram" | "messenger";
 
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("ar-EG", { day: "numeric", hour: "2-digit", minute: "2-digit", month: "short" }).format(new Date(value));
@@ -39,12 +41,24 @@ function getCustomerPhone(message: MessageRecord) {
   return message.direction === "OUTBOUND" ? message.toNumber : message.fromNumber;
 }
 
+function getConversationKey(message: MessageRecord) {
+  return `${message.connectionId}:${getCustomerPhone(message)}`;
+}
+
+const channelOptions: Array<{ value: ChannelFilter; label: string }> = [
+  { value: "all", label: "الكل" },
+  { value: "whatsapp", label: "واتساب" },
+  { value: "instagram", label: "إنستجرام" },
+  { value: "messenger", label: "ماسنجر" },
+];
+
 export function MessageList() {
   const [page, setPage] = useState(1);
   const [direction] = useState<DirectionOption>("ALL");
   const [status, setStatus] = useState<StatusOption>("ALL");
   const [simpleFilter, setSimpleFilter] = useState<SimpleFilter>("ALL");
   const [connectionFilter, setConnectionFilter] = useState<ConnectionFilter>("ALL");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>("all");
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
   const [activeConversation, setActiveConversation] = useState<MessageRecord | null>(null);
@@ -52,17 +66,18 @@ export function MessageList() {
   const messagesResult = useMessages({
     page,
     limit,
+    channel: channelFilter === "all" ? undefined : channelFilter,
     connectionId: connectionFilter === "ALL" ? undefined : connectionFilter,
     direction: direction === "ALL" ? undefined : direction,
     status: status === "ALL" ? undefined : status,
   });
-  const connectionOptionsResult = useMessages({ page: 1, limit: 100 });
+  const connectionOptionsResult = useMessages({ page: 1, limit: 100, channel: channelFilter === "all" ? undefined : channelFilter });
   const totalPages = Math.max(1, Math.ceil(messagesResult.total / limit));
   const connectionOptions = useMemo(() => {
     const options = new Map<string, string>();
 
     for (const message of connectionOptionsResult.messages) {
-      options.set(message.connectionId, message.connection?.displayName ?? message.connection?.phoneNumberId ?? "رقم واتساب");
+      options.set(message.connectionId, message.connection?.displayName ?? message.connection?.phoneNumberId ?? "قناة متصلة");
     }
 
     return Array.from(options, ([id, label]) => ({ id, label }));
@@ -92,8 +107,8 @@ export function MessageList() {
       return [];
     }
 
-    const phone = getCustomerPhone(activeConversation);
-    return messagesResult.messages.filter((message) => getCustomerPhone(message) === phone);
+    const key = getConversationKey(activeConversation);
+    return messagesResult.messages.filter((message) => getConversationKey(message) === key);
   }, [activeConversation, messagesResult.messages]);
 
   const chips: Array<{ value: SimpleFilter; label: string }> = [
@@ -155,7 +170,7 @@ export function MessageList() {
                     setPage(1);
                   }}
                 >
-                  كل الأرقام
+                  كل القنوات
                 </button>
                 {connectionOptions.map((option) => (
                   <button
@@ -178,12 +193,40 @@ export function MessageList() {
                 ))}
               </div>
             ) : null}
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+              {channelOptions.map((option) => {
+                const active = channelFilter === option.value;
+                const channel = option.value === "all" ? null : option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={cn(
+                      "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-body-sm font-semibold transition-colors",
+                      active
+                        ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
+                        : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
+                    )}
+                    onClick={() => {
+                      setChannelFilter(option.value);
+                      setConnectionFilter("ALL");
+                      setActiveConversation(null);
+                      setPage(1);
+                    }}
+                  >
+                    {channel ? <ChannelIcon channel={channel} className="size-4" /> : null}
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="relative">
                 <Search className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400 sm:right-4" aria-hidden="true" />
                 <Input
                   className="h-11 rounded-2xl bg-wa-gray-50 pr-10 sm:h-12 sm:pr-11"
-                  placeholder="ابحثي بالرسالة أو رقم الهاتف"
+                  placeholder="ابحثي بالرسالة أو رقم الهاتف أو اسم العميل"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                 />
@@ -224,18 +267,20 @@ export function MessageList() {
           ) : filteredMessages.length === 0 ? (
             <InboxEmptyState
               title={search || simpleFilter !== "ALL" ? "لا توجد محادثات مطابقة" : "لا توجد رسائل بعد"}
-              body={search || simpleFilter !== "ALL" ? "جرّبي بحثًا مختلفًا أو أزيلي الفلاتر لعرض محادثات أكثر." : "عندما يرسل العملاء إلى رقم واتساب المتصل ستظهر المحادثات هنا."}
+              body={search || simpleFilter !== "ALL" ? "جرّبي بحثًا مختلفًا أو أزيلي الفلاتر لعرض محادثات أكثر." : "عندما يرسل العملاء إلى واتساب أو إنستجرام أو ماسنجر ستظهر المحادثات هنا."}
             />
           ) : (
             filteredMessages.map((message) => (
               <ConversationCard
                 key={message.id}
                 aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
-                contactName={message.connection?.displayName}
+                contactName={message.senderName ?? message.connection?.displayName}
+                channel={message.channel}
                 failed={message.status === "FAILED"}
                 handoff={message.handoffActive}
                 resolved={Boolean(message.resolvedAt)}
                 rating={message.rating}
+                socialIntent={message.socialIntent}
                 phoneNumber={getCustomerPhone(message)}
                 preview={
                   message.status === "FAILED"
@@ -309,10 +354,10 @@ export function MessageList() {
                     وصلت رسالة العميل، لكن الرد توقف قبل الإرسال. افتحي المحادثة لمعرفة السبب المسجل في kallem.
                   </p>
                   <p className="mt-2 rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-                    إذا كان الرقم ما زال رقم اختبار من Meta، فالردود مسموحة فقط لأرقام الاختبار المعتمدة.
+                    إذا كانت القناة ما زالت في وضع اختبار من Meta، فالردود مسموحة فقط لحسابات الاختبار المعتمدة.
                   </p>
                   <Link
-                    href="/whatsapp"
+                    href="/connect"
                     className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
                   >
                     مراجعة الإعداد
@@ -330,10 +375,10 @@ export function MessageList() {
               <WorkflowRow icon={<Clock3 className="size-4" aria-hidden="true" />} title="تابعي يدويًا" body="ارسلي ردًا مباشرًا عندما يحتاج الأمر تدخل صاحب النشاط." />
             </div>
             <Link
-              href="/whatsapp"
+              href="/connect"
               className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-wa-gray-200 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 sm:mt-5 sm:min-h-11"
             >
-              مراجعة إعداد واتساب
+              مراجعة إعداد القنوات
               <ArrowRight className="size-4" aria-hidden="true" />
             </Link>
           </section>
@@ -342,7 +387,17 @@ export function MessageList() {
       {activeConversation ? (
         <ConversationThread
           connectionId={activeConversation.connectionId}
-          contactName={activeConversation.connection?.displayName ?? getCustomerPhone(activeConversation)}
+          channel={activeConversation.channel}
+          contactName={activeConversation.senderName ?? activeConversation.connection?.displayName ?? getCustomerPhone(activeConversation)}
+          channelAccountName={
+            activeConversation.channel === "instagram"
+              ? activeConversation.connection?.instagramUsername
+                ? `@${activeConversation.connection.instagramUsername}`
+                : null
+              : activeConversation.channel === "messenger"
+                ? activeConversation.connection?.facebookPageName ?? null
+                : activeConversation.connection?.displayName ?? null
+          }
           handoffActive={Boolean(activeConversation.handoffActive)}
           rating={activeConversation.rating}
           ratingRequestedAt={activeConversation.ratingRequestedAt}

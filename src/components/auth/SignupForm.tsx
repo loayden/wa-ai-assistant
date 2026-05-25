@@ -106,13 +106,13 @@ export function SignupForm() {
           </div>
           <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">راجعي بريدك الإلكتروني</CardTitle>
           <CardDescription className="mt-2 max-w-[390px] text-body-sm leading-6 text-wa-gray-600 sm:mt-3 sm:text-body">
-            أرسلنا رابط التأكيد. افتحيه، وبعدها سيكمل kallem إلى إعداد واتساب تلقائياً.
+            أرسلنا رابط التأكيد. افتحيه، وبعدها سيكمل kallem إلى إعداد قنوات السوشيال تلقائياً.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 pt-5 sm:pt-7">
           <div className="mb-5 rounded-2xl border border-wa-blue-100 bg-wa-blue-50 p-3.5 sm:mb-6 sm:p-4">
             <p className="text-body-sm font-semibold text-wa-blue-600">الخطوة التالية</p>
-            <p className="mt-1 text-body-sm leading-6 text-wa-gray-700">أكدي البريد، سجّلي الدخول إذا طُلب منك، ثم اربطي رقم واتساب من شاشة الإعداد.</p>
+            <p className="mt-1 text-body-sm leading-6 text-wa-gray-700">أكدي البريد، سجّلي الدخول إذا طُلب منك، ثم اربطي واتساب أو إنستجرام أو ماسنجر من شاشة القنوات.</p>
           </div>
           <Button className="w-full rounded-full" type="button" onClick={() => mutation.reset()}>
             استخدام بريد آخر
@@ -128,7 +128,7 @@ export function SignupForm() {
         <BrandLogo className="mb-4 sm:mb-6" layout="stacked" wordmarkSize="md" />
         <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">إنشاء حساب</CardTitle>
         <CardDescription className="mt-2 max-w-[390px] text-body-sm leading-6 text-wa-gray-600 sm:mt-3 sm:text-body">
-          ابدئي مجاناً، أكدي بريدك، ثم اربطي رقم واتساب الذي يستخدمه عملاؤك.
+          ابدئي مجاناً، أكدي بريدك، ثم اربطي قنوات العملاء: واتساب، إنستجرام، وماسنجر.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 pt-5 sm:pt-7">
@@ -137,7 +137,7 @@ export function SignupForm() {
             "٥٠ رد مجاني",
             "لا تحتاج بطاقة",
             "تأكيد البريد",
-            "إعداد واتساب بعدها",
+            "إعداد القنوات بعدها",
           ].map((item) => (
             <div key={item} className="flex items-center gap-2 text-body-sm font-semibold text-wa-gray-800">
               <CheckCircle2 className="size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
@@ -213,14 +213,14 @@ export function SignupForm() {
           ) : null}
           <label className="flex items-start gap-3 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3.5 text-body-sm text-wa-gray-700 sm:p-4">
             <Checkbox className="mt-1" {...form.register("acceptTerms")} />
-            <span>أوافق على الشروط وسياسة الخصوصية لاستخدام kallem مع حساب واتساب الخاص بنشاطي.</span>
+            <span>أوافق على الشروط وسياسة الخصوصية لاستخدام kallem مع قنوات السوشيال الخاصة بنشاطي.</span>
           </label>
           {form.formState.errors.acceptTerms ? <p className="text-body-sm text-wa-error">{form.formState.errors.acceptTerms.message}</p> : null}
           <div className="rounded-2xl border border-wa-gray-100 bg-white p-3.5 sm:p-4">
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
               <p className="text-body-sm leading-6 text-wa-gray-600">
-                بعد إنشاء الحساب، يؤكد kallem بريدك قبل فتح مسار إعداد واتساب.
+                بعد إنشاء الحساب، يؤكد kallem بريدك قبل فتح مسار إعداد قنوات السوشيال.
               </p>
             </div>
           </div>

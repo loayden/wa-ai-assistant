@@ -27,6 +27,11 @@ function serializeMessage(message: {
   bodyText: string;
   mediaUrl: string | null;
   mediaType: string | null;
+  channel: string;
+  externalMessageId: string | null;
+  externalThreadId: string | null;
+  senderName: string | null;
+  senderProfilePicUrl: string | null;
   metadata: unknown;
   status: MessageResponse["status"];
   aiReplyText: string | null;
@@ -37,8 +42,11 @@ function serializeMessage(message: {
   updatedAt: Date;
   connection: {
     id: string;
-    displayName: string | null;
-    phoneNumberId: string;
+      displayName: string | null;
+      phoneNumberId: string;
+      channel?: string;
+      facebookPageName?: string | null;
+      instagramUsername?: string | null;
   } | null;
   handoffActive?: boolean;
   handoffAt?: Date | string | null;
@@ -48,6 +56,7 @@ function serializeMessage(message: {
 }): MessageResponse {
   return {
     ...message,
+    channel: message.channel === "instagram" || message.channel === "messenger" ? message.channel : "whatsapp",
     metadata: normalizeMessageMetadata(message.metadata),
     processedAt: message.processedAt?.toISOString() ?? null,
     createdAt: message.createdAt.toISOString(),
@@ -81,6 +90,12 @@ const dashboardMessageSelect = {
   bodyText: true,
   mediaUrl: true,
   mediaType: true,
+  channel: true,
+  externalMessageId: true,
+  externalThreadId: true,
+  senderName: true,
+  senderProfilePicUrl: true,
+  metadata: true,
   status: true,
   aiReplyText: true,
   aiModelUsed: true,
@@ -93,6 +108,9 @@ const dashboardMessageSelect = {
       id: true,
       displayName: true,
       phoneNumberId: true,
+      channel: true,
+      facebookPageName: true,
+      instagramUsername: true,
     },
   },
 } as const;
@@ -143,7 +161,7 @@ export async function getWhatsAppPageBootstrap() {
 
   const settings = await getOrCreateUserSettings(auth.appUser.id);
   const connections = await prisma.whatsAppConnection.findMany({
-    where: { userId: auth.appUser.id },
+    where: { userId: auth.appUser.id, channel: "whatsapp" },
     orderBy: { createdAt: "desc" },
   });
 
@@ -245,7 +263,6 @@ export async function getDashboardBootstrap() {
 
       return serializeMessage({
         ...message,
-        metadata: {},
         handoffActive: Boolean(handoff?.active),
         handoffAt: handoff?.handoffAt ?? null,
         resolvedAt: handoff?.resolvedAt ?? null,

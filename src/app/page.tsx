@@ -12,7 +12,6 @@ import {
   Megaphone,
   MessageSquareText,
   Mic2,
-  Send,
   ShieldCheck,
   ShoppingBag,
   SlidersHorizontal,
@@ -33,7 +32,7 @@ const navItems = [
   { label: "كيف يعمل", href: "#workflow" },
   { label: "الفيديو", href: "#demo" },
   { label: "المميزات", href: "#features" },
-  { label: "واتساب", href: "#connect" },
+  { label: "القنوات", href: "#connect" },
   { label: "الأسعار", href: "#pricing" },
 ];
 
@@ -46,8 +45,8 @@ const heroStats = [
 
 const workflowSteps = [
   {
-    title: "اربط واتساب",
-    body: "ابدأ برقم النشاط، تحقق من الاتصال، وشغّل استقبال الرسائل داخل kallem.",
+    title: "اربط قنوات السوشيال",
+    body: "ابدأ بأي قناة جاهزة، ثم أضف واتساب وإنستجرام وماسنجر عندما تكون الصلاحيات مكتملة.",
     icon: ShieldCheck,
   },
   {
@@ -57,7 +56,7 @@ const workflowSteps = [
   },
   {
     title: "استقبل المحادثات",
-    body: "العميل يرسل على واتساب كالمعتاد. المساعد يرد، والمالك يراجع كل شيء من الصندوق.",
+    body: "العميل يرسل من واتساب أو إنستجرام أو ماسنجر. المساعد يرد، والمالك يراجع كل شيء من صندوق واحد.",
     icon: Inbox,
   },
   {
@@ -69,10 +68,10 @@ const workflowSteps = [
 
 const featureGroups = [
   {
-    title: "ردود واتساب ذكية",
-    body: "ردود تلقائية مبنية على معلومات نشاطك، مع إمكانية الإيقاف أو التسليم للبشر في أي وقت.",
+    title: "ردود ذكية لكل قناة",
+    body: "ردود تلقائية مبنية على معلومات نشاطك لواتساب وإنستجرام وماسنجر، مع إيقاف أو تسليم للبشر في أي وقت.",
     icon: Bot,
-    href: "/whatsapp",
+    href: "/connect",
   },
   {
     title: "قاعدة معرفة",
@@ -82,7 +81,7 @@ const featureGroups = [
   },
   {
     title: "صندوق وارد عملي",
-    body: "محادثات واضحة، رسائل واردة وصادرة، حالة الذكاء، وتسليم يدوي عند الحاجة.",
+    body: "صندوق موحد يوضح القناة، الرسائل الواردة والصادرة، حالة الذكاء، والتسليم اليدوي عند الحاجة.",
     icon: MessageSquareText,
     href: "/messages",
   },
@@ -100,7 +99,7 @@ const featureGroups = [
   },
   {
     title: "قوالب وحملات",
-    body: "إدارة قوالب Meta المعتمدة وإرسال حملات منظمة بدون كسر قواعد واتساب.",
+    body: "إدارة قوالب Meta المعتمدة وإرسال حملات منظمة مع احترام قواعد القنوات.",
     icon: Megaphone,
     href: "/templates",
   },
@@ -119,9 +118,9 @@ const featureGroups = [
 ];
 
 const connectDetails = [
-  "العميل لا يرى أي إعدادات تقنية. هو يرسل رسالة واتساب فقط.",
-  "kallem يتحقق من اتصال واتساب قبل تشغيل الردود.",
-  "القوالب والحملات تلتزم بقواعد Meta ونافذة 24 ساعة.",
+  "العميل لا يرى أي إعدادات تقنية. هو يرسل من القناة التي يعرفها.",
+  "kallem يتحقق من اتصال كل قناة قبل تشغيل الردود عليها.",
+  "القوالب والحملات تلتزم بقواعد Meta ونافذة خدمة العملاء.",
 ];
 
 const pricingPlans = [
@@ -130,17 +129,17 @@ const pricingPlans = [
     price: "٠ جنيه",
     description: "لبداية آمنة وتجربة الردود على نشاط واحد.",
     replies: "٥٠ رد / شهر",
-    numbers: "رقم واتساب واحد",
+    numbers: "قناة واحدة",
     cta: "ابدأ مجانًا",
     href: "/signup",
-    features: ["لوحة تحكم أساسية", "إعداد واتساب موجّه", "تشغيل وإيقاف الردود"],
+    features: ["لوحة تحكم أساسية", "إعداد قناة موجّه", "تشغيل وإيقاف الردود"],
   },
   {
     name: "PRO",
     price: "٩٩٩ جنيه",
     description: "للأنشطة التي تستقبل رسائل يومية وتحتاج متابعة منظمة.",
     replies: "٢٬٠٠٠ رد / شهر",
-    numbers: "حتى ٣ أرقام",
+    numbers: "حتى ٣ قنوات",
     cta: "اختر Pro",
     href: "/signup",
     featured: true,
@@ -151,10 +150,10 @@ const pricingPlans = [
     price: "٢٬٤٩٩ جنيه",
     description: "للعمليات الأكبر، فرق متعددة، وحجم محادثات أعلى.",
     replies: "١٠٬٠٠٠ رد / شهر",
-    numbers: "حتى ١٠ أرقام",
+    numbers: "حتى ١٠ قنوات",
     cta: "اختر Business",
     href: "/signup",
-    features: ["أرقام متعددة", "حملات Broadcast", "طلبات ودفع", "أولوية دعم"],
+    features: ["قنوات متعددة", "حملات Broadcast", "طلبات ودفع", "أولوية دعم"],
   },
 ];
 
@@ -246,7 +245,7 @@ function ProductPreview() {
 
         <div className="grid gap-3 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="rounded-[18px] border border-wa-gray-100 bg-wa-gray-50 p-3">
-            <p className="text-xs font-semibold text-wa-gray-400">محادثة واتساب</p>
+            <p className="text-xs font-semibold text-wa-gray-400">محادثة من السوشيال</p>
             <div className="mt-3 space-y-2">
               <div className="max-w-[86%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 text-sm leading-6 text-wa-gray-700">
                 عايز أعرف السعر والتوصيل؟
@@ -309,13 +308,13 @@ function PromoVideoSection() {
           <div className="px-2 py-3 sm:px-4 lg:py-6">
             <p className="text-sm font-semibold text-wa-blue-600">فيديو تعريفي</p>
             <h2 className="mt-3 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px] sm:leading-[1.12]">
-              شاهد كيف يربط Kallem واتساب وإنستجرام بالذكاء الاصطناعي.
+              شاهد كيف يربط Kallem واتساب وإنستجرام وماسنجر بالذكاء الاصطناعي.
             </h2>
             <p className="mt-4 text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">
               عرض سريع لمدة ٣٠ ثانية يوضح الربط السهل، الردود التلقائية، الصندوق الموحد، اكتشاف Leads، وتدريب المساعد بالعربية.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {["ربط Meta", "واتساب", "إنستجرام", "Leads", "RTL عربي"].map((item) => (
+              {["ربط Meta", "واتساب", "إنستجرام", "ماسنجر", "Leads"].map((item) => (
                 <span key={item} className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-3 py-2 text-xs font-semibold text-wa-gray-600">
                   {item}
                 </span>
@@ -397,7 +396,7 @@ export default function Home() {
               كل محادثات عملائك تتحول لعمل واضح.
             </h1>
             <p className="mt-5 max-w-[680px] text-body leading-7 text-wa-gray-600 sm:mt-7 sm:text-xl sm:leading-8">
-              {BRAND_NAME_AR} | {BRAND_NAME} مساعد واتساب ذكي يرد على العملاء، يفهم رسائلهم، يسجل الطلبات، يكتشف العملاء المحتملين، ويرسل روابط الدفع من لوحة عربية بسيطة.
+              {BRAND_NAME_AR} | {BRAND_NAME} منصة رسائل سوشيال ترد على العملاء في واتساب وإنستجرام وماسنجر، تفهم الرسائل، تسجل الطلبات، تكتشف العملاء المحتملين، وترسل روابط الدفع من لوحة عربية بسيطة.
             </p>
             <div className="mt-6 grid gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
               <MagneticLink href="/signup" className="w-full bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] hover:bg-[#0E47E8] sm:w-auto">
@@ -432,7 +431,7 @@ export default function Home() {
           <div>
             <p className="text-sm font-semibold text-wa-blue-600">مهم للمستخدمين</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700 sm:text-base sm:leading-7">
-              kallem لا يجعل عميلك يتعلم أي شيء جديد. العميل يرسل واتساب عادي، وصاحب النشاط يدير الردود، الطلبات، الدفع، والتحليلات من داخل التطبيق.
+              kallem لا يجعل عميلك يتعلم أي شيء جديد. العميل يرسل من واتساب أو إنستجرام أو ماسنجر، وصاحب النشاط يدير الردود، الطلبات، الدفع، والتحليلات من داخل التطبيق.
             </p>
           </div>
           <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
@@ -449,8 +448,8 @@ export default function Home() {
       <section id="workflow" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
         <SectionHeading
           eyebrow="طريقة العمل"
-          title="من أول رسالة واتساب إلى طلب أو عميل محتمل."
-          body="التجربة مصممة لصاحب نشاط غير تقني: ابدأ بالربط، أضف معلوماتك، ثم اترك المساعد يرد تحت تحكمك."
+          title="من أول رسالة سوشيال إلى طلب أو عميل محتمل."
+          body="التجربة مصممة لصاحب نشاط غير تقني: اربط القنوات، أضف معلوماتك، ثم اترك المساعد يرد تحت تحكمك."
         />
         <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
           {workflowSteps.map((step, index) => {
@@ -490,20 +489,20 @@ export default function Home() {
       <section id="connect" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
         <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
           <SectionHeading
-            eyebrow="ربط واتساب بدون قلق"
-            title="نشرح القواعد بوضوح بدل ما نخفيها."
-            body="واتساب الرسمي له قواعد من Meta: الردود الحرة تعمل داخل نافذة خدمة العملاء، أما الرسائل التي تبدأها الشركة فتحتاج قوالب معتمدة. لذلك kallem يعرض الإعداد، القوالب، والحملات بطريقة مفهومة."
+            eyebrow="ربط قنوات Meta بدون قلق"
+            title="واتساب وإنستجرام وماسنجر في مسار واحد واضح."
+            body="كل قناة لها صلاحيات وقواعد من Meta. لذلك kallem يعرض حالة واتساب، إنستجرام، وماسنجر بوضوح: المتصل، الناقص صلاحيات، وما يحتاج مراجعة قبل استقبال العملاء الحقيقيين."
           />
           <FormalCard className="overflow-hidden" data-cinema-reveal>
             <div className="border-b border-wa-gray-100 p-4 sm:p-6">
               <p className="text-sm font-semibold text-wa-blue-600">ما سيراه صاحب النشاط</p>
-              <h3 className="mt-2 text-2xl font-semibold text-wa-gray-900">لوحة ربط واتساب ومتابعة الجاهزية</h3>
+              <h3 className="mt-2 text-2xl font-semibold text-wa-gray-900">لوحة ربط القنوات ومتابعة الجاهزية</h3>
             </div>
             <div className="grid gap-3 p-4 sm:p-6">
               {[
-                { title: "اتصال الرقم", value: "متصل وجاهز", icon: ShieldCheck },
-                { title: "الردود الذكية", value: "تعمل داخل قواعد واتساب", icon: Zap },
-                { title: "القوالب", value: "للمتابعة بعد نافذة 24 ساعة", icon: Send },
+                { title: "قنوات Meta", value: "واتساب جاهز، والسوشيال قابل للإضافة", icon: ShieldCheck },
+                { title: "إنستجرام وماسنجر", value: "ربط Meta وصلاحيات واضحة", icon: MessageSquareText },
+                { title: "الردود الذكية", value: "تعمل حسب قواعد كل قناة", icon: Zap },
                 { title: "المالك", value: "يقدر يوقف أو يتدخل يدويًا", icon: SlidersHorizontal },
               ].map((item) => {
                 const Icon = item.icon;
@@ -560,7 +559,7 @@ export default function Home() {
                 <p className="text-xs font-semibold text-wa-gray-400">اليوم</p>
                 <h3 className="mt-2 text-2xl font-semibold text-wa-gray-900">المساعد يرد على العملاء</h3>
                 <div className="mt-4 grid grid-cols-2 gap-2">
-                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">واتساب متصل</span>
+                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">قنوات متصلة</span>
                   <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">Lead جديد</span>
                   <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">طلب جديد</span>
                   <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">دفع جاهز</span>
@@ -582,7 +581,7 @@ export default function Home() {
           <SectionHeading
             eyebrow="الأسعار"
             title="خطط واضحة بالجنيه المصري."
-            body="كل خطة تعرض عدد الردود، عدد الأرقام، ومتى تحتاج الترقية. بدون وعود غامضة أو كلمة Unlimited."
+            body="كل خطة تعرض عدد الردود، عدد القنوات، ومتى تحتاج الترقية. بدون وعود غامضة أو كلمة Unlimited."
           />
           <div className="mt-8 grid gap-4 sm:mt-12 lg:grid-cols-3">
             {pricingPlans.map((plan) => (
@@ -608,7 +607,7 @@ export default function Home() {
                     <p className="mt-2 text-sm font-semibold text-wa-gray-900">{plan.replies}</p>
                   </div>
                   <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3">
-                    <p className="text-xs text-wa-gray-400">الأرقام</p>
+                    <p className="text-xs text-wa-gray-400">القنوات</p>
                     <p className="mt-2 text-sm font-semibold text-wa-gray-900">{plan.numbers}</p>
                   </div>
                 </div>
@@ -641,7 +640,7 @@ export default function Home() {
             <div>
               <p className="text-sm font-semibold text-wa-blue-600">ابدأ الآن</p>
               <h2 className="mt-3 max-w-[760px] text-[32px] font-semibold leading-tight text-wa-gray-900 sm:text-[58px] sm:leading-[1.08]">
-                اجعل واتساب قناة بيع ودعم، وليس صندوق رسائل مزدحم.
+                اجعل رسائل السوشيال قناة بيع ودعم، وليس صناديق متفرقة.
               </h2>
               <p className="mt-4 max-w-[640px] text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">
                 أنشئ الحساب، أضف معلومات نشاطك، ثم راقب الردود، العملاء المحتملين، الطلبات، والدفع من مكان واحد.

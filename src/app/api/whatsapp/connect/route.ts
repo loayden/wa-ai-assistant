@@ -61,7 +61,7 @@ export async function GET() {
   try {
     const user = await requireAppUser();
     const connections = await prisma.whatsAppConnection.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, channel: "whatsapp" },
       orderBy: { createdAt: "desc" },
     });
 
@@ -107,13 +107,14 @@ export async function POST(request: Request) {
     const existingConnection = await prisma.whatsAppConnection.findFirst({
       where: {
         userId: user.id,
+        channel: "whatsapp",
         phoneNumberId: parsed.data.phoneNumberId,
       },
     });
 
     if (!existingConnection) {
       const connectionCount = await prisma.whatsAppConnection.count({
-        where: { userId: user.id },
+        where: { userId: user.id, channel: "whatsapp" },
       });
 
       if (connectionCount >= getMaxConnectionCount(user.planTier)) {
@@ -146,6 +147,8 @@ export async function POST(request: Request) {
       accessToken: encrypt(parsed.data.accessToken),
       webhookVerifyToken: appEnv.WHATSAPP_VERIFY_TOKEN,
       displayName: resolveConnectionName(parsed.data.displayName, phoneProfile),
+      channel: "whatsapp",
+      provider: "meta",
       ownerPhoneNumber:
         normalizeOwnerPhoneNumber(parsed.data.ownerPhoneNumber) ??
         normalizeOwnerPhoneNumber(phoneProfile?.display_phone_number),
@@ -214,6 +217,7 @@ export async function DELETE(request: Request) {
       where: {
         id: parsed.data.id,
         userId: user.id,
+        channel: "whatsapp",
       },
     });
 

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
 import { AlertCircle, ArrowLeft, Bot, Check, CheckCircle2, Mic, Pencil, Send, Star, UserRoundCheck, X } from "lucide-react";
 
+import { ChannelIcon } from "@/components/icons/ChannelIcons";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
@@ -30,6 +31,8 @@ export interface ConversationThreadMessage {
 export interface ConversationThreadProps {
   connectionId: string | null;
   contactName: string;
+  channel?: "whatsapp" | "instagram" | "messenger";
+  channelAccountName?: string | null;
   handoffActive?: boolean;
   resolvedAt?: string | null;
   rating?: number | null;
@@ -46,9 +49,17 @@ function formatTime(value: string) {
   return new Intl.DateTimeFormat("ar-EG", { hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
+function channelLabel(channel?: string) {
+  if (channel === "instagram") return "إنستجرام";
+  if (channel === "messenger") return "ماسنجر";
+  return "واتساب";
+}
+
 export function ConversationThread({
   connectionId,
   contactName,
+  channel = "whatsapp",
+  channelAccountName = null,
   handoffActive = false,
   rating = null,
   ratingRequestedAt = null,
@@ -100,7 +111,7 @@ export function ConversationThread({
   const sendMutation = useMutation({
     mutationFn: async () => {
       if (!connectionId) {
-        throw new Error("هذه المحادثة غير مرتبطة باتصال واتساب نشط.");
+        throw new Error("هذه المحادثة غير مرتبطة باتصال نشط.");
       }
 
       return apiData(`/api/conversations/${threadId}/reply`, {
@@ -166,7 +177,10 @@ export function ConversationThread({
           </IconButton>
           <div className="min-w-0 flex-1">
             <p className="truncate text-body font-semibold text-wa-gray-900">{contactName}</p>
-            <p className="truncate text-body-sm text-wa-gray-500">{phoneNumber}</p>
+            <p className="flex items-center gap-1.5 truncate text-body-sm text-wa-gray-500">
+              <ChannelIcon channel={channel} className="size-4 shrink-0" />
+              <span className="truncate">{channelLabel(channel)}{channelAccountName ? ` · ${channelAccountName}` : ""} · {phoneNumber}</span>
+            </p>
           </div>
           <span className="rounded-full bg-wa-blue-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-wa-blue-700 sm:px-3 sm:text-label">المحادثة</span>
           {rating ? (
@@ -209,17 +223,17 @@ export function ConversationThread({
                 <div>
                   <p className="font-semibold text-wa-error">لم يتم إرسال الرد التلقائي</p>
                   <p className="mt-1">
-                    وصلت رسالة العميل إلى kallem، لكن الرد توقف قبل أن يرسله واتساب.
+                    وصلت رسالة العميل إلى kallem، لكن الرد توقف قبل إرساله عبر القناة.
                   </p>
                   <p className="mt-3 rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
                     {failedMessage.aiReplyText ??
-                      "راجعي رصيد OpenAI، صلاحيات توكن واتساب، وهل الرقم إنتاج حقيقي وليس رقم اختبار."}
+                      "راجعي رصيد OpenAI، صلاحيات القناة، وهل الاتصال جاهز لجمهور حقيقي وليس وضع اختبار فقط."}
                   </p>
                   <Link
-                    href="/whatsapp"
+                    href="/connect"
                     className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
                   >
-                    فتح إعداد واتساب
+                    فتح إعداد القنوات
                   </Link>
                 </div>
               </div>

@@ -24,18 +24,53 @@ export async function GET(request: Request) {
       channel: parsed.data.channel,
     };
 
-    const [leads, total] = await Promise.all([
+    const [leads, total, instagramCommentLeads] = await Promise.all([
       prisma.lead.findMany({
         where,
         orderBy: { detectedAt: "desc" },
         take: 100,
       }),
       prisma.lead.count({ where }),
+      prisma.instagramCommentLead.findMany({
+        where: {
+          userId: user.id,
+          ...(parsed.data.status
+            ? {
+                lead: {
+                  status: parsed.data.status,
+                },
+              }
+            : {}),
+          ...(parsed.data.channel && parsed.data.channel !== "instagram"
+            ? {
+                id: "__no_instagram_comment_leads_for_channel_filter__",
+              }
+            : {}),
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          commentText: true,
+          commenterId: true,
+          commenterName: true,
+          postId: true,
+          postCaption: true,
+          isLead: true,
+          dmSent: true,
+          leadId: true,
+          createdAt: true,
+        },
+      }),
     ]);
 
     return jsonSuccess(
       {
         leads: leads.map(serializeLead),
+        instagramCommentLeads: instagramCommentLeads.map((comment) => ({
+          ...comment,
+          createdAt: comment.createdAt.toISOString(),
+        })),
       },
       {
         meta: { total },

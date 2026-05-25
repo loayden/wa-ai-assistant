@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const leadStatusSchema = z.enum(["new", "contacted", "converted", "dismissed"]);
-export const leadChannelSchema = z.enum(["whatsapp", "instagram"]);
+export const leadChannelSchema = z.enum(["whatsapp", "instagram", "messenger"]);
 
 export const leadsQuerySchema = z.object({
   status: leadStatusSchema.optional(),

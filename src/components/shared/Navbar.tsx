@@ -20,7 +20,7 @@ export function Navbar() {
         <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
           <Link href="/#features">المميزات</Link>
           <Link href="/#pricing">الأسعار</Link>
-          <Link href="/whatsapp">واتساب</Link>
+          <Link href="/connect">القنوات</Link>
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/login" className={cn(buttonVariants({ variant: "ghost" }))}>

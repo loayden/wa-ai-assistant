@@ -8,18 +8,20 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Download, MessageCircle, RefreshCcw, Search, UserPlus } from "lucide-react";
+import { ArrowLeft, Download, RefreshCcw, Search, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
+import { ChannelIcon } from "@/components/icons/ChannelIcons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiData } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
-import type { LeadResponse, LeadStatus, LeadsResponse } from "@/types/api";
+import type { InstagramCommentLeadResponse, LeadResponse, LeadStatus, LeadsResponse } from "@/types/api";
 
 type LeadFilter = "all" | LeadStatus;
+type ChannelFilter = "all" | "whatsapp" | "instagram" | "messenger";
 
 const FILTERS: Array<{ value: LeadFilter; label: string }> = [
   { value: "all", label: "الكل" },
@@ -35,6 +37,19 @@ const STATUS_LABELS: Record<LeadStatus, string> = {
   converted: "تحوّل لعميل",
   dismissed: "تجاهل",
 };
+
+const CHANNEL_FILTERS: Array<{ value: ChannelFilter; label: string }> = [
+  { value: "all", label: "كل القنوات" },
+  { value: "whatsapp", label: "واتساب" },
+  { value: "instagram", label: "إنستجرام" },
+  { value: "messenger", label: "ماسنجر" },
+];
+
+function channelLabel(channel: string) {
+  if (channel === "instagram") return "إنستجرام";
+  if (channel === "messenger") return "ماسنجر";
+  return "واتساب";
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("ar-EG", {
@@ -60,13 +75,15 @@ function statusTone(status: LeadStatus) {
 
 export function LeadsPageClient() {
   const [filter, setFilter] = useState<LeadFilter>("all");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>("all");
   const [search, setSearch] = useState("");
   const [leads, setLeads] = useState<LeadResponse[]>([]);
+  const [instagramCommentLeads, setInstagramCommentLeads] = useState<InstagramCommentLeadResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function loadLeads(nextFilter = filter) {
+  async function loadLeads(nextFilter = filter, nextChannel = channelFilter) {
     setLoading(true);
     setError(null);
 
@@ -75,9 +92,13 @@ export function LeadsPageClient() {
       if (nextFilter !== "all") {
         params.set("status", nextFilter);
       }
+      if (nextChannel !== "all") {
+        params.set("channel", nextChannel);
+      }
 
       const response = await apiData<LeadsResponse>(`/api/leads${params.toString() ? `?${params.toString()}` : ""}`);
       setLeads(response.leads);
+      setInstagramCommentLeads(response.instagramCommentLeads ?? []);
     } catch (loadError) {
       const message = loadError instanceof Error ? loadError.message : "تعذر تحميل العملاء المحتملين.";
       setError(message);
@@ -87,9 +108,9 @@ export function LeadsPageClient() {
   }
 
   useEffect(() => {
-    void loadLeads(filter);
+    void loadLeads(filter, channelFilter);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+  }, [filter, channelFilter]);
 
   const filteredLeads = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
@@ -98,7 +119,7 @@ export function LeadsPageClient() {
     }
 
     return leads.filter((lead) =>
-      [lead.customerPhone, lead.customerPhoneMasked, lead.interest, lead.channel, STATUS_LABELS[lead.status]]
+      [lead.customerPhone, lead.customerPhoneMasked, lead.externalId, lead.senderName, lead.interest, lead.channel, STATUS_LABELS[lead.status]]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(normalizedSearch)),
     );
@@ -177,7 +198,7 @@ export function LeadsPageClient() {
                 <Download className="size-4" aria-hidden="true" />
                 تصدير CSV
               </button>
-              <Button size="sm" variant="outline" className="rounded-full" onClick={() => void loadLeads(filter)}>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => void loadLeads(filter, channelFilter)}>
                 <RefreshCcw className="size-4" aria-hidden="true" />
                 تحديث
               </Button>
@@ -185,6 +206,22 @@ export function LeadsPageClient() {
           </div>
 
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {CHANNEL_FILTERS.map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                className={cn(
+                  "inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border px-3 text-body-sm font-semibold transition-colors sm:min-h-11 sm:px-4",
+                  channelFilter === item.value
+                    ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
+                    : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
+                )}
+                onClick={() => setChannelFilter(item.value)}
+              >
+                {item.value !== "all" ? <ChannelIcon channel={item.value} className="size-4" /> : null}
+                {item.label}
+              </button>
+            ))}
             {FILTERS.map((item) => (
               <button
                 key={item.value}
@@ -209,7 +246,7 @@ export function LeadsPageClient() {
           <div className="p-6 text-center sm:p-10">
             <p className="text-h3 font-semibold text-wa-gray-900">تعذر تحميل العملاء المحتملين</p>
             <p className="mt-2 text-body-sm text-wa-gray-600">{error}</p>
-            <Button className="mt-4 rounded-full" onClick={() => void loadLeads(filter)}>
+            <Button className="mt-4 rounded-full" onClick={() => void loadLeads(filter, channelFilter)}>
               حاول مرة أخرى
             </Button>
           </div>
@@ -234,18 +271,25 @@ export function LeadsPageClient() {
             {filteredLeads.map((lead) => (
               <article key={lead.id} className="grid gap-3 p-4 sm:p-5 lg:grid-cols-[170px_minmax(0,1fr)_140px_150px_170px] lg:items-center" dir="rtl">
                 <div>
-                  <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">الهاتف</p>
-                  <p className="mt-1 text-body-sm font-semibold text-wa-gray-900">{lead.customerPhoneMasked}</p>
+                  <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">العميل</p>
+                  <p className="mt-1 text-body-sm font-semibold text-wa-gray-900">
+                    {lead.channel === "whatsapp" ? lead.customerPhoneMasked : lead.senderName ?? lead.externalId ?? "عميل اجتماعي"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">الاهتمام</p>
                   <p className="mt-1 text-body-sm leading-6 text-wa-gray-700">{lead.interest}</p>
+                  {lead.source !== "chat" ? (
+                    <span className="mt-2 inline-flex rounded-full bg-pink-50 px-2.5 py-1 text-[10px] font-semibold text-pink-700">
+                      {lead.source === "instagram_comment" ? "تعليق إنستجرام" : lead.source}
+                    </span>
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">القناة</p>
                   <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-wa-success-bg px-2.5 py-1 text-xs font-semibold text-wa-success">
-                    <MessageCircle className="size-3" aria-hidden="true" />
-                    {lead.channel === "whatsapp" ? "واتساب" : "إنستجرام"}
+                    <ChannelIcon channel={lead.channel} className="size-3" />
+                    {channelLabel(lead.channel)}
                   </span>
                 </div>
                 <div>
@@ -277,6 +321,41 @@ export function LeadsPageClient() {
           </div>
         )}
       </section>
+
+      {instagramCommentLeads.length > 0 ? (
+        <section className="mt-4 rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:mt-5 sm:rounded-[28px] sm:p-5" dir="rtl">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-label font-semibold uppercase tracking-widest text-pink-600">Instagram</p>
+              <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900">تعليقات إنستجرام التي تحولت لفرص</h2>
+            </div>
+            <span className="rounded-full bg-pink-50 px-3 py-1 text-xs font-semibold text-pink-700">
+              {instagramCommentLeads.length.toLocaleString("ar-EG")} تعليق
+            </span>
+          </div>
+
+          <div className="mt-4 divide-y divide-wa-gray-100">
+            {instagramCommentLeads.map((comment) => (
+              <article key={comment.id} className="grid gap-3 py-4 lg:grid-cols-[minmax(0,1fr)_150px_130px_140px] lg:items-center">
+                <div className="min-w-0">
+                  <p className="line-clamp-2 text-body-sm font-semibold leading-6 text-wa-gray-900">{comment.commentText}</p>
+                  <p className="mt-1 truncate text-xs text-wa-gray-500">
+                    {comment.commenterName ?? comment.commenterId}
+                    {comment.postCaption ? ` · ${comment.postCaption}` : ""}
+                  </p>
+                </div>
+                <span className={cn("inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold", comment.isLead ? "bg-wa-success-bg text-wa-success" : "bg-wa-gray-100 text-wa-gray-500")}>
+                  {comment.isLead ? "نية شراء" : "تعليق عادي"}
+                </span>
+                <span className={cn("inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold", comment.dmSent ? "bg-blue-50 text-blue-700" : "bg-wa-warning-bg text-wa-warning")}>
+                  {comment.dmSent ? "تم إرسال DM" : "لم يتم إرسال DM"}
+                </span>
+                <time className="text-xs font-medium text-wa-gray-500">{formatDate(comment.createdAt)}</time>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

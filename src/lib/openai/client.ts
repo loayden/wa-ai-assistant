@@ -11,6 +11,7 @@ import type { UserSettings } from "@prisma/client";
 import OpenAI, { APIConnectionTimeoutError, APIError, RateLimitError } from "openai";
 
 import { buildKnowledgeBlock } from "@/lib/api/knowledge";
+import type { MessagingChannel } from "@/lib/channels/types";
 import { prisma } from "@/lib/prisma/client";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
@@ -21,6 +22,7 @@ export type GenerateAIReplyParams = {
   settings: UserSettings;
   extraInstructions?: string[];
   forceEgyptianArabic?: boolean;
+  channel?: MessagingChannel;
 };
 
 export type GenerateAIReplyResult = {
@@ -141,6 +143,7 @@ function interpolateSystemPrompt(
     correctionsBlock: string;
     extraInstructions?: string[];
     forceEgyptianArabic?: boolean;
+    channel?: MessagingChannel;
   },
 ): string {
   const replacements = {
@@ -162,6 +165,42 @@ function interpolateSystemPrompt(
 
   if (promptSections.forceEgyptianArabic) {
     sections.push("Reply in friendly Egyptian Arabic. Do not use stiff formal Arabic unless the customer does.");
+  }
+
+  if (promptSections.channel) {
+    const channelToneGuide: Record<MessagingChannel, string> = {
+      whatsapp: "أسلوب مختصر ومباشر، مناسب للجوال.",
+      instagram: "أسلوب اجتماعي وودود، قصير، يناسب جمهور إنستجرام.",
+      messenger: "أسلوب محترف وودود، مناسب للتواصل عبر فيسبوك.",
+    };
+
+    sections.push(`Channel style note: ${channelToneGuide[promptSections.channel]}`);
+
+    if (promptSections.channel === "instagram") {
+      sections.push(
+        [
+          "Instagram channel persona:",
+          `Tone: ${settings.instagramTone ?? settings.language}`,
+          "Style: استخدم أسلوباً اجتماعياً وودياً. يمكن استخدام emoji بشكل طبيعي. اجعل الردود قصيرة ومباشرة.",
+          settings.instagramInstructions?.trim() ? `Special instructions: ${settings.instagramInstructions.trim()}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
+
+    if (promptSections.channel === "messenger") {
+      sections.push(
+        [
+          "Messenger channel persona:",
+          `Tone: ${settings.messengerTone ?? settings.language}`,
+          "Style: أسلوب احترافي وودود. ابدأ بتحية عند الحاجة. ردود متوسطة الطول وواضحة.",
+          settings.messengerInstructions?.trim() ? `Special instructions: ${settings.messengerInstructions.trim()}` : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      );
+    }
   }
 
   if (promptSections.knowledgeBlock) {
@@ -215,6 +254,7 @@ export async function generateAIReply(params: GenerateAIReplyParams): Promise<Ge
     correctionsBlock,
     extraInstructions: params.extraInstructions,
     forceEgyptianArabic: params.forceEgyptianArabic,
+    channel: params.channel,
   });
 
   try {

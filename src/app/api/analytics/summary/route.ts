@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       },
     };
 
-    const [messages, handoffs, leadsDetected, ratings] = await Promise.all([
+    const [messages, handoffs, leadsDetected, ratings, topInstagramPosts] = await Promise.all([
       prisma.message.findMany({
         where,
         orderBy: { createdAt: "asc" },
@@ -55,6 +55,7 @@ export async function GET(request: Request) {
           direction: true,
           fromNumber: true,
           connectionId: true,
+          channel: true,
           createdAt: true,
           connection: {
             select: { id: true },
@@ -87,6 +88,24 @@ export async function GET(request: Request) {
         },
         select: { rating: true },
       }),
+      prisma.instagramPostStats.findMany({
+        where: {
+          userId: user.id,
+          lastUpdatedAt: {
+            gte: start,
+          },
+        },
+        orderBy: [{ leadCount: "desc" }, { dmCount: "desc" }, { commentCount: "desc" }],
+        take: 5,
+        select: {
+          postId: true,
+          postCaption: true,
+          postMediaUrl: true,
+          commentCount: true,
+          leadCount: true,
+          dmCount: true,
+        },
+      }),
     ]);
 
     const dailyMap = new Map<string, number>();
@@ -100,8 +119,11 @@ export async function GET(request: Request) {
     const hourCounts = new Map<number, number>();
     const dayCounts = new Map<number, number>();
     let totalReplies = 0;
-    let whatsappCount = 0;
-    let instagramCount = 0;
+    const channelSplit = {
+      whatsapp: 0,
+      instagram: 0,
+      messenger: 0,
+    };
 
     for (const message of messages) {
       if (message.direction === MessageDirection.OUTBOUND) {
@@ -117,10 +139,10 @@ export async function GET(request: Request) {
         dayCounts.set(day, (dayCounts.get(day) ?? 0) + 1);
       }
 
-      if (message.connectionId || message.connection?.id) {
-        whatsappCount += 1;
-      } else {
-        instagramCount += 1;
+      const channel = message.channel in channelSplit ? (message.channel as keyof typeof channelSplit) : "whatsapp";
+
+      if (message.direction === MessageDirection.OUTBOUND) {
+        channelSplit[channel] += 1;
       }
     }
 
@@ -140,10 +162,8 @@ export async function GET(request: Request) {
       busiestHour,
       busiestDay: busiestDayNumber === null ? null : ARABIC_DAYS[busiestDayNumber],
       dailyReplies: [...dailyMap.entries()].map(([date, count]) => ({ date, count })),
-      channelSplit: {
-        whatsapp: whatsappCount,
-        instagram: instagramCount,
-      },
+      channelSplit,
+      topInstagramPosts,
       averageRating,
       ratingCount: ratingValues.length,
       planTier: user.planTier,

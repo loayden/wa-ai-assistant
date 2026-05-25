@@ -64,9 +64,10 @@ export function AnalyticsPageClient() {
   }, [range]);
 
   const maxDailyReplies = useMemo(() => Math.max(1, ...(summary?.dailyReplies.map((item) => item.count) ?? [0])), [summary]);
-  const channelTotal = (summary?.channelSplit.whatsapp ?? 0) + (summary?.channelSplit.instagram ?? 0);
+  const channelTotal = (summary?.channelSplit.whatsapp ?? 0) + (summary?.channelSplit.instagram ?? 0) + (summary?.channelSplit.messenger ?? 0);
   const whatsappPercent = channelTotal > 0 ? Math.round(((summary?.channelSplit.whatsapp ?? 0) / channelTotal) * 100) : 0;
-  const instagramPercent = channelTotal > 0 ? 100 - whatsappPercent : 0;
+  const instagramPercent = channelTotal > 0 ? Math.round(((summary?.channelSplit.instagram ?? 0) / channelTotal) * 100) : 0;
+  const messengerPercent = channelTotal > 0 ? Math.max(0, 100 - whatsappPercent - instagramPercent) : 0;
   const locked = summary?.planTier === "FREE";
 
   return (
@@ -188,9 +189,43 @@ export function AnalyticsPageClient() {
               <div className="mt-4 space-y-4">
                 <ChannelBar label="واتساب" percent={whatsappPercent} tone="whatsapp" />
                 <ChannelBar label="إنستجرام" percent={instagramPercent} tone="instagram" />
+                <ChannelBar label="ماسنجر" percent={messengerPercent} tone="messenger" />
               </div>
             </section>
           </section>
+
+          {summary.topInstagramPosts.length > 0 ? (
+            <section className="mt-4 rounded-[24px] border border-wa-gray-100 bg-white p-5 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:mt-5 sm:rounded-[28px] sm:p-6" dir="rtl">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-label font-semibold uppercase tracking-widest text-pink-600">Instagram</p>
+                  <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900">أفضل المنشورات أداءً</h2>
+                  <p className="mt-1 text-body-sm text-wa-gray-600">المنشورات التي جلبت أكبر عدد من التعليقات والرسائل الخاصة والعملاء المحتملين.</p>
+                </div>
+                <Link href="/leads" className="inline-flex min-h-10 items-center justify-center rounded-full border border-wa-gray-100 px-4 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50">
+                  عرض العملاء
+                </Link>
+              </div>
+
+              <div className="mt-5 grid gap-3">
+                {summary.topInstagramPosts.map((post) => (
+                  <article key={post.postId} className="grid gap-3 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                    <div className="min-w-0">
+                      <p className="truncate text-body-sm font-semibold text-wa-gray-900">
+                        {post.postCaption ?? `منشور ${post.postId}`}
+                      </p>
+                      <p className="mt-1 text-xs text-wa-gray-500">{post.postId}</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <PostStat label="تعليق" value={post.commentCount} />
+                      <PostStat label="Leads" value={post.leadCount} />
+                      <PostStat label="DM" value={post.dmCount} />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
         </>
       ) : null}
     </div>
@@ -221,7 +256,23 @@ function InfoCard({ detail, icon, label, value }: { detail: string; icon: ReactN
   );
 }
 
-function ChannelBar({ label, percent, tone }: { label: string; percent: number; tone: "whatsapp" | "instagram" }) {
+function PostStat({ label, value }: { label: string; value: number }) {
+  return (
+    <span className="rounded-xl bg-white px-3 py-2 shadow-[0_8px_22px_rgba(13,20,33,0.04)]">
+      <span className="block text-base font-semibold text-wa-gray-900">{value.toLocaleString("ar-EG")}</span>
+      <span className="block text-[10px] font-semibold text-wa-gray-400">{label}</span>
+    </span>
+  );
+}
+
+function ChannelBar({ label, percent, tone }: { label: string; percent: number; tone: "whatsapp" | "instagram" | "messenger" }) {
+  const barClass =
+    tone === "whatsapp"
+      ? "bg-wa-success"
+      : tone === "instagram"
+        ? "bg-[linear-gradient(90deg,#833AB4,#E1306C)]"
+        : "bg-blue-500";
+
   return (
     <div>
       <div className="mb-2 flex items-center justify-between text-body-sm">
@@ -230,7 +281,7 @@ function ChannelBar({ label, percent, tone }: { label: string; percent: number; 
       </div>
       <div className="h-3 overflow-hidden rounded-full bg-wa-gray-100">
         <div
-          className={cn("h-full rounded-full", tone === "whatsapp" ? "bg-wa-success" : "bg-[linear-gradient(90deg,#833AB4,#E1306C)]")}
+          className={cn("h-full rounded-full", barClass)}
           style={{ width: `${percent}%` }}
         />
       </div>

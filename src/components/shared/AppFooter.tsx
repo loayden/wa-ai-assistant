@@ -14,7 +14,7 @@ const footerSections = [
     title: "المنتج",
     links: [
       { label: "لوحة التحكم", href: "/dashboard" },
-      { label: "إعداد واتساب", href: "/whatsapp" },
+      { label: "إعداد القنوات", href: "/connect" },
       { label: "الرسائل", href: "/messages" },
       { label: "الفوترة", href: "/billing" },
     ],
@@ -31,7 +31,7 @@ const footerSections = [
   {
     title: "الثقة",
     links: [
-      { label: "اتصال موثّق", href: "/whatsapp" },
+      { label: "اتصال Meta موثّق", href: "/connect" },
       { label: "تخزين مشفر", href: "/#setup" },
       { label: "إيقاف الذكاء في أي وقت", href: "/dashboard" },
       { label: "دفع عبر Paymob", href: "/billing" },
@@ -40,7 +40,7 @@ const footerSections = [
 ];
 
 const trustNotes = [
-  "إعداد واتساب اليدوي واضح ويتم التحقق منه قبل الحفظ.",
+  "إعداد القنوات واضح ويتم التحقق منه قبل تشغيل الردود.",
   "صاحب النشاط يقدر يوقف ردود الذكاء الاصطناعي في أي وقت.",
   "الخطط تعرض حدود الردود الشهرية بدون غموض.",
 ];
@@ -58,14 +58,14 @@ export function AppFooter({ className, compact = false }: { className?: string; 
               </span>
             </Link>
             <p className="mt-3 max-w-[440px] text-body-sm leading-6 text-wa-gray-600 sm:mt-4">
-              مساعد واتساب ذكي للأعمال الصغيرة. اربط رقمك، فعّل الردود التلقائية، راجع المحادثات، وتابع الفوترة من مكان واحد.
+              منصة رسائل سوشيال للأعمال الصغيرة. اربط واتساب وإنستجرام وماسنجر، فعّل الردود التلقائية، وراجع المحادثات والفوترة من مكان واحد.
             </p>
             <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-3">
               <Link
-                href="/whatsapp"
+                href="/connect"
                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-wa-blue-600 px-4 text-body-sm font-semibold text-white shadow-[0_16px_42px_rgba(26,86,255,0.16)] transition hover:bg-[#1447E6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 sm:min-h-11 sm:px-5"
               >
-                افتح الإعداد
+                افتح القنوات
               </Link>
               <Link
                 href="/billing"

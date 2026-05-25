@@ -59,6 +59,12 @@ export const updateSettingsSchema = z
       .optional(),
     csatEnabled: z.boolean().optional(),
     notificationPrefs: notificationPrefsSchema.optional(),
+    commentToDmEnabled: z.boolean().optional(),
+    commentToDmMessage: z.string().trim().min(1).max(300).optional(),
+    instagramTone: z.enum(["friendly", "professional", "playful", "sales"]).optional(),
+    messengerTone: z.enum(["friendly", "professional", "playful", "sales"]).optional(),
+    instagramInstructions: optionalTrimmedString(1000),
+    messengerInstructions: optionalTrimmedString(1000),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {

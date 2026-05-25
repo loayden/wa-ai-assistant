@@ -24,6 +24,9 @@ const apiMocks = vi.hoisted(() => {
         findFirst: vi.fn(),
         update: vi.fn(),
       },
+      instagramCommentLead: {
+        findMany: vi.fn(),
+      },
     },
   };
 });
@@ -63,6 +66,9 @@ function makeLead(overrides: Partial<Record<string, unknown>> = {}) {
     customerName: null,
     interest: "Asked about delivery pricing.",
     channel: "whatsapp",
+    externalId: null,
+    senderName: null,
+    source: "chat",
     status: "new",
     detectedAt: new Date("2026-05-22T18:00:00.000Z"),
     createdAt: new Date("2026-05-22T18:00:00.000Z"),
@@ -86,6 +92,7 @@ describe("leads API", () => {
     apiMocks.prisma.lead.count.mockResolvedValue(1);
     apiMocks.prisma.lead.findMany.mockResolvedValue([makeLead()]);
     apiMocks.prisma.lead.findFirst.mockResolvedValue(makeLead());
+    apiMocks.prisma.instagramCommentLead.findMany.mockResolvedValue([]);
   });
 
   it("fetches current-user leads with filters", async () => {
@@ -132,7 +139,7 @@ describe("leads API", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Disposition")).toContain("leads.csv");
-    expect(csv).toContain("Phone,Interest,Channel,Status,Date");
+    expect(csv).toContain("Phone,External ID,Sender Name,Interest,Channel,Source,Status,Date");
     expect(csv).toContain("201144999221");
   });
 });

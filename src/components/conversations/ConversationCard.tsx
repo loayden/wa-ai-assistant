@@ -8,11 +8,13 @@
  */
 import { AlertCircle, Bot, CheckCircle2, MessageCircle, Star, UserRoundCheck } from "lucide-react";
 
+import { ChannelIcon } from "@/components/icons/ChannelIcons";
 import { cn } from "@/lib/utils";
 
 export interface ConversationCardProps {
   contactName?: string | null;
   phoneNumber: string;
+  channel?: "whatsapp" | "instagram" | "messenger";
   preview: string;
   timestamp: string;
   aiGenerated?: boolean;
@@ -21,6 +23,7 @@ export interface ConversationCardProps {
   rating?: number | null;
   resolved?: boolean;
   unread?: boolean;
+  socialIntent?: string | null;
   selected?: boolean;
   className?: string;
   onClick?: () => void;
@@ -30,8 +33,56 @@ function initialsFor(value: string) {
   return value.replace(/\D/g, "").slice(-2) || "WA";
 }
 
+function channelLabel(channel?: string) {
+  if (channel === "instagram") return "إنستجرام";
+  if (channel === "messenger") return "ماسنجر";
+  return "واتساب";
+}
+
+function channelPillClass(channel?: string) {
+  if (channel === "instagram") return "bg-pink-50 text-pink-700";
+  if (channel === "messenger") return "bg-blue-50 text-blue-700";
+  return "bg-green-50 text-green-700";
+}
+
+function intentLabel(intent?: string | null) {
+  switch (intent) {
+    case "collaboration":
+    case "influencer_request":
+      return "تعاون";
+    case "complaint":
+      return "شكوى";
+    case "order":
+      return "طلب";
+    case "price_inquiry":
+      return "سعر";
+    case "spam":
+      return "مزعج";
+    default:
+      return null;
+  }
+}
+
+function intentPillClass(intent?: string | null) {
+  switch (intent) {
+    case "collaboration":
+    case "influencer_request":
+      return "bg-blue-50 text-blue-700";
+    case "complaint":
+      return "bg-wa-error-bg text-wa-error";
+    case "order":
+    case "price_inquiry":
+      return "bg-wa-success-bg text-wa-success";
+    case "spam":
+      return "bg-wa-gray-100 text-wa-gray-500";
+    default:
+      return "";
+  }
+}
+
 export function ConversationCard({
   aiGenerated = false,
+  channel = "whatsapp",
   contactName,
   className,
   failed = false,
@@ -41,10 +92,12 @@ export function ConversationCard({
   onClick,
   phoneNumber,
   preview,
+  socialIntent = null,
   selected = false,
   timestamp,
   unread = false,
 }: ConversationCardProps) {
+  const intent = intentLabel(socialIntent);
   const content = (
     <>
       <div
@@ -66,6 +119,15 @@ export function ConversationCard({
           <time className="shrink-0 text-xs font-medium text-wa-gray-400 sm:text-body-sm">{timestamp}</time>
         </div>
         <p className="mt-1.5 flex min-w-0 items-center gap-2 truncate text-xs text-wa-gray-600 sm:mt-2 sm:text-body-sm">
+          <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold", channelPillClass(channel))}>
+            <ChannelIcon channel={channel} className="size-3" />
+            {channelLabel(channel)}
+          </span>
+          {intent ? (
+            <span className={cn("inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-semibold", intentPillClass(socialIntent))}>
+              {intent}
+            </span>
+          ) : null}
           {failed ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa-error-bg px-2 py-0.5 text-[10px] font-semibold text-wa-error">
               <AlertCircle className="size-3" aria-hidden="true" />

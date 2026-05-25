@@ -3,8 +3,8 @@ import { MessageDirection, MessageStatus } from "@prisma/client";
 import { UnauthorizedError, requireAppUser } from "@/lib/api/auth";
 import { resolveConversationThread } from "@/lib/api/conversations";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
-import { whatsappClient } from "@/lib/api/whatsapp";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
+import { getAdapter, type MessagingChannel } from "@/lib/channels";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
@@ -14,6 +14,10 @@ import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+function isMessagingChannel(value: string): value is MessagingChannel {
+  return value === "whatsapp" || value === "instagram" || value === "messenger";
+}
 
 type RouteContext = {
   params: Promise<{
@@ -43,13 +47,28 @@ export async function POST(request: Request, context: RouteContext) {
       return jsonError("لم يتم العثور على المحادثة.", 404);
     }
 
-    const sendResponse = await whatsappClient.sendMessage(thread.connection.phoneNumberId, thread.customerPhone, parsed.data.message, {
-      accessToken: appEnv.WHATSAPP_MOCK_MODE ? undefined : decrypt(thread.connection.accessToken),
+    const channel = isMessagingChannel(thread.connection.channel) ? thread.connection.channel : "whatsapp";
+    const accessToken =
+      channel === "whatsapp"
+        ? appEnv.WHATSAPP_MOCK_MODE
+          ? ""
+          : decrypt(thread.connection.accessToken)
+        : decrypt(thread.connection.pageAccessTokenEncrypted ?? thread.connection.accessToken);
+    const recipientId = channel === "whatsapp" ? thread.customerPhone : thread.message.externalThreadId ?? thread.customerPhone;
+    const sendResult = await getAdapter(channel).sendText({
+      connectionId: thread.connection.id,
+      recipientId,
+      text: parsed.data.message,
+      accessToken,
+      pageId: thread.connection.facebookPageId ?? undefined,
+      phoneNumberId: thread.connection.phoneNumberId,
     });
-    const waMessageId = sendResponse.messages[0]?.id;
+    const waMessageId = sendResult.externalMessageId
+      ? `${channel}:${sendResult.externalMessageId}`
+      : `${channel}:manual:${crypto.randomUUID()}`;
 
-    if (!waMessageId) {
-      return jsonError("لم يرجع WhatsApp API رقم الرسالة بعد الإرسال.", 502);
+    if (!sendResult.success) {
+      return jsonError(sendResult.error || "رفضت Meta إرسال الرد اليدوي.", 502);
     }
 
     const message = await prisma.message.create({
@@ -58,10 +77,14 @@ export async function POST(request: Request, context: RouteContext) {
         connectionId: thread.connection.id,
         waMessageId,
         direction: MessageDirection.OUTBOUND,
-        fromNumber: thread.connection.phoneNumberId,
-        toNumber: thread.customerPhone,
+        fromNumber: channel === "whatsapp" ? thread.connection.phoneNumberId : thread.connection.facebookPageId ?? thread.connection.instagramAccountId ?? thread.connection.phoneNumberId,
+        toNumber: recipientId,
         bodyText: parsed.data.message,
+        channel,
+        externalMessageId: sendResult.externalMessageId,
+        externalThreadId: channel === "whatsapp" ? null : recipientId,
         status: MessageStatus.REPLIED,
+        aiModelUsed: "manual-reply",
         processedAt: new Date(),
       },
     });

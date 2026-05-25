@@ -20,6 +20,7 @@ const envSchema = z.object({
   WHATSAPP_APP_ID: z.string().min(1),
   WHATSAPP_APP_SECRET: z.string().min(1),
   WHATSAPP_VERIFY_TOKEN: z.string().min(1),
+  META_VERIFY_TOKEN: z.string().min(1).optional(),
   WHATSAPP_API_VERSION: z.string().regex(/^v\d+\.\d+$/),
   WHATSAPP_MOCK_MODE: z.enum(["true", "false"]).transform((value) => value === "true"),
   PAYMOB_API_KEY: z.string().optional(),

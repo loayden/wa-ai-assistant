@@ -97,6 +97,12 @@ const settings: UserSettings = {
     daily_summary: false,
     weekly_report: true,
   },
+  commentToDmEnabled: false,
+  commentToDmMessage: "مرحباً! شكراً لاهتمامك. كيف يمكنني مساعدتك؟",
+  instagramTone: "friendly",
+  messengerTone: "professional",
+  instagramInstructions: null,
+  messengerInstructions: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -183,6 +189,31 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("Business Knowledge");
     expect(request.messages[0].content).toContain("[FAQ: Delivery]");
     expect(request.messages[0].content).toContain("Delivery is available across Cairo until midnight.");
+  });
+
+  it("uses channel-specific persona settings for Instagram", async () => {
+    openAiMock.create.mockResolvedValueOnce({
+      choices: [{ message: { content: "تمام، بعتلك التفاصيل ❤️" } }],
+      model: "gpt-4o",
+      usage: { total_tokens: 12 },
+    });
+
+    await generateAIReply({
+      systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      userMessage: "بكام؟",
+      settings: {
+        ...settings,
+        instagramTone: "playful",
+        instagramInstructions: "استخدم أسلوب قصير مناسب لتعليقات وإنستجرام.",
+      },
+      channel: "instagram",
+    });
+
+    const request = openAiMock.create.mock.calls[0][0];
+
+    expect(request.messages[0].content).toContain("Instagram channel persona");
+    expect(request.messages[0].content).toContain("playful");
+    expect(request.messages[0].content).toContain("استخدم أسلوب قصير مناسب لتعليقات وإنستجرام.");
   });
 
   it("maps OpenAI rate limits to AIReplyError", async () => {

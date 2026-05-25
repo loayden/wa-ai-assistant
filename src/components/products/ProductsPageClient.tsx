@@ -152,7 +152,7 @@ export function ProductsPageClient() {
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">المنتجات</p>
             <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px]">قائمة المنتجات</h1>
             <p className="mt-3 max-w-[720px] text-body-sm leading-7 text-wa-gray-600 sm:text-body-lg">
-              أضف منتجاتك وأسعارك حتى يستطيع المساعد الرد على أسئلة الأسعار وتسجيل الطلبات من داخل واتساب.
+              أضف منتجاتك وأسعارك حتى يستطيع المساعد الرد على أسئلة الأسعار وتسجيل الطلبات من محادثات السوشيال.
             </p>
           </div>
           <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">

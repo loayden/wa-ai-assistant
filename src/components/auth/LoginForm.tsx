@@ -51,7 +51,7 @@ export function LoginForm() {
        * Decision: After a normal sign-in, users should land on WhatsApp setup
        * or connection status first because that is the critical next step.
        */
-      router.push(searchParams.get("next") || "/whatsapp");
+      router.push(searchParams.get("next") || "/connect");
       router.refresh();
     },
   });
@@ -107,7 +107,7 @@ export function LoginForm() {
         <BrandLogo className="mb-4 sm:mb-6" layout="stacked" wordmarkSize="md" />
         <CardTitle className="text-[26px] font-semibold leading-tight text-wa-gray-900 sm:text-[30px]">مرحباً بعودتك</CardTitle>
         <CardDescription className="mt-2 max-w-[390px] text-body-sm leading-6 text-wa-gray-600 sm:mt-3 sm:text-body">
-          سجّلي الدخول لإدارة رقم واتساب، ردود الذكاء، المحادثات، والفوترة.
+          سجّلي الدخول لإدارة قنوات السوشيال، ردود الذكاء، المحادثات، والفوترة.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 pt-5 sm:pt-7">
@@ -117,7 +117,7 @@ export function LoginForm() {
             <div>
               <p className="text-body-sm font-semibold text-wa-gray-900">بعد تسجيل الدخول</p>
               <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
-                نفتح شاشة واتساب أولاً حتى يكون رقم النشاط جاهزاً قبل الاستخدام اليومي.
+                نفتح شاشة القنوات أولاً حتى تربطي واتساب أو إنستجرام أو ماسنجر قبل الاستخدام اليومي.
               </p>
             </div>
           </div>

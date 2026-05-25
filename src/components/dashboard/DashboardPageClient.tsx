@@ -280,25 +280,25 @@ export function DashboardPageClient({
                 </span>
               ) : null}
               <span className="rounded-full border border-wa-gray-100 bg-white px-3 py-1 text-label font-semibold uppercase tracking-widest text-wa-gray-500">
-                تشغيل واتساب
+                قنوات السوشيال
               </span>
             </div>
             <div className="mt-5 max-w-[720px] sm:mt-8">
               <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مركز التحكم</p>
               <h1 className="mt-2 text-[29px] font-semibold leading-[1.05] text-wa-gray-900 sm:mt-3 sm:text-[48px]">
                 {ready
-                  ? "كل رسائل واتساب في مكان واحد واضح."
+                  ? "كل رسائل السوشيال في صندوق واحد واضح."
                   : connected
-                    ? "رقمك متصل. شغّلي الردود عندما تكوني جاهزة."
-                    : "وصّلي واتساب، واتركي kallem يرد على العملاء."}
+                    ? "قناتك الأساسية متصلة. شغّلي الردود عندما تكوني جاهزة."
+                    : "وصّلي قنواتك، واتركي kallem يرد على العملاء."}
               </h1>
               <p className="mt-3 max-w-[640px] text-body-sm leading-6 text-wa-gray-600 sm:mt-4 sm:text-body-lg">
                 لوحة بسيطة للعمل اليومي: راقبي حالة الردود، افتحي آخر المحادثات، وعدّلي سلوك المساعد بدون إعدادات تقنية.
               </p>
             </div>
             <div className="mt-5 flex flex-col gap-2 sm:mt-7 sm:flex-row sm:gap-3">
-              <Button className="rounded-full" onClick={() => router.push(connected ? "/messages" : "/whatsapp")}>
-                {connected ? "فتح الرسائل" : "ربط واتساب"}
+              <Button className="rounded-full" onClick={() => router.push(connected ? "/messages" : "/connect")}>
+                {connected ? "فتح الرسائل" : "ربط القنوات"}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
               <Button className="rounded-full" variant="outline" onClick={() => setDrawerOpen(true)}>
@@ -326,9 +326,9 @@ export function DashboardPageClient({
           />
           <CommandSignal
             icon={<RadioTower className="size-4 text-wa-success" aria-hidden="true" />}
-            label="واتساب"
+            label="قنوات Meta"
             value={connected ? "متصل" : "غير متصل"}
-            detail={connected ? connection?.displayName ?? "رقم النشاط جاهز" : "وصّلي رقم النشاط"}
+            detail={connected ? connection?.displayName ?? "قناة النشاط جاهزة" : "وصّلي واتساب أو إنستجرام أو ماسنجر"}
           />
           <CommandSignal
             icon={<MessageSquareText className="size-4 text-wa-gray-500" aria-hidden="true" />}
@@ -360,9 +360,9 @@ export function DashboardPageClient({
               <NextStepRow
                 done={connected}
                 icon={<PhoneCall className="size-4" aria-hidden="true" />}
-                title="ربط الرقم"
-                body={connected ? "واتساب جاهز." : "كمّلي الربط أولًا."}
-                href="/whatsapp"
+                title="ربط القنوات"
+                body={connected ? "قناة واحدة جاهزة على الأقل." : "كمّلي الربط أولًا."}
+                href="/connect"
               />
               <NextStepRow
                 done={autoReplyEnabled}
@@ -405,7 +405,7 @@ export function DashboardPageClient({
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">صندوق الرسائل</p>
-                <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900 sm:text-h2">آخر محادثات واتساب</h2>
+                <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900 sm:text-h2">آخر محادثات السوشيال</h2>
               </div>
               <Link href="/messages" className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-wa-gray-100 px-4 text-body-sm font-semibold text-wa-blue-600 transition hover:bg-wa-blue-50">
                 عرض الكل
@@ -424,6 +424,7 @@ export function DashboardPageClient({
                 key={message.id}
                 aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
                 contactName={message.connection?.displayName}
+                channel={message.channel}
                 failed={message.status === "FAILED"}
                 handoff={message.handoffActive}
                 resolved={Boolean(message.resolvedAt)}
@@ -444,9 +445,9 @@ export function DashboardPageClient({
             <EmptyState
               icon={<MessageSquareText className="size-6 text-wa-blue-600" aria-hidden="true" />}
               title="لا توجد محادثات بعد"
-              body="عندما يرسل العملاء إلى رقم واتساب المتصل، ستظهر المحادثات هنا مع رد المساعد."
-              actionLabel={connected ? "فتح الرسائل" : "ربط واتساب"}
-              onAction={() => router.push(connected ? "/messages" : "/whatsapp")}
+              body="عندما يرسل العملاء إلى واتساب أو إنستجرام أو ماسنجر، ستظهر المحادثات هنا مع رد المساعد."
+              actionLabel={connected ? "فتح الرسائل" : "ربط القنوات"}
+              onAction={() => router.push(connected ? "/messages" : "/connect")}
             />
           )}
         </div>
@@ -457,8 +458,8 @@ export function DashboardPageClient({
             <div className="mt-4 space-y-3">
               <HealthRow
                 ok={connected}
-                title="اتصال واتساب"
-                body={connected ? "متصل برقم النشاط المحفوظ." : "وصّلي واتساب قبل استقبال العملاء."}
+                title="اتصال القنوات"
+                body={connected ? "قناة النشاط الأساسية متصلة." : "وصّلي قناة واحدة على الأقل قبل استقبال العملاء."}
               />
               <HealthRow
                 ok={autoReplyEnabled}
@@ -537,9 +538,9 @@ function OnboardingBanner({
       done: hasConnection,
       href: "/connect",
       icon: RadioTower,
-      title: "① ربط واتساب",
-      body: "وصّل رقم النشاط حتى تصل رسائل العملاء إلى kallem.",
-      action: "ربط واتساب",
+      title: "① ربط القنوات",
+      body: "وصّل واتساب أو إنستجرام أو ماسنجر حتى تصل رسائل العملاء إلى kallem.",
+      action: "ربط القنوات",
     },
     {
       done: hasKnowledge,
@@ -566,7 +567,7 @@ function OnboardingBanner({
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">دليل الإعداد</p>
           <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900 sm:text-h2">خلّي المساعد يرد بإجابات من نشاطك، مش ردود عامة.</h2>
           <p className="mt-1 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            ثلاث خطوات قصيرة: وصّل واتساب، علّم المساعد معلومات البيزنس، ثم جرّب الرد قبل ما تدعو العملاء.
+            ثلاث خطوات قصيرة: وصّل قناة سوشيال، علّم المساعد معلومات البيزنس، ثم جرّب الرد قبل ما تدعو العملاء.
           </p>
         </div>
         <button type="button" onClick={onSkip} className="self-start text-body-sm font-semibold text-wa-gray-500 underline-offset-4 hover:text-wa-gray-900 hover:underline">

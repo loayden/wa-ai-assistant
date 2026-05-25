@@ -100,6 +100,12 @@ export async function PUT(request: Request) {
       ...(parsed.data.notificationPrefs !== undefined
         ? { notificationPrefs: normalizeNotificationPrefs(parsed.data.notificationPrefs) }
         : {}),
+      ...(parsed.data.commentToDmEnabled !== undefined ? { commentToDmEnabled: parsed.data.commentToDmEnabled } : {}),
+      ...(parsed.data.commentToDmMessage !== undefined ? { commentToDmMessage: parsed.data.commentToDmMessage } : {}),
+      ...(parsed.data.instagramTone !== undefined ? { instagramTone: parsed.data.instagramTone } : {}),
+      ...(parsed.data.messengerTone !== undefined ? { messengerTone: parsed.data.messengerTone } : {}),
+      ...(parsed.data.instagramInstructions !== undefined ? { instagramInstructions: parsed.data.instagramInstructions } : {}),
+      ...(parsed.data.messengerInstructions !== undefined ? { messengerInstructions: parsed.data.messengerInstructions } : {}),
     };
 
     const settings = await updateUserSettings(user.id, persistedData);

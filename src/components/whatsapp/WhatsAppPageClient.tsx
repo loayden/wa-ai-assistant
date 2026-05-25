@@ -14,6 +14,7 @@ import { Bot, CheckCircle2, Info, MessageSquareText, Plus, RadioTower, Settings2
 
 import { AIToggle } from "@/components/ai/AIToggle";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
+import { SocialChannelCards } from "@/components/social/SocialChannelCards";
 import { SetupFlow } from "@/components/whatsapp/SetupFlow";
 import { ConnectionStatus, type WhatsAppConnectionSummary } from "@/components/whatsapp/ConnectionStatus";
 import { LiveConnectionCheck } from "@/components/whatsapp/LiveConnectionCheck";
@@ -79,7 +80,7 @@ export function WhatsAppPageClient({
             type="button"
             onClick={() => setShowSetup(false)}
           >
-            الرجوع للأرقام المتصلة
+            الرجوع للقنوات المتصلة
           </button>
         ) : null}
         <SetupFlow
@@ -94,6 +95,11 @@ export function WhatsAppPageClient({
             router.refresh();
           }}
         />
+        <SocialChannelCards
+          apiVersion={apiVersion}
+          appId={embeddedSignupAppId}
+          whatsappConnected={connections.some((item) => item.isActive && item.isVerified)}
+        />
       </div>
     );
   }
@@ -101,7 +107,7 @@ export function WhatsAppPageClient({
   const connectedFacts = [
     {
       icon: CheckCircle2,
-      label: "الرقم موثق",
+      label: "واتساب موثق",
       value: connection.displayName ?? "واتساب متصل",
     },
     {
@@ -148,12 +154,12 @@ export function WhatsAppPageClient({
                 variant={autoReplyEnabled ? "active" : "paused"}
               />
             </div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مركز واتساب</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مركز القنوات</p>
             <h1 className="mt-2 max-w-[640px] text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[54px] sm:leading-[1.06]">
-              المساعد جاهز لهذا الرقم.
+              المساعد جاهز للقنوات المتصلة.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              شغّلي أو أوقفي ردود AI، راجعي تفاصيل الاتصال، وخلي رقم النشاط جاهز لمحادثات العملاء من مكان واحد.
+              شغّلي أو أوقفي ردود AI، راجعي تفاصيل واتساب، وأضيفي إنستجرام وماسنجر من نفس شاشة القنوات.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
@@ -178,9 +184,9 @@ export function WhatsAppPageClient({
       <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-body-sm font-semibold text-wa-gray-900">الأرقام المتصلة</p>
+            <p className="text-body-sm font-semibold text-wa-gray-900">اتصالات واتساب</p>
             <p className="mt-1 text-body-sm text-wa-gray-500">
-              مستخدم {connections.length} من {planLimit} أرقام في خطة {planTier.toLowerCase()}.
+              مستخدم {connections.length} من {planLimit} اتصال واتساب في خطة {planTier.toLowerCase()}.
             </p>
           </div>
           <button
@@ -195,7 +201,7 @@ export function WhatsAppPageClient({
             onClick={() => setShowSetup(true)}
           >
             <Plus className="size-4" aria-hidden="true" />
-            إضافة رقم
+            إضافة واتساب
           </button>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-wa-gray-100">
@@ -203,7 +209,7 @@ export function WhatsAppPageClient({
         </div>
         {atConnectionLimit ? (
           <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-body-sm text-amber-800">
-            خطتك تسمح بعدد {planLimit} من الأرقام النشطة. يمكنك الترقية من الفوترة لإضافة المزيد.
+            خطتك تسمح بعدد {planLimit} من اتصالات واتساب النشطة. يمكنك الترقية من الفوترة لإضافة المزيد.
           </p>
         ) : null}
         <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -225,7 +231,7 @@ export function WhatsAppPageClient({
                     <Smartphone className="size-5" aria-hidden="true" />
                   </span>
                   <span>
-                    <span className="block text-body-sm font-semibold text-wa-gray-900">{item.displayName ?? "رقم واتساب"}</span>
+                    <span className="block text-body-sm font-semibold text-wa-gray-900">{item.displayName ?? "اتصال واتساب"}</span>
                     <span className="block text-label text-wa-gray-500">{item.ownerPhoneNumberMasked ?? item.phoneNumberId}</span>
                   </span>
                 </span>
@@ -234,6 +240,12 @@ export function WhatsAppPageClient({
           })}
         </div>
       </section>
+
+      <SocialChannelCards
+        apiVersion={apiVersion}
+        appId={embeddedSignupAppId}
+        whatsappConnected={connections.some((item) => item.isActive && item.isVerified)}
+      />
 
       <div className="grid gap-5 lg:grid-cols-[0.78fr_1.22fr]">
         <div className="space-y-4 sm:space-y-5">

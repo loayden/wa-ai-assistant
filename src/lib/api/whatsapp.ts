@@ -12,7 +12,7 @@ import { appEnv } from "@/lib/utils/env";
 import * as realWhatsAppClient from "@/lib/whatsapp/client";
 import * as mockWhatsAppClient from "@/lib/whatsapp/mock";
 
-export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken" | "ownerPhoneNumber"> & {
+export type SafeWhatsAppConnection = Omit<WhatsAppConnection, "accessToken" | "ownerPhoneNumber" | "pageAccessTokenEncrypted"> & {
   accessTokenMasked: string;
   ownerPhoneNumberMasked: string | null;
 };
@@ -36,8 +36,14 @@ function maskPhoneNumber(value: string | null): string | null {
 }
 
 export function sanitizeConnection(connection: WhatsAppConnection): SafeWhatsAppConnection {
-  const { accessToken: _accessToken, ownerPhoneNumber: _ownerPhoneNumber, ...safeConnection } = connection;
+  const {
+    accessToken: _accessToken,
+    ownerPhoneNumber: _ownerPhoneNumber,
+    pageAccessTokenEncrypted: _pageAccessTokenEncrypted,
+    ...safeConnection
+  } = connection;
   void _accessToken;
+  void _pageAccessTokenEncrypted;
 
   return {
     ...safeConnection,

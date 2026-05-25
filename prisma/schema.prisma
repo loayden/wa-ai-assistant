@@ -47,44 +47,46 @@ enum MessageStatus {
 // Decision: The application user row mirrors Supabase Auth identity data and is
 // the parent record for all tenant-scoped data.
 model User {
-  id                   String               @id @db.Uuid
-  email                String               @unique
-  fullName             String?              @map("full_name")
-  avatarUrl            String?              @map("avatar_url")
-  isAdmin              Boolean              @default(false) @map("is_admin")
-  planTier             PlanTier             @default(FREE) @map("plan_tier")
-  paymentCustomerId    String?              @unique @map("stripe_customer_id")
-  paymentSubscriptionId String?             @map("stripe_subscription_id")
-  subscriptionStatus   SubscriptionStatus   @default(INACTIVE) @map("subscription_status")
-  monthlyReplyCount    Int                  @default(0) @map("monthly_reply_count")
-  onboardingCompleted  Boolean              @default(false) @map("onboarding_completed")
-  trialEndsAt          DateTime?            @map("trial_ends_at")
-  trialUsed            Boolean              @default(false) @map("trial_used")
-  paidAt               DateTime?            @map("paid_at")
-  usageAlert80SentAt   DateTime?            @map("usage_alert_80_sent_at")
-  usageAlert100SentAt  DateTime?            @map("usage_alert_100_sent_at")
-  replyCountResetAt    DateTime             @default(now()) @map("reply_count_reset_at")
-  createdAt            DateTime             @default(now()) @map("created_at")
-  updatedAt            DateTime             @updatedAt @map("updated_at")
-  connections          WhatsAppConnection[]
-  conversationHandoffs ConversationHandoff[]
-  aiCorrections        AiCorrection[]
-  orders               Order[]
-  products             Product[]
-  routingRules         RoutingRule[]
-  leads                Lead[]
-  knowledgeBaseEntries KnowledgeBaseEntry[]
-  messages             Message[]
-  messageTemplates     MessageTemplate[]
-  broadcasts           Broadcast[]
-  settings             UserSettings?
-  subscriptionEvents   SubscriptionEvent[]
-  supportTickets       SupportTicket[]
-  adminOutreach        AdminOutreach[]
-  customerProfiles     CustomerProfile[]
-  whatsappFlows        WhatsAppFlow[]
-  flowResponses        FlowResponse[]
-  appointments         Appointment[]
+  id                    String                 @id @db.Uuid
+  email                 String                 @unique
+  fullName              String?                @map("full_name")
+  avatarUrl             String?                @map("avatar_url")
+  isAdmin               Boolean                @default(false) @map("is_admin")
+  planTier              PlanTier               @default(FREE) @map("plan_tier")
+  paymentCustomerId     String?                @unique @map("stripe_customer_id")
+  paymentSubscriptionId String?                @map("stripe_subscription_id")
+  subscriptionStatus    SubscriptionStatus     @default(INACTIVE) @map("subscription_status")
+  monthlyReplyCount     Int                    @default(0) @map("monthly_reply_count")
+  onboardingCompleted   Boolean                @default(false) @map("onboarding_completed")
+  trialEndsAt           DateTime?              @map("trial_ends_at")
+  trialUsed             Boolean                @default(false) @map("trial_used")
+  paidAt                DateTime?              @map("paid_at")
+  usageAlert80SentAt    DateTime?              @map("usage_alert_80_sent_at")
+  usageAlert100SentAt   DateTime?              @map("usage_alert_100_sent_at")
+  replyCountResetAt     DateTime               @default(now()) @map("reply_count_reset_at")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  connections           WhatsAppConnection[]
+  conversationHandoffs  ConversationHandoff[]
+  aiCorrections         AiCorrection[]
+  orders                Order[]
+  products              Product[]
+  routingRules          RoutingRule[]
+  leads                 Lead[]
+  knowledgeBaseEntries  KnowledgeBaseEntry[]
+  messages              Message[]
+  messageTemplates      MessageTemplate[]
+  broadcasts            Broadcast[]
+  settings              UserSettings?
+  subscriptionEvents    SubscriptionEvent[]
+  supportTickets        SupportTicket[]
+  adminOutreach         AdminOutreach[]
+  customerProfiles      CustomerProfile[]
+  whatsappFlows         WhatsAppFlow[]
+  flowResponses         FlowResponse[]
+  appointments          Appointment[]
+  instagramCommentLeads InstagramCommentLead[]
+  instagramPostStats    InstagramPostStats[]
 
   @@index([createdAt])
   @@index([planTier])
@@ -116,29 +118,48 @@ model KnowledgeBaseEntry {
 // Decision: WhatsApp connections are tenant-owned and cascade with the user so
 // deleting an account removes credentials and linked message history.
 model WhatsAppConnection {
-  id                 String    @id @default(uuid()) @db.Uuid
-  userId             String    @map("user_id") @db.Uuid
-  phoneNumberId      String    @map("phone_number_id")
-  businessAccountId  String    @map("business_account_id")
+  id                       String                 @id @default(uuid()) @db.Uuid
+  userId                   String                 @map("user_id") @db.Uuid
+  phoneNumberId            String                 @map("phone_number_id")
+  businessAccountId        String                 @map("business_account_id")
   // WhatsApp access tokens must be encrypted before this field is written.
-  accessToken        String    @map("access_token")
-  webhookVerifyToken String    @map("webhook_verify_token")
-  ownerPhoneNumber   String?   @map("owner_phone_number")
-  displayName        String?   @map("display_name")
-  isActive           Boolean   @default(false) @map("is_active")
-  isVerified         Boolean   @default(false) @map("is_verified")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  messages           Message[]
-  conversationHandoffs ConversationHandoff[]
-  leads              Lead[]
-  messageTemplates   MessageTemplate[]
-  broadcasts         Broadcast[]
-  orders             Order[]
-  flowResponses      FlowResponse[]
+  accessToken              String                 @map("access_token")
+  webhookVerifyToken       String                 @map("webhook_verify_token")
+  ownerPhoneNumber         String?                @map("owner_phone_number")
+  displayName              String?                @map("display_name")
+  channel                  String                 @default("whatsapp")
+  provider                 String                 @default("meta")
+  facebookPageId           String?                @map("facebook_page_id")
+  facebookPageName         String?                @map("facebook_page_name")
+  facebookPagePicture      String?                @map("facebook_page_picture")
+  instagramAccountId       String?                @map("instagram_account_id")
+  instagramUsername        String?                @map("instagram_username")
+  instagramProfilePicture  String?                @map("instagram_profile_picture")
+  pageAccessTokenEncrypted String?                @map("page_access_token_encrypted")
+  permissions              String[]               @default([])
+  permissionStatus         String                 @default("unknown") @map("permission_status")
+  lastVerifiedAt           DateTime?              @map("last_verified_at")
+  webhookSubscribed        Boolean                @default(false) @map("webhook_subscribed")
+  isActive                 Boolean                @default(false) @map("is_active")
+  isVerified               Boolean                @default(false) @map("is_verified")
+  createdAt                DateTime               @default(now()) @map("created_at")
+  updatedAt                DateTime               @updatedAt @map("updated_at")
+  user                     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages                 Message[]
+  conversationHandoffs     ConversationHandoff[]
+  leads                    Lead[]
+  messageTemplates         MessageTemplate[]
+  broadcasts               Broadcast[]
+  orders                   Order[]
+  flowResponses            FlowResponse[]
+  instagramCommentLeads    InstagramCommentLead[]
+  instagramPostStats       InstagramPostStats[]
 
   @@index([userId])
+  @@index([userId, channel])
+  @@index([channel])
+  @@index([facebookPageId])
+  @@index([instagramAccountId])
   @@index([createdAt])
   @@index([isActive])
   @@index([isVerified])
@@ -149,31 +170,40 @@ model WhatsAppConnection {
 // Decision: Messages are scoped by user and connection, with idempotency enforced
 // by WhatsApp's message id to make webhook retries safe.
 model Message {
-  id           String             @id @default(uuid()) @db.Uuid
-  userId       String             @map("user_id") @db.Uuid
-  connectionId String             @map("connection_id") @db.Uuid
-  waMessageId  String             @unique @map("wa_message_id")
-  direction    MessageDirection
-  fromNumber   String             @map("from_number")
-  toNumber     String             @map("to_number")
-  bodyText     String             @map("body_text")
-  mediaUrl     String?            @map("media_url")
-  mediaType    String?            @map("media_type")
-  status       MessageStatus      @default(RECEIVED)
-  aiReplyText  String?            @map("ai_reply_text")
-  aiModelUsed  String?            @map("ai_model_used")
-  aiTokensUsed Int?               @map("ai_tokens_used")
-  metadata     Json               @default("{}")
-  processedAt  DateTime?          @map("processed_at")
-  createdAt    DateTime           @default(now()) @map("created_at")
-  updatedAt    DateTime           @updatedAt @map("updated_at")
-  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection   WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
-  leads        Lead[]
+  id                  String             @id @default(uuid()) @db.Uuid
+  userId              String             @map("user_id") @db.Uuid
+  connectionId        String             @map("connection_id") @db.Uuid
+  waMessageId         String             @unique @map("wa_message_id")
+  direction           MessageDirection
+  fromNumber          String             @map("from_number")
+  toNumber            String             @map("to_number")
+  bodyText            String             @map("body_text")
+  mediaUrl            String?            @map("media_url")
+  mediaType           String?            @map("media_type")
+  channel             String             @default("whatsapp")
+  externalMessageId   String?            @map("external_message_id")
+  externalThreadId    String?            @map("external_thread_id")
+  senderName          String?            @map("sender_name")
+  senderProfilePicUrl String?            @map("sender_profile_pic_url")
+  status              MessageStatus      @default(RECEIVED)
+  aiReplyText         String?            @map("ai_reply_text")
+  aiModelUsed         String?            @map("ai_model_used")
+  aiTokensUsed        Int?               @map("ai_tokens_used")
+  metadata            Json               @default("{}")
+  processedAt         DateTime?          @map("processed_at")
+  createdAt           DateTime           @default(now()) @map("created_at")
+  updatedAt           DateTime           @updatedAt @map("updated_at")
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection          WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  leads               Lead[]
 
   @@index([userId, createdAt])
   @@index([userId, status])
+  @@index([userId, channel])
   @@index([connectionId])
+  @@index([channel])
+  @@index([externalMessageId])
+  @@index([externalThreadId])
   @@index([createdAt])
   @@index([status])
   @@index([waMessageId])
@@ -192,11 +222,11 @@ model Product {
   description String?
   price       Int
   category    String?
-  isAvailable Boolean @default(true) @map("is_available")
-  sortOrder   Int     @default(0) @map("sort_order")
+  isAvailable Boolean  @default(true) @map("is_available")
+  sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, sortOrder])
   @@index([userId, isAvailable])
@@ -208,23 +238,23 @@ model Product {
 // phone because the production schema derives threads from messages rather than
 // a conversations table.
 model Order {
-  id                String              @id @default(uuid()) @db.Uuid
-  userId            String              @map("user_id") @db.Uuid
-  connectionId      String              @map("connection_id") @db.Uuid
-  customerPhone     String              @map("customer_phone")
-  customerName      String?             @map("customer_name")
-  customerAddress   String?             @map("customer_address")
+  id                String             @id @default(uuid()) @db.Uuid
+  userId            String             @map("user_id") @db.Uuid
+  connectionId      String             @map("connection_id") @db.Uuid
+  customerPhone     String             @map("customer_phone")
+  customerName      String?            @map("customer_name")
+  customerAddress   String?            @map("customer_address")
   items             Json
   subtotal          Int
-  status            String              @default("new")
+  status            String             @default("new")
   notes             String?
-  paymentLink       String?             @map("payment_link")
-  paymentLinkSentAt DateTime?           @map("payment_link_sent_at")
-  paidAt            DateTime?           @map("paid_at")
-  createdAt         DateTime            @default(now()) @map("created_at")
-  updatedAt         DateTime            @updatedAt @map("updated_at")
-  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection        WhatsAppConnection  @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  paymentLink       String?            @map("payment_link")
+  paymentLinkSentAt DateTime?          @map("payment_link_sent_at")
+  paidAt            DateTime?          @map("paid_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection        WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([userId, status])
@@ -276,25 +306,30 @@ model RoutingRule {
 // Decision: Leads are attached to the current tenant user and optionally to the
 // message that triggered detection, preserving the existing flat message model.
 model Lead {
-  id            String              @id @default(uuid()) @db.Uuid
-  userId        String              @map("user_id") @db.Uuid
-  messageId     String?             @map("message_id") @db.Uuid
-  connectionId  String?             @map("connection_id") @db.Uuid
-  customerPhone String              @map("customer_phone")
-  customerName  String?             @map("customer_name")
-  interest      String
-  channel       String              @default("whatsapp")
-  status        String              @default("new")
-  detectedAt    DateTime            @default(now()) @map("detected_at")
-  createdAt     DateTime            @default(now()) @map("created_at")
-  updatedAt     DateTime            @updatedAt @map("updated_at")
-  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection    WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
-  message       Message?            @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  id                    String                 @id @default(uuid()) @db.Uuid
+  userId                String                 @map("user_id") @db.Uuid
+  messageId             String?                @map("message_id") @db.Uuid
+  connectionId          String?                @map("connection_id") @db.Uuid
+  customerPhone         String                 @map("customer_phone")
+  customerName          String?                @map("customer_name")
+  interest              String
+  channel               String                 @default("whatsapp")
+  externalId            String?                @map("external_id")
+  senderName            String?                @map("sender_name")
+  source                String                 @default("chat")
+  status                String                 @default("new")
+  detectedAt            DateTime               @default(now()) @map("detected_at")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  user                  User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection            WhatsAppConnection?    @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  message               Message?               @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  instagramCommentLeads InstagramCommentLead[]
 
   @@index([userId, detectedAt])
   @@index([userId, status])
   @@index([userId, channel])
+  @@index([userId, externalId])
   @@index([connectionId, customerPhone])
   @@map("leads")
 }
@@ -303,21 +338,24 @@ model Lead {
 // Decision: Handoff is stored per customer thread derived from connection and
 // phone number because the production schema has no separate conversations table.
 model ConversationHandoff {
-  id            String             @id @default(uuid()) @db.Uuid
-  userId        String             @map("user_id") @db.Uuid
-  connectionId  String             @map("connection_id") @db.Uuid
-  customerPhone String             @map("customer_phone")
-  active        Boolean            @default(false)
-  handoffAt     DateTime?          @map("handoff_at")
-  resumedAt     DateTime?          @map("resumed_at")
-  resolvedAt    DateTime?          @map("resolved_at")
-  rating        Int?
-  ratingRequestedAt DateTime?      @map("rating_requested_at")
-  notifiedEvents String[]          @default([]) @map("notified_events")
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection    WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  id                String             @id @default(uuid()) @db.Uuid
+  userId            String             @map("user_id") @db.Uuid
+  connectionId      String             @map("connection_id") @db.Uuid
+  customerPhone     String             @map("customer_phone")
+  active            Boolean            @default(false)
+  handoffAt         DateTime?          @map("handoff_at")
+  resumedAt         DateTime?          @map("resumed_at")
+  resolvedAt        DateTime?          @map("resolved_at")
+  rating            Int?
+  ratingRequestedAt DateTime?          @map("rating_requested_at")
+  notifiedEvents    String[]           @default([]) @map("notified_events")
+  priority          String             @default("normal")
+  tags              String[]           @default([])
+  socialIntent      String?            @map("social_intent")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection        WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
 
   @@unique([userId, connectionId, customerPhone])
   @@index([userId, active])
@@ -330,26 +368,32 @@ model ConversationHandoff {
 // Decision: User settings are one-to-one with the tenant user and cascade on
 // account deletion to keep prompt behavior isolated per tenant.
 model UserSettings {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @unique @map("user_id") @db.Uuid
-  systemPrompt     String   @default("You are a helpful business assistant for {businessName}. Your role is to respond\nto customer WhatsApp messages in a friendly, professional, and concise manner.\nAlways stay on topic. If you cannot help with something, politely direct the\ncustomer to contact a human agent. Respond in {language}. Keep replies under\n{maxReplyLength} characters.") @map("system_prompt")
-  autoReplyEnabled Boolean  @default(true) @map("auto_reply_enabled")
-  language         String   @default("en")
-  businessName     String?  @map("business_name")
-  businessContext  String?  @map("business_context")
-  fallbackMessage  String?  @map("fallback_message")
-  maxReplyLength   Int      @default(300) @map("max_reply_length")
-  workingHoursEnabled Boolean @default(false) @map("working_hours_enabled")
-  workingHoursStart String   @default("09:00") @map("working_hours_start")
-  workingHoursEnd String     @default("22:00") @map("working_hours_end")
-  workingDays      String[] @default(["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"]) @map("working_days")
-  offHoursMessage  String   @default("شكراً لتواصلك 🙏 نحن حالياً خارج أوقات العمل. سنرد عليك فور بدء الدوام.") @map("off_hours_message")
-  timezone         String   @default("Africa/Cairo")
-  csatEnabled      Boolean  @default(false) @map("csat_enabled")
-  notificationPrefs Json    @default("{\"angry\":true,\"lead\":true,\"handoff\":true,\"daily_summary\":false,\"weekly_report\":true,\"ai_failed\":true}") @map("notification_prefs")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String   @id @default(uuid()) @db.Uuid
+  userId                String   @unique @map("user_id") @db.Uuid
+  systemPrompt          String   @default("You are a helpful business assistant for {businessName}. Your role is to respond\nto customer WhatsApp messages in a friendly, professional, and concise manner.\nAlways stay on topic. If you cannot help with something, politely direct the\ncustomer to contact a human agent. Respond in {language}. Keep replies under\n{maxReplyLength} characters.") @map("system_prompt")
+  autoReplyEnabled      Boolean  @default(true) @map("auto_reply_enabled")
+  language              String   @default("en")
+  businessName          String?  @map("business_name")
+  businessContext       String?  @map("business_context")
+  fallbackMessage       String?  @map("fallback_message")
+  maxReplyLength        Int      @default(300) @map("max_reply_length")
+  workingHoursEnabled   Boolean  @default(false) @map("working_hours_enabled")
+  workingHoursStart     String   @default("09:00") @map("working_hours_start")
+  workingHoursEnd       String   @default("22:00") @map("working_hours_end")
+  workingDays           String[] @default(["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"]) @map("working_days")
+  offHoursMessage       String   @default("شكراً لتواصلك 🙏 نحن حالياً خارج أوقات العمل. سنرد عليك فور بدء الدوام.") @map("off_hours_message")
+  timezone              String   @default("Africa/Cairo")
+  csatEnabled           Boolean  @default(false) @map("csat_enabled")
+  notificationPrefs     Json     @default("{\"angry\":true,\"lead\":true,\"handoff\":true,\"daily_summary\":false,\"weekly_report\":true,\"ai_failed\":true}") @map("notification_prefs")
+  commentToDmEnabled    Boolean  @default(false) @map("comment_to_dm_enabled")
+  commentToDmMessage    String   @default("مرحباً! 👋 شكراً لاهتمامك. كيف يمكنني مساعدتك؟") @map("comment_to_dm_message")
+  instagramTone         String   @default("friendly") @map("instagram_tone")
+  messengerTone         String   @default("professional") @map("messenger_tone")
+  instagramInstructions String?  @map("instagram_instructions")
+  messengerInstructions String?  @map("messenger_instructions")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
   @@map("user_settings")
@@ -359,18 +403,18 @@ model UserSettings {
 // Decision: Payment events are append-only audit records scoped to the user;
 // they cascade on account deletion to honor tenant data removal.
 model SubscriptionEvent {
-  id            String    @id @default(uuid()) @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  paymentEventId String   @unique @map("stripe_event_id")
-  eventType     String    @map("event_type")
-  planTier      PlanTier  @map("plan_tier")
-  status        String
-  amount        Int?
-  currency      String?
-  periodStart   DateTime? @map("period_start")
-  periodEnd     DateTime? @map("period_end")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  paymentEventId String    @unique @map("stripe_event_id")
+  eventType      String    @map("event_type")
+  planTier       PlanTier  @map("plan_tier")
+  status         String
+  amount         Int?
+  currency       String?
+  periodStart    DateTime? @map("period_start")
+  periodEnd      DateTime? @map("period_end")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -385,26 +429,26 @@ model SubscriptionEvent {
 // connection. Status/category stay as text so production can adopt the feature
 // without enum migrations fighting existing Supabase ownership.
 model MessageTemplate {
-  id             String              @id @default(uuid()) @db.Uuid
-  userId         String              @map("user_id") @db.Uuid
-  connectionId   String?             @map("connection_id") @db.Uuid
-  name           String
-  displayName    String              @map("display_name")
-  category       String
-  language       String              @default("ar")
-  headerText     String?             @map("header_text")
-  bodyText       String              @map("body_text")
-  footerText     String?             @map("footer_text")
-  buttonText     String?             @map("button_text")
-  buttonUrl      String?             @map("button_url")
-  metaTemplateId String?             @map("meta_template_id")
-  status         String              @default("draft")
-  rejectionReason String?            @map("rejection_reason")
-  createdAt      DateTime            @default(now()) @map("created_at")
-  updatedAt      DateTime            @updatedAt @map("updated_at")
-  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  connection     WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
-  broadcasts     Broadcast[]
+  id              String              @id @default(uuid()) @db.Uuid
+  userId          String              @map("user_id") @db.Uuid
+  connectionId    String?             @map("connection_id") @db.Uuid
+  name            String
+  displayName     String              @map("display_name")
+  category        String
+  language        String              @default("ar")
+  headerText      String?             @map("header_text")
+  bodyText        String              @map("body_text")
+  footerText      String?             @map("footer_text")
+  buttonText      String?             @map("button_text")
+  buttonUrl       String?             @map("button_url")
+  metaTemplateId  String?             @map("meta_template_id")
+  status          String              @default("draft")
+  rejectionReason String?             @map("rejection_reason")
+  createdAt       DateTime            @default(now()) @map("created_at")
+  updatedAt       DateTime            @updatedAt @map("updated_at")
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection      WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  broadcasts      Broadcast[]
 
   @@unique([userId, name])
   @@index([userId, status])
@@ -497,11 +541,11 @@ model TicketMessage {
 // Decision: Admin outreach is a lightweight audit trail for manual owner
 // messages sent from the private admin surface.
 model AdminOutreach {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  message   String
-  sentAt    DateTime @default(now()) @map("sent_at")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String   @id @default(uuid()) @db.Uuid
+  userId  String   @map("user_id") @db.Uuid
+  message String
+  sentAt  DateTime @default(now()) @map("sent_at")
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, sentAt])
   @@map("admin_outreach")
@@ -517,6 +561,11 @@ model CustomerProfile {
   name               String?
   channel            String                @default("whatsapp")
   instagramId        String?               @map("instagram_id")
+  messengerPsid      String?               @map("messenger_psid")
+  instagramIgsid     String?               @map("instagram_igsid")
+  instagramUsername  String?               @map("instagram_username")
+  linkedProfileId    String?               @map("linked_profile_id") @db.Uuid
+  isMerged           Boolean               @default(false) @map("is_merged")
   firstContactAt     DateTime              @default(now()) @map("first_contact_at")
   lastContactAt      DateTime              @default(now()) @map("last_contact_at")
   totalConversations Int                   @default(0) @map("total_conversations")
@@ -531,10 +580,15 @@ model CustomerProfile {
   isBlocked          Boolean               @default(false) @map("is_blocked")
   user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   facts              CustomerProfileFact[]
+  linkedProfile      CustomerProfile?      @relation("CustomerProfileMerge", fields: [linkedProfileId], references: [id])
+  mergedProfiles     CustomerProfile[]     @relation("CustomerProfileMerge")
 
   @@unique([userId, phone])
   @@index([userId, lastContactAt])
   @@index([userId, channel])
+  @@index([userId, messengerPsid])
+  @@index([userId, instagramIgsid])
+  @@index([linkedProfileId])
   @@map("customer_profiles")
 }
 
@@ -548,6 +602,52 @@ model CustomerProfileFact {
 
   @@index([profileId, createdAt])
   @@map("customer_profile_facts")
+}
+
+model InstagramCommentLead {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @map("user_id") @db.Uuid
+  connectionId  String             @map("connection_id") @db.Uuid
+  commentId     String             @unique @map("comment_id")
+  commentText   String             @map("comment_text")
+  commenterId   String             @map("commenter_id")
+  commenterName String?            @map("commenter_name")
+  postId        String?            @map("post_id")
+  postCaption   String?            @map("post_caption")
+  isLead        Boolean            @default(false) @map("is_lead")
+  dmSent        Boolean            @default(false) @map("dm_sent")
+  dmMessageId   String?            @map("dm_message_id")
+  leadId        String?            @map("lead_id") @db.Uuid
+  createdAt     DateTime           @default(now()) @map("created_at")
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  lead          Lead?              @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([userId, postId])
+  @@index([connectionId])
+  @@map("instagram_comment_leads")
+}
+
+model InstagramPostStats {
+  id            String             @id @default(uuid()) @db.Uuid
+  userId        String             @map("user_id") @db.Uuid
+  connectionId  String             @map("connection_id") @db.Uuid
+  postId        String             @map("post_id")
+  postCaption   String?            @map("post_caption")
+  postMediaUrl  String?            @map("post_media_url")
+  postTimestamp DateTime?          @map("post_timestamp")
+  commentCount  Int                @default(0) @map("comment_count")
+  leadCount     Int                @default(0) @map("lead_count")
+  dmCount       Int                @default(0) @map("dm_count")
+  lastUpdatedAt DateTime           @default(now()) @map("last_updated_at")
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection    WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([userId, lastUpdatedAt])
+  @@index([connectionId])
+  @@map("instagram_post_stats")
 }
 
 // [ROLE: BACKEND ENGINEER]

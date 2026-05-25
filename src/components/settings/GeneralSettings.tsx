@@ -47,6 +47,8 @@ const DEFAULT_WORKING_DAYS: WorkingDayKey[] = ["saturday", "sunday", "monday", "
 const WORKING_DAY_SET = new Set<string>(WORKING_DAY_KEYS);
 const TIMEZONE_VALUES = ARAB_TIMEZONES.map((timezone) => timezone.value);
 type SettingsTimezone = NonNullable<UpdateSettingsInput["timezone"]>;
+type SettingsTone = NonNullable<UpdateSettingsInput["instagramTone"]>;
+const TONE_VALUES = new Set<string>(["friendly", "professional", "playful", "sales"]);
 
 function normalizeWorkingDays(value: readonly string[] | null | undefined): WorkingDayKey[] {
   const days = (value ?? []).filter((day): day is WorkingDayKey => WORKING_DAY_SET.has(day));
@@ -56,6 +58,10 @@ function normalizeWorkingDays(value: readonly string[] | null | undefined): Work
 
 function normalizeTimezone(value: string | null | undefined): SettingsTimezone {
   return TIMEZONE_VALUES.includes(value as SettingsTimezone) ? (value as SettingsTimezone) : "Africa/Cairo";
+}
+
+function normalizeTone(value: string | null | undefined, fallback: SettingsTone): SettingsTone {
+  return TONE_VALUES.has(value ?? "") ? (value as SettingsTone) : fallback;
 }
 
 export function GeneralSettings() {
@@ -78,6 +84,12 @@ export function GeneralSettings() {
       timezone: "Africa/Cairo",
       csatEnabled: false,
       notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
+      commentToDmEnabled: false,
+      commentToDmMessage: "مرحباً! 👋 شكراً لاهتمامك. كيف يمكنني مساعدتك؟",
+      instagramTone: "friendly",
+      messengerTone: "professional",
+      instagramInstructions: "",
+      messengerInstructions: "",
     },
   });
   const updateMutation = useUpdateSettings();
@@ -103,6 +115,12 @@ export function GeneralSettings() {
       timezone: normalizeTimezone(settingsResult.settings.timezone),
       csatEnabled: settingsResult.settings.csatEnabled,
       notificationPrefs: settingsResult.settings.notificationPrefs,
+      commentToDmEnabled: settingsResult.settings.commentToDmEnabled,
+      commentToDmMessage: settingsResult.settings.commentToDmMessage,
+      instagramTone: normalizeTone(settingsResult.settings.instagramTone, "friendly"),
+      messengerTone: normalizeTone(settingsResult.settings.messengerTone, "professional"),
+      instagramInstructions: normalizeText(settingsResult.settings.instagramInstructions),
+      messengerInstructions: normalizeText(settingsResult.settings.messengerInstructions),
     });
   }, [form, settingsResult.settings]);
 
@@ -157,6 +175,8 @@ export function GeneralSettings() {
         ...DEFAULT_NOTIFICATION_PREFS,
         ...values.notificationPrefs,
       },
+      instagramInstructions: toNullable(values.instagramInstructions),
+      messengerInstructions: toNullable(values.messengerInstructions),
     };
 
     if (!canEditCustomPrompt) {
@@ -234,6 +254,70 @@ export function GeneralSettings() {
             error={form.formState.errors.systemPrompt?.message}
             onChange={(value) => form.setValue("systemPrompt", value, { shouldDirty: true })}
           />
+          <section className="space-y-4 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4 sm:rounded-3xl sm:p-5" dir="rtl">
+            <div>
+              <p className="text-body font-semibold text-wa-gray-900">قنوات السوشيال</p>
+              <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
+                اضبطي طريقة كلام المساعد على إنستجرام وماسنجر، وفعّلي التقاط التعليقات التي تحمل نية شراء.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <p className="text-body-sm font-semibold text-wa-gray-900">ردود تلقائية على تعليقات إنستجرام</p>
+                  <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
+                    عند تعليق العميل بسؤال شراء مثل &quot;بكام؟&quot; أو &quot;متوفر؟&quot;، يرسل kallem رسالة خاصة ويسجل Lead.
+                  </p>
+                  <p className="mt-2 rounded-2xl bg-wa-blue-50 px-3 py-2 text-xs leading-5 text-wa-blue-800">
+                    يتطلب صلاحيات Meta: instagram_basic + pages_read_engagement + instagram_manage_comments.
+                  </p>
+                </div>
+                <Switch
+                  checked={Boolean(form.watch("commentToDmEnabled"))}
+                  onChange={(event) => form.setValue("commentToDmEnabled", event.currentTarget.checked, { shouldDirty: true })}
+                />
+              </div>
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="commentToDmMessage">رسالة الـ DM التلقائية</Label>
+                <Textarea id="commentToDmMessage" rows={3} maxLength={300} {...form.register("commentToDmMessage")} />
+                {form.formState.errors.commentToDmMessage ? <p className="text-sm text-destructive">{form.formState.errors.commentToDmMessage.message}</p> : null}
+              </div>
+            </div>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
+                <p className="text-body-sm font-semibold text-wa-gray-900">شخصية إنستجرام</p>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="instagramTone">النبرة</Label>
+                  <Select id="instagramTone" {...form.register("instagramTone")}>
+                    <option value="friendly">ودودة</option>
+                    <option value="playful">خفيفة واجتماعية</option>
+                    <option value="professional">احترافية</option>
+                    <option value="sales">بيعية</option>
+                  </Select>
+                </div>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="instagramInstructions">تعليمات خاصة لإنستجرام</Label>
+                  <Textarea id="instagramInstructions" rows={4} {...form.register("instagramInstructions")} />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
+                <p className="text-body-sm font-semibold text-wa-gray-900">شخصية ماسنجر</p>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="messengerTone">النبرة</Label>
+                  <Select id="messengerTone" {...form.register("messengerTone")}>
+                    <option value="professional">احترافية</option>
+                    <option value="friendly">ودودة</option>
+                    <option value="playful">خفيفة</option>
+                    <option value="sales">بيعية</option>
+                  </Select>
+                </div>
+                <div className="mt-3 space-y-2">
+                  <Label htmlFor="messengerInstructions">تعليمات خاصة لماسنجر</Label>
+                  <Textarea id="messengerInstructions" rows={4} {...form.register("messengerInstructions")} />
+                </div>
+              </div>
+            </div>
+          </section>
           <section className="space-y-4 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4 sm:rounded-3xl sm:p-5" dir="rtl">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>

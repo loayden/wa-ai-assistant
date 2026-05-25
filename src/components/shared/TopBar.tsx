@@ -51,7 +51,7 @@ function initialsFor(name?: string | null, email?: string | null) {
 
 const appNavItems = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
-  { href: "/whatsapp", label: "واتساب", icon: RadioTower },
+  { href: "/connect", label: "القنوات", icon: RadioTower },
   { href: "/knowledge", label: "المعرفة", icon: BookOpen },
   { href: "/products", label: "المنتجات", icon: Package },
   { href: "/orders", label: "الطلبات", icon: ShoppingBag },
@@ -65,8 +65,8 @@ const appNavItems = [
   { href: "/support", label: "الدعم", icon: LifeBuoy },
 ];
 
-const mobilePrimaryHrefs = new Set(["/dashboard", "/whatsapp", "/messages", "/billing"]);
-const desktopPrimaryHrefs = new Set(["/dashboard", "/whatsapp", "/knowledge", "/products", "/orders", "/messages", "/billing"]);
+const mobilePrimaryHrefs = new Set(["/dashboard", "/connect", "/messages", "/billing"]);
+const desktopPrimaryHrefs = new Set(["/dashboard", "/connect", "/knowledge", "/products", "/orders", "/messages", "/billing"]);
 
 export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE", userEmail, userName }: TopBarProps) {
   const [profileOpen, setProfileOpen] = useState(false);

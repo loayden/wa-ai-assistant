@@ -20,6 +20,9 @@ export function serializeLead(lead: Lead): LeadResponse {
     customerName: lead.customerName,
     interest: lead.interest,
     channel: lead.channel as LeadResponse["channel"],
+    externalId: lead.externalId,
+    senderName: lead.senderName,
+    source: lead.source,
     status: lead.status as LeadResponse["status"],
     detectedAt: lead.detectedAt.toISOString(),
     createdAt: lead.createdAt.toISOString(),
@@ -38,11 +41,14 @@ function escapeCsvValue(value: string | null | undefined): string {
 }
 
 export function leadsToCsv(leads: Lead[]): string {
-  const header = ["Phone", "Interest", "Channel", "Status", "Date"];
+  const header = ["Phone", "External ID", "Sender Name", "Interest", "Channel", "Source", "Status", "Date"];
   const rows = leads.map((lead) => [
     lead.customerPhone,
+    lead.externalId,
+    lead.senderName,
     lead.interest,
     lead.channel,
+    lead.source,
     lead.status,
     lead.detectedAt.toISOString(),
   ]);

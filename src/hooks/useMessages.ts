@@ -14,6 +14,7 @@ import type { MessageDirection, MessageResponse, MessageStatus } from "@/types/a
 
 export type MessageDirectionFilter = MessageDirection;
 export type MessageStatusFilter = MessageStatus;
+export type MessageChannelFilter = "whatsapp" | "instagram" | "messenger";
 
 export type MessageRecord = MessageResponse & {
   connection?: MessageResponse["connection"] | null;
@@ -25,6 +26,7 @@ export type UseMessagesParams = {
   direction?: MessageDirectionFilter;
   status?: MessageStatusFilter;
   connectionId?: string;
+  channel?: MessageChannelFilter;
 };
 
 export const messagesQueryKey = (params: Required<Pick<UseMessagesParams, "page" | "limit">> & Omit<UseMessagesParams, "page" | "limit">) => [
@@ -32,16 +34,17 @@ export const messagesQueryKey = (params: Required<Pick<UseMessagesParams, "page"
   params,
 ] as const;
 
-export function useMessages({ page = 1, limit = 20, connectionId, direction, status }: UseMessagesParams = {}) {
+export function useMessages({ page = 1, limit = 20, channel, connectionId, direction, status }: UseMessagesParams = {}) {
   const queryParams = useMemo(
     () => ({
       page,
       limit,
+      channel,
       connectionId,
       direction,
       status,
     }),
-    [connectionId, direction, limit, page, status],
+    [channel, connectionId, direction, limit, page, status],
   );
   const query = useQuery({
     queryKey: messagesQueryKey(queryParams),
@@ -61,6 +64,10 @@ export function useMessages({ page = 1, limit = 20, connectionId, direction, sta
 
       if (queryParams.connectionId) {
         params.set("connectionId", queryParams.connectionId);
+      }
+
+      if (queryParams.channel) {
+        params.set("channel", queryParams.channel);
       }
 
       return apiRequest<MessageRecord[]>(`/api/messages?${params.toString()}`);

@@ -32,6 +32,8 @@ export function AuthConfirmClient() {
     const code = searchParams.get("code");
     const tokenHash = searchParams.get("token_hash");
     const type = searchParams.get("type") as EmailOtpType | null;
+    const providerError = searchParams.get("error") ?? searchParams.get("error_code");
+    const providerErrorDescription = searchParams.get("error_description") ?? searchParams.get("error_reason");
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const accessToken = hashParams.get("access_token");
     const refreshToken = hashParams.get("refresh_token");
@@ -39,6 +41,11 @@ export function AuthConfirmClient() {
 
     async function finishAuth() {
       try {
+        if (providerError || providerErrorDescription) {
+          router.replace(buildLoginRedirect("oauth_provider_error", nextPath, providerErrorDescription ?? providerError ?? undefined));
+          return;
+        }
+
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code);
 

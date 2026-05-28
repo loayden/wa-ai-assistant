@@ -79,7 +79,7 @@ function getSignupRedirectUrl(request: Request) {
     request,
     fallbackAppUrl: appEnv.NEXT_PUBLIC_APP_URL,
     explicitRedirectUrl: process.env.AUTH_EMAIL_REDIRECT_URL ?? null,
-    path: "/auth/confirm?next=/whatsapp",
+    path: "/auth/confirm?next=/connect",
   });
 }
 

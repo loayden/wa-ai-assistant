@@ -148,6 +148,14 @@ export function LoginForm() {
               </AlertDescription>
             </Alert>
           ) : null}
+          {authError === "oauth_provider_error" ? (
+            <Alert className="border-wa-error bg-wa-error-bg">
+              <AlertDescription>
+                موفر تسجيل الدخول رفض الطلب. راجعي إعدادات Google/Facebook OAuth ثم حاولي مرة أخرى.
+                {authReason ? <span className="mt-1 block text-xs opacity-80">{authReason}</span> : null}
+              </AlertDescription>
+            </Alert>
+          ) : null}
           {authError === "confirmation_required" ? (
             <Alert className="border-wa-warning bg-wa-warning-bg">
               <AlertDescription>تم تأكيد البريد، لكن الجلسة لم تفتح تلقائياً. سجّلي الدخول مرة واحدة للمتابعة.</AlertDescription>

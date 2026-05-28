@@ -31,6 +31,7 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const authError = searchParams.get("authError");
+  const authReason = searchParams.get("authReason");
   const nextPath = searchParams.get("next") || "/connect";
   const [showPassword, setShowPassword] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -141,7 +142,10 @@ export function LoginForm() {
           ) : null}
           {authError === "confirmation_failed" ? (
             <Alert className="border-wa-error bg-wa-error-bg">
-              <AlertDescription>رابط التأكيد لم يستطع تسجيل الدخول. اطلبي رسالة تأكيد جديدة وحاولي مرة أخرى.</AlertDescription>
+              <AlertDescription>
+                تعذر إكمال تسجيل الدخول الاجتماعي.
+                {authReason ? <span className="mt-1 block text-xs opacity-80">{authReason}</span> : null}
+              </AlertDescription>
             </Alert>
           ) : null}
           {authError === "confirmation_required" ? (

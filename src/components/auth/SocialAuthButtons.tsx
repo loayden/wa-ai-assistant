@@ -34,7 +34,7 @@ const providerConfig: Record<
     iconLabel: "f",
     iconClassName: "bg-[#1877F2] text-white",
     buttonClassName: "hover:border-[#1877F2] hover:bg-[#F0F6FF]",
-    scopes: "email,public_profile",
+    scopes: "public_profile",
   },
 };
 

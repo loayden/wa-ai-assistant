@@ -9,11 +9,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { normalizeAuthNextPath } from "@/lib/auth/redirect-url";
 import { createClient } from "@/lib/supabase/client";
 
-function buildLoginRedirect(errorCode: string, nextPath: string) {
+function buildLoginRedirect(errorCode: string, nextPath: string, errorDescription?: string) {
   const search = new URLSearchParams({
     authError: errorCode,
     next: nextPath,
   });
+
+  if (errorDescription) {
+    search.set("authReason", errorDescription);
+  }
 
   return `/login?${search.toString()}`;
 }
@@ -76,12 +80,14 @@ export function AuthConfirmClient() {
 
         window.history.replaceState({}, document.title, window.location.pathname);
         router.replace(nextPath);
-      } catch {
+      } catch (error) {
         if (!active) {
           return;
         }
 
-        router.replace(buildLoginRedirect("confirmation_failed", nextPath));
+        const errorDescription = error instanceof Error ? error.message : undefined;
+
+        router.replace(buildLoginRedirect("confirmation_failed", nextPath, errorDescription));
       }
     }
 

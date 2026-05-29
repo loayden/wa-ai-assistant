@@ -33,8 +33,9 @@ const footerSections = [
     links: [
       { label: "اتصال Meta موثّق", href: "/connect" },
       { label: "تخزين مشفر", href: "/#setup" },
-      { label: "إيقاف الذكاء في أي وقت", href: "/dashboard" },
-      { label: "دفع عبر Paymob", href: "/billing" },
+      { label: "سياسة الخصوصية", href: "/privacy" },
+      { label: "شروط الاستخدام", href: "/terms" },
+      { label: "حذف البيانات", href: "/data-deletion" },
     ],
   },
 ];

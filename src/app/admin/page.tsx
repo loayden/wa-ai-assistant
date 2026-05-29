@@ -3,6 +3,8 @@ import { AlertTriangle, Building2, CheckCircle2, MessageSquareText, Sparkles, Wa
 
 import { getAdminBusinesses, getAdminOverview } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 function formatNumber(value: number) {
   return value.toLocaleString("ar-EG");
 }

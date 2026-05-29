@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getAdminBusinesses } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 const filters = [
   { label: "الكل", value: "all" },
   { label: "مدفوع", value: "paid" },

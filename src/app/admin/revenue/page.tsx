@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getAdminRevenue, type AdminRange } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 const ranges = ["7d", "30d", "90d"] as const;
 
 function formatEgp(value: number) {

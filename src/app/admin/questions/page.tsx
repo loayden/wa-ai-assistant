@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getAdminQuestions } from "@/lib/admin/queries";
 
+export const dynamic = "force-dynamic";
+
 const ranges = ["7d", "30d"] as const;
 
 export default async function AdminQuestionsPage({ searchParams }: { searchParams?: Promise<{ range?: string }> }) {

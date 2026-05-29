@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { prisma } from "@/lib/prisma/client";
 
+export const dynamic = "force-dynamic";
+
 function statusClass(status: string) {
   if (status === "resolved") return "bg-emerald-50 text-emerald-700";
   if (status === "in_progress") return "bg-amber-50 text-amber-700";

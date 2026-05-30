@@ -129,7 +129,9 @@ export async function GET(request: Request) {
       if (message.direction === MessageDirection.OUTBOUND) {
         totalReplies += 1;
         const key = dateKey(message.createdAt);
-        dailyMap.set(key, (dailyMap.get(key) ?? 0) + 1);
+        if (dailyMap.has(key)) {
+          dailyMap.set(key, (dailyMap.get(key) ?? 0) + 1);
+        }
       } else {
         const key = `${message.connection?.id ?? message.connectionId}:${message.fromNumber}`;
         conversationKeys.add(key);

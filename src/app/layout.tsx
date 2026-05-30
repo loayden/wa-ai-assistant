@@ -46,8 +46,9 @@ export default async function RootLayout({
       lang="ar"
       dir="rtl"
       className={`${inter.variable} ${cairo.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col" data-csp-nonce={nonce}>
+      <body className="min-h-full flex flex-col" data-csp-nonce={nonce} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>

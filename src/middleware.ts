@@ -58,9 +58,10 @@ function isE2EAuthBypassEnabled(request: NextRequest): boolean {
 
 function createNonceHeaders(request: NextRequest): { nonce: string; requestHeaders: Headers } {
   const nonce = createNonce();
-  const requestHeaders = new Headers();
+  const requestHeaders = new Headers(request.headers);
 
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("x-csp-nonce", nonce);
   requestHeaders.set("x-pathname", request.nextUrl.pathname);
 
   return { nonce, requestHeaders };

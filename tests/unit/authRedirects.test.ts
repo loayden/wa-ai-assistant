@@ -69,7 +69,7 @@ describe("resolveSignupRedirectUrl", () => {
 describe("social OAuth redirect helpers", () => {
   it("builds the Supabase OAuth callback with a safe next path", () => {
     expect(buildOAuthRedirectUrl("https://kallem.vercel.app", "/dashboard")).toBe(
-      "https://kallem.vercel.app/auth/confirm?next=%2Fdashboard",
+      "https://kallem.vercel.app/auth/callback?next=%2Fdashboard",
     );
   });
 
@@ -77,7 +77,7 @@ describe("social OAuth redirect helpers", () => {
     expect(normalizeAuthNextPath("https://evil.example.com")).toBe("/connect");
     expect(normalizeAuthNextPath("//evil.example.com")).toBe("/connect");
     expect(buildOAuthRedirectUrl("https://kallem.vercel.app/", "//evil.example.com")).toBe(
-      "https://kallem.vercel.app/auth/confirm?next=%2Fconnect",
+      "https://kallem.vercel.app/auth/callback?next=%2Fconnect",
     );
   });
 });

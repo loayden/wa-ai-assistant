@@ -61,7 +61,7 @@ export function buildOAuthRedirectUrl(origin: string, nextPath?: string | null) 
   const safeNextPath = normalizeAuthNextPath(nextPath);
   const params = new URLSearchParams({ next: safeNextPath });
 
-  return joinOrigin(origin, `/auth/confirm?${params.toString()}`);
+  return joinOrigin(origin, `/auth/callback?${params.toString()}`);
 }
 
 export function resolveSignupRedirectUrl(options: {

@@ -149,7 +149,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
 
   function connectMessenger() {
     if (!window.FB || !sdkReady || !appId) {
-      setError("Meta Login غير جاهز في هذه البيئة. تأكد من WHATSAPP_APP_ID ثم حدّث الصفحة.");
+      setError("Meta Login غير جاهز في هذه البيئة. تأكد من وجود WHATSAPP_APP_ID أو NEXT_PUBLIC_META_APP_ID ثم حدّث الصفحة.");
       return;
     }
 

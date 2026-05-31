@@ -9,6 +9,7 @@ import { getWhatsAppPageBootstrap } from "@/lib/server/dashboard-bootstrap";
 
 export default async function WhatsAppPage() {
   const bootstrap = await getWhatsAppPageBootstrap();
+  const metaAppId = process.env.WHATSAPP_APP_ID ?? process.env.NEXT_PUBLIC_META_APP_ID ?? null;
 
   if (!bootstrap) {
     return null;
@@ -18,7 +19,7 @@ export default async function WhatsAppPage() {
     <WhatsAppPageClient
       apiVersion={process.env.WHATSAPP_API_VERSION ?? "v19.0"}
       appUrl={process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}
-      embeddedSignupAppId={process.env.WHATSAPP_APP_ID ?? null}
+      embeddedSignupAppId={metaAppId}
       embeddedSignupConfigId={process.env.WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ?? null}
       embeddedSignupEnabled={process.env.WHATSAPP_EMBEDDED_SIGNUP_ENABLED === "true"}
       initialConnections={bootstrap.connections}

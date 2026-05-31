@@ -17,6 +17,8 @@ const envSchema = z.object({
   DIRECT_URL: z.string().url(),
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL: z.string().min(1).default("gpt-4o-mini"),
+  NEXT_PUBLIC_META_APP_ID: z.string().min(1).optional(),
+  META_APP_SECRET: z.string().min(1).optional(),
   WHATSAPP_APP_ID: z.string().min(1),
   WHATSAPP_APP_SECRET: z.string().min(1),
   WHATSAPP_VERIFY_TOKEN: z.string().min(1),
@@ -45,7 +47,13 @@ const envSchema = z.object({
 export type AppEnv = z.infer<typeof envSchema>;
 
 export function validateEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
-  const parsed = envSchema.safeParse(env);
+  const normalizedEnv = {
+    ...env,
+    WHATSAPP_APP_ID: env.WHATSAPP_APP_ID || env.NEXT_PUBLIC_META_APP_ID,
+    WHATSAPP_APP_SECRET: env.WHATSAPP_APP_SECRET || env.META_APP_SECRET,
+  };
+
+  const parsed = envSchema.safeParse(normalizedEnv);
 
   if (!parsed.success) {
     const details = parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ");

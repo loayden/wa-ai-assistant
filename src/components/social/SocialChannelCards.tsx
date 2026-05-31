@@ -186,7 +186,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       },
       {
         scope:
-          "pages_show_list,pages_messaging,pages_manage_metadata,instagram_business_basic,instagram_business_manage_messages,instagram_manage_comments,pages_read_engagement",
+          "pages_show_list,pages_messaging,pages_manage_metadata,instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,pages_read_engagement",
         response_type: "code",
         override_default_response_type: true,
       },

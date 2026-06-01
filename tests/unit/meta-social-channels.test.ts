@@ -1,10 +1,15 @@
 import { createHmac } from "crypto";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { instagramAdapter } from "@/lib/channels/adapters/instagram";
 import { messengerAdapter } from "@/lib/channels/adapters/messenger";
 import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, hasPermissionRequirements, missingPermissionLabels } from "@/lib/meta/permissions";
 import { verifyMetaSignature } from "@/lib/meta/signature";
+import { getGrantedPermissions } from "@/lib/meta/social";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("Meta social channel adapters", () => {
   it("normalizes Messenger text and image messages and ignores echoes", () => {
@@ -103,5 +108,41 @@ describe("Meta permission aliases", () => {
     ).toBe(true);
 
     expect(missingPermissionLabels(["instagram_business_basic"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS)).toEqual(["instagram_manage_messages", "pages_messaging"]);
+  });
+});
+
+describe("Meta permission discovery", () => {
+  it("merges user permission data with page token scopes from debug_token", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      const requestUrl = String(url);
+
+      if (requestUrl.includes("/me/permissions")) {
+        return Response.json({
+          data: [
+            { permission: "pages_show_list", status: "granted" },
+            { permission: "pages_read_engagement", status: "declined" },
+          ],
+        });
+      }
+
+      if (requestUrl.includes("/debug_token")) {
+        return Response.json({
+          data: {
+            scopes: ["pages_messaging", "pages_manage_metadata", "pages_show_list"],
+          },
+        });
+      }
+
+      return Response.json({}, { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getGrantedPermissions("page-token")).resolves.toEqual([
+      "pages_manage_metadata",
+      "pages_messaging",
+      "pages_show_list",
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

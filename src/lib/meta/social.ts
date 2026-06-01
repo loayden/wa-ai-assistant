@@ -39,7 +39,11 @@ export function hasRequiredPermissionGroups(grantedPerms: string[], requirements
   return hasPermissionRequirements(grantedPerms, requirements);
 }
 
-export async function getGrantedPermissions(accessToken: string): Promise<string[]> {
+function uniquePermissions(permissions: string[]): string[] {
+  return Array.from(new Set(permissions.filter((permission) => typeof permission === "string" && permission.length > 0))).sort();
+}
+
+async function getPermissionsFromMePermissions(accessToken: string): Promise<string[]> {
   const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/me/permissions?access_token=${encodeURIComponent(accessToken)}`);
   const data = await res.json().catch(() => ({}));
 
@@ -50,6 +54,32 @@ export async function getGrantedPermissions(accessToken: string): Promise<string
   return data.data
     .filter((permission: { status?: string; permission?: string }) => permission.status === "granted" && typeof permission.permission === "string")
     .map((permission: { permission: string }) => permission.permission);
+}
+
+async function getPermissionsFromDebugToken(accessToken: string): Promise<string[]> {
+  const appAccessToken = `${appEnv.WHATSAPP_APP_ID}|${appEnv.WHATSAPP_APP_SECRET}`;
+  const params = new URLSearchParams({
+    input_token: accessToken,
+    access_token: appAccessToken,
+  });
+  const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/debug_token?${params.toString()}`);
+  const data = await res.json().catch(() => ({}));
+  const scopes = data?.data?.scopes;
+
+  if (!res.ok || !Array.isArray(scopes)) {
+    return [];
+  }
+
+  return scopes.filter((scope: unknown): scope is string => typeof scope === "string");
+}
+
+export async function getGrantedPermissions(accessToken: string): Promise<string[]> {
+  const [directPermissions, tokenScopes] = await Promise.all([
+    getPermissionsFromMePermissions(accessToken),
+    getPermissionsFromDebugToken(accessToken),
+  ]);
+
+  return uniquePermissions([...directPermissions, ...tokenScopes]);
 }
 
 export async function subscribePageToWebhook(pageId: string, pageAccessToken: string): Promise<boolean> {

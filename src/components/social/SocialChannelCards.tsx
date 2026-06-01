@@ -50,7 +50,6 @@ type SocialChannelCardsProps = {
   whatsappConnected: boolean;
 };
 
-const FACEBOOK_SDK_ID = "facebook-jssdk";
 const META_OAUTH_STATE_STORAGE_KEY = "kallem_meta_oauth_state";
 const META_OAUTH_SCOPES = [
   "pages_show_list",
@@ -80,7 +79,6 @@ function statusClass(connection?: SocialConnection | null) {
 export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: SocialChannelCardsProps) {
   const [connections, setConnections] = useState<SocialConnection[]>([]);
   const [availablePages, setAvailablePages] = useState<MetaPage[]>([]);
-  const [sdkReady, setSdkReady] = useState(false);
   const [loadingConnections, setLoadingConnections] = useState(true);
   const [connecting, setConnecting] = useState<"messenger" | "instagram" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -114,43 +112,6 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       active = false;
     };
   }, []);
-
-  useEffect(() => {
-    if (!appId) {
-      return;
-    }
-
-    const initializeFacebookSdk = () => {
-      if (!window.FB) {
-        return;
-      }
-
-      window.FB.init({
-        appId,
-        cookie: true,
-        xfbml: false,
-        version: apiVersion,
-      });
-      setSdkReady(true);
-    };
-
-    if (window.FB) {
-      initializeFacebookSdk();
-      return;
-    }
-
-    window.fbAsyncInit = initializeFacebookSdk;
-
-    if (!document.getElementById(FACEBOOK_SDK_ID)) {
-      const script = document.createElement("script");
-      script.id = FACEBOOK_SDK_ID;
-      script.async = true;
-      script.defer = true;
-      script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.onerror = () => setError("تعذر تحميل Meta SDK. حدّث الصفحة وحاول مرة أخرى.");
-      document.body.appendChild(script);
-    }
-  }, [apiVersion, appId]);
 
   const refreshConnections = useCallback(async () => {
     const data = await apiData<{ connections: SocialConnection[] }>("/api/meta/pages");
@@ -273,38 +234,8 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
   }, [apiVersion, appId]);
 
   const connectMessenger = useCallback(() => {
-    if (!window.FB || !sdkReady || !appId) {
-      startMetaOAuthRedirect();
-      return;
-    }
-
-    setError(null);
-    setConnecting("messenger");
-    window.FB.login(
-      async (response) => {
-        try {
-          const code = response.authResponse?.code;
-
-          if (!code) {
-            setError("تم إلغاء تسجيل الدخول إلى Meta قبل منح الصلاحيات.");
-            return;
-          }
-
-          await exchangeMetaCode(code);
-        } catch {
-          setError("فشل ربط ماسنجر.");
-        } finally {
-          setConnecting(null);
-        }
-      },
-      {
-        auth_type: "rerequest",
-        scope: META_OAUTH_SCOPES,
-        response_type: "code",
-        override_default_response_type: true,
-      },
-    );
-  }, [appId, exchangeMetaCode, sdkReady, startMetaOAuthRedirect]);
+    startMetaOAuthRedirect();
+  }, [startMetaOAuthRedirect]);
 
   async function connectInstagram(page: MetaPage) {
     if (!page.instagram_business_account?.id) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { AlertCircle, Loader2, Lock } from "lucide-react";
 
@@ -51,6 +51,16 @@ type SocialChannelCardsProps = {
 };
 
 const FACEBOOK_SDK_ID = "facebook-jssdk";
+const META_OAUTH_STATE_STORAGE_KEY = "kallem_meta_oauth_state";
+const META_OAUTH_SCOPES = [
+  "pages_show_list",
+  "pages_messaging",
+  "pages_manage_metadata",
+  "instagram_business_basic",
+  "instagram_business_manage_messages",
+  "instagram_business_manage_comments",
+  "pages_read_engagement",
+].join(",");
 
 function statusLabel(connection?: SocialConnection | null) {
   if (!connection) return "غير متصل";
@@ -142,14 +152,130 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     }
   }, [apiVersion, appId]);
 
-  async function refreshConnections() {
+  const refreshConnections = useCallback(async () => {
     const data = await apiData<{ connections: SocialConnection[] }>("/api/meta/pages");
     setConnections(data.connections);
-  }
+  }, []);
 
-  function connectMessenger() {
-    if (!window.FB || !sdkReady || !appId) {
+  const connectSelectedPage = useCallback(
+    async (page: MetaPage) => {
+      setConnecting("messenger");
+      try {
+        await apiData("/api/meta/connect-page", {
+          method: "POST",
+          body: JSON.stringify({
+            pageId: page.id,
+            pageName: page.name,
+            pageAccessToken: page.access_token,
+            pagePicture: page.picture?.data?.url,
+          }),
+        });
+        await refreshConnections();
+      } catch (requestError) {
+        setError(requestError instanceof ApiClientError ? requestError.message : "فشل حفظ صفحة Facebook.");
+      } finally {
+        setConnecting(null);
+      }
+    },
+    [refreshConnections],
+  );
+
+  const exchangeMetaCode = useCallback(
+    async (code: string) => {
+      setError(null);
+      setConnecting("messenger");
+
+      try {
+        const data = await apiData<{ pages: MetaPage[] }>("/api/meta/oauth/exchange", {
+          method: "POST",
+          body: JSON.stringify({
+            code,
+            redirectUri: `${window.location.origin}/connect`,
+          }),
+        });
+
+        setAvailablePages(data.pages);
+
+        if (data.pages.length === 1) {
+          await connectSelectedPage(data.pages[0]);
+        }
+      } catch (requestError) {
+        setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط ماسنجر.");
+      } finally {
+        setConnecting(null);
+      }
+    },
+    [connectSelectedPage],
+  );
+
+  useEffect(() => {
+    if (!appId) {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    const state = params.get("state");
+    const oauthError = params.get("error_description") ?? params.get("error");
+
+    if (!code && !oauthError) {
+      return;
+    }
+
+    const cleanUrl = () => {
+      window.history.replaceState(null, "", window.location.pathname);
+    };
+
+    if (oauthError) {
+      setError(`تم إلغاء أو رفض ربط Meta: ${oauthError}`);
+      cleanUrl();
+      return;
+    }
+
+    if (!code) {
+      cleanUrl();
+      return;
+    }
+
+    const expectedState = window.sessionStorage.getItem(META_OAUTH_STATE_STORAGE_KEY);
+    window.sessionStorage.removeItem(META_OAUTH_STATE_STORAGE_KEY);
+
+    if (!expectedState || !state || expectedState !== state) {
+      setError("انتهت جلسة ربط Meta أو تغيّر رمز الحماية. اضغط ربط حساب Meta مرة أخرى.");
+      cleanUrl();
+      return;
+    }
+
+    void exchangeMetaCode(code).finally(cleanUrl);
+  }, [appId, exchangeMetaCode]);
+
+  const startMetaOAuthRedirect = useCallback(() => {
+    if (!appId) {
       setError("Meta Login غير جاهز في هذه البيئة. تأكد من وجود WHATSAPP_APP_ID أو NEXT_PUBLIC_META_APP_ID ثم حدّث الصفحة.");
+      return;
+    }
+
+    const state = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.sessionStorage.setItem(META_OAUTH_STATE_STORAGE_KEY, state);
+
+    const authUrl = new URL(`https://www.facebook.com/${apiVersion}/dialog/oauth`);
+    authUrl.search = new URLSearchParams({
+      auth_type: "rerequest",
+      client_id: appId,
+      redirect_uri: `${window.location.origin}/connect`,
+      response_type: "code",
+      scope: META_OAUTH_SCOPES,
+      state,
+    }).toString();
+
+    setError(null);
+    setConnecting("messenger");
+    window.location.assign(authUrl.toString());
+  }, [apiVersion, appId]);
+
+  const connectMessenger = useCallback(() => {
+    if (!window.FB || !sdkReady || !appId) {
+      startMetaOAuthRedirect();
       return;
     }
 
@@ -165,53 +291,21 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
             return;
           }
 
-          const data = await apiData<{ pages: MetaPage[] }>("/api/meta/oauth/exchange", {
-            method: "POST",
-            body: JSON.stringify({
-              code,
-              redirectUri: `${window.location.origin}/connect`,
-            }),
-          });
-
-          setAvailablePages(data.pages);
-
-          if (data.pages.length === 1) {
-            await connectSelectedPage(data.pages[0]);
-          }
-        } catch (requestError) {
-          setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط ماسنجر.");
+          await exchangeMetaCode(code);
+        } catch {
+          setError("فشل ربط ماسنجر.");
         } finally {
           setConnecting(null);
         }
       },
       {
-        scope:
-          "pages_show_list,pages_messaging,pages_manage_metadata,instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,pages_read_engagement",
+        auth_type: "rerequest",
+        scope: META_OAUTH_SCOPES,
         response_type: "code",
         override_default_response_type: true,
       },
     );
-  }
-
-  async function connectSelectedPage(page: MetaPage) {
-    setConnecting("messenger");
-    try {
-      await apiData("/api/meta/connect-page", {
-        method: "POST",
-        body: JSON.stringify({
-          pageId: page.id,
-          pageName: page.name,
-          pageAccessToken: page.access_token,
-          pagePicture: page.picture?.data?.url,
-        }),
-      });
-      await refreshConnections();
-    } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "فشل حفظ صفحة Facebook.");
-    } finally {
-      setConnecting(null);
-    }
-  }
+  }, [appId, exchangeMetaCode, sdkReady, startMetaOAuthRedirect]);
 
   async function connectInstagram(page: MetaPage) {
     if (!page.instagram_business_account?.id) {

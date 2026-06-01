@@ -102,9 +102,6 @@ describe("Meta permission aliases", () => {
       hasPermissionRequirements(["instagram_basic", "instagram_manage_messages", "pages_messaging"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS),
     ).toBe(true);
 
-    expect(missingPermissionLabels(["instagram_business_basic"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS)).toEqual([
-      "instagram_business_manage_messages",
-      "pages_messaging",
-    ]);
+    expect(missingPermissionLabels(["instagram_business_basic"], INSTAGRAM_DM_PERMISSION_REQUIREMENTS)).toEqual(["instagram_manage_messages", "pages_messaging"]);
   });
 });

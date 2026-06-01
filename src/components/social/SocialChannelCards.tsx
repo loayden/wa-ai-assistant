@@ -55,9 +55,9 @@ const META_OAUTH_SCOPES = [
   "pages_show_list",
   "pages_messaging",
   "pages_manage_metadata",
-  "instagram_business_basic",
-  "instagram_business_manage_messages",
-  "instagram_business_manage_comments",
+  "instagram_basic",
+  "instagram_manage_messages",
+  "instagram_manage_comments",
   "pages_read_engagement",
 ].join(",");
 
@@ -358,7 +358,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        للاختبار المجاني: الرسائل تعمل مع حسابات مضافة كـ Admin أو Tester في Meta App. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_business_manage_messages`.
+        للاختبار المجاني: الرسائل تعمل مع حسابات مضافة كـ Admin أو Tester في Meta App. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_manage_messages`.
       </div>
     </section>
   );

@@ -269,7 +269,7 @@ export function GeneralSettings() {
                     عند تعليق العميل بسؤال شراء مثل &quot;بكام؟&quot; أو &quot;متوفر؟&quot;، يرسل kallem رسالة خاصة ويسجل Lead.
                   </p>
                   <p className="mt-2 rounded-2xl bg-wa-blue-50 px-3 py-2 text-xs leading-5 text-wa-blue-800">
-                    يتطلب صلاحيات Meta: instagram_business_basic + pages_read_engagement + instagram_business_manage_comments.
+                    يتطلب صلاحيات Meta: instagram_basic + pages_read_engagement + instagram_manage_comments.
                   </p>
                 </div>
                 <Switch

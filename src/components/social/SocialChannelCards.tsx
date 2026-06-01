@@ -55,9 +55,6 @@ const META_OAUTH_SCOPES = [
   "pages_show_list",
   "pages_messaging",
   "pages_manage_metadata",
-  "instagram_basic",
-  "instagram_manage_messages",
-  "instagram_manage_comments",
   "pages_read_engagement",
 ].join(",");
 
@@ -273,7 +270,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">القنوات</p>
           <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط قنوات السوشيال</h2>
           <p className="mt-2 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            ابدأ بربط حساب Meta مرة واحدة لقراءة صفحات Facebook وحسابات Instagram Business المرتبطة بها، ثم تظهر المحادثات في نفس صندوق الرسائل.
+            ابدأ بربط حساب Meta مرة واحدة لقراءة صفحات Facebook وتشغيل Messenger. إنستجرام يحتاج موافقة Meta منفصلة قبل تفعيله للعموم.
           </p>
         </div>
         {loadingConnections ? <Loader2 className="size-5 animate-spin text-wa-blue-600" aria-hidden="true" /> : null}
@@ -313,10 +310,10 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           icon={<InstagramIcon className="size-6" />}
           title="إنستجرام"
           description="استقبل ورد على Instagram DMs من نفس الصندوق."
-          status={statusLabel(instagramConnection)}
+          status={instagramConnection ? statusLabel(instagramConnection) : "يتطلب موافقة Meta"}
           statusClassName={statusClass(instagramConnection)}
-          actionDisabled={connecting === "instagram" || !canConnectInstagram}
-          actionLabel={instagramConnection ? "تحديث إنستجرام" : canConnectInstagram ? "ربط إنستجرام" : "ابدأ بربط Meta"}
+          actionDisabled={connecting === "instagram" || !canConnectInstagram || !instagramConnection}
+          actionLabel={instagramConnection ? "تحديث إنستجرام" : "بانتظار موافقة Meta"}
           onAction={() => {
             const page = availablePages.find((item) => item.id === messengerConnection?.facebookPageId);
             if (page) {
@@ -328,7 +325,11 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         >
           {!messengerConnection ? (
             <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-              اربط حساب Meta/صفحة Facebook أولاً حتى نقرأ حساب Instagram Business المرتبط بها.
+              اربط حساب Meta/صفحة Facebook أولاً. بعد موافقة Meta على صلاحيات إنستجرام سنفعّل الربط من هنا بدون API token.
+            </p>
+          ) : !instagramConnection ? (
+            <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
+              Messenger جاهز من نفس ربط Meta. إنستجرام يحتاج App Review لصلاحيات instagram_manage_messages قبل استخدامه مع العملاء.
             </p>
           ) : instagramMissing.length > 0 && instagramConnection ? (
             <MissingPermissions permissions={instagramMissing} />
@@ -358,7 +359,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        للاختبار المجاني: الرسائل تعمل مع حسابات مضافة كـ Admin أو Tester في Meta App. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_manage_messages`.
+        العميل لا يكتب API tokens داخل Kallem. زر ربط Meta يطلب الصلاحيات ويحفظ Page token بشكل مشفر. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_manage_messages`.
       </div>
     </section>
   );

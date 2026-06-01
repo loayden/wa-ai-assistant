@@ -269,8 +269,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     }).toString();
 
     setError(null);
-    setConnecting("messenger");
-    window.location.assign(authUrl.toString());
+    window.location.href = authUrl.toString();
   }, [apiVersion, appId]);
 
   const connectMessenger = useCallback(() => {

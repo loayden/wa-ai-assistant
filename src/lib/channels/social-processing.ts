@@ -145,15 +145,15 @@ async function notifyOwner(params: {
 function describeSocialAiFailure(error: unknown): string {
   if (error instanceof AIReplyError) {
     if (error.code === "OPENAI_RATE_LIMIT") {
-      return "لم يتم إرسال الرد لأن رصيد أو حد مزود الذكاء الاصطناعي انتهى.";
+      return "لم يتم إرسال الرد لأن المساعد غير متاح مؤقتاً.";
     }
 
     if (error.code === "OPENAI_TIMEOUT") {
-      return "لم يتم إرسال الرد لأن مزود الذكاء الاصطناعي تأخر في الاستجابة.";
+      return "لم يتم إرسال الرد لأن المساعد تأخر في الاستجابة.";
     }
   }
 
-  return "وصلت الرسالة لكن الرد التلقائي على قناة Meta لم يكتمل. راجع صلاحيات Meta ورصيد OpenAI.";
+  return "وصلت الرسالة لكن الرد التلقائي على قناة Meta لم يكتمل. راجع صلاحيات القناة أو تواصل مع الدعم.";
 }
 
 function intentTag(intent: SocialIntent) {

@@ -11,10 +11,12 @@ import { CheckCircle2, Package, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { cn } from "@/lib/utils";
 
 type Product = {
@@ -57,6 +59,8 @@ const emptyForm: ProductForm = {
   isAvailable: true,
 };
 
+type ProductFormErrors = Partial<Record<keyof ProductForm, string>>;
+
 function formatPrice(value: number) {
   return new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(value);
 }
@@ -72,9 +76,25 @@ function buildPayload(form: ProductForm) {
   };
 }
 
+function validateProductForm(form: ProductForm): ProductFormErrors {
+  const errors: ProductFormErrors = {};
+  const price = Number(form.priceEGP);
+
+  if (!form.name.trim()) {
+    errors.name = "اكتب اسم المنتج.";
+  }
+
+  if (!form.priceEGP.trim() || !Number.isFinite(price) || price <= 0) {
+    errors.priceEGP = "اكتب سعراً صحيحاً أكبر من صفر.";
+  }
+
+  return errors;
+}
+
 export function ProductsPageClient() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [formErrors, setFormErrors] = useState<ProductFormErrors>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const productsQuery = useQuery({
     queryKey: ["products"],
@@ -100,13 +120,14 @@ export function ProductsPageClient() {
     },
     onSuccess: () => {
       setForm(emptyForm);
+      setFormErrors({});
       setEditingId(null);
       toast.success("تم حفظ المنتج");
       void queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error) => {
       toast.error("تعذر حفظ المنتج", {
-        description: error instanceof Error ? error.message : "حاول مرة أخرى.",
+        description: translateError(error, "حاول مرة أخرى."),
       });
     },
   });
@@ -116,20 +137,31 @@ export function ProductsPageClient() {
       toast.success("تم حذف المنتج");
       void queryClient.invalidateQueries({ queryKey: ["products"] });
     },
+    onError: (error) => {
+      toast.error("تعذر حذف المنتج", {
+        description: translateError(error, "حاول مرة أخرى."),
+      });
+    },
   });
   const availabilityMutation = useMutation({
     mutationFn: ({ isAvailable, productId }: { productId: string; isAvailable: boolean }) =>
       apiData<ProductMutationResponse>(`/api/products/${productId}`, {
         method: "PATCH",
         body: JSON.stringify({ isAvailable }),
-      }),
+    }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      toast.error("تعذر تحديث حالة المنتج", {
+        description: translateError(error, "حاول مرة أخرى."),
+      });
     },
   });
 
   function updateForm<Key extends keyof ProductForm>(key: Key, value: ProductForm[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
+    setFormErrors((current) => ({ ...current, [key]: undefined }));
   }
 
   function startEdit(product: Product) {
@@ -165,9 +197,17 @@ export function ProductsPageClient() {
 
       <section className="grid gap-5 lg:grid-cols-[380px_minmax(0,1fr)]">
         <form
+          noValidate
           className="rounded-[24px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5"
           onSubmit={(event) => {
             event.preventDefault();
+            const errors = validateProductForm(form);
+
+            if (Object.keys(errors).length > 0) {
+              setFormErrors(errors);
+              return;
+            }
+
             saveMutation.mutate(form);
           }}
         >
@@ -183,20 +223,29 @@ export function ProductsPageClient() {
           <div className="mt-5 space-y-4">
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">اسم المنتج</span>
-              <Input value={form.name} onChange={(event) => updateForm("name", event.target.value)} placeholder="مثال: وجبة شاورما كبيرة" required />
+              <Input
+                aria-invalid={Boolean(formErrors.name)}
+                hasError={Boolean(formErrors.name)}
+                value={form.name}
+                onChange={(event) => updateForm("name", event.target.value)}
+                placeholder="مثال: وجبة شاورما كبيرة"
+              />
+              <FieldError>{formErrors.name}</FieldError>
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="space-y-2">
                 <span className="text-body-sm font-semibold text-wa-gray-800">السعر بالجنيه</span>
                 <Input
+                  aria-invalid={Boolean(formErrors.priceEGP)}
+                  hasError={Boolean(formErrors.priceEGP)}
                   inputMode="decimal"
                   min="1"
                   type="number"
                   value={form.priceEGP}
                   onChange={(event) => updateForm("priceEGP", event.target.value)}
                   placeholder="120"
-                  required
                 />
+                <FieldError>{formErrors.priceEGP}</FieldError>
               </label>
               <label className="space-y-2">
                 <span className="text-body-sm font-semibold text-wa-gray-800">الفئة</span>
@@ -237,6 +286,7 @@ export function ProductsPageClient() {
                   onClick={() => {
                     setEditingId(null);
                     setForm(emptyForm);
+                    setFormErrors({});
                   }}
                 >
                   إلغاء
@@ -302,8 +352,9 @@ export function ProductsPageClient() {
                             >
                               {product.isAvailable ? "إيقاف" : "تشغيل"}
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => deleteMutation.mutate(product.id)}>
+                            <Button size="sm" variant="outline" aria-label={`حذف ${product.name}`} onClick={() => deleteMutation.mutate(product.id)}>
                               <Trash2 className="size-4" aria-hidden="true" />
+                              <span className="sr-only">حذف {product.name}</span>
                             </Button>
                           </div>
                         </div>

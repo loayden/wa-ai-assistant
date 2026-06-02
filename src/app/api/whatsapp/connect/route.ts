@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       );
 
       if (!businessPhone) {
-        return jsonError("Phone Number ID لا يتبع Business Account ID الذي أدخلته.", 400);
+        return jsonError("معرّف رقم واتساب لا يتبع حساب واتساب التجاري الذي أدخلته.", 400);
       }
 
       await subscribeAppToBusinessAccount(parsed.data.businessAccountId, parsed.data.accessToken);
@@ -187,7 +187,7 @@ export async function POST(request: Request) {
 
     if (error instanceof EmbeddedSignupError) {
       return jsonError(
-        "تعذر التحقق من بيانات Meta. راجع Phone Number ID وBusiness Account ID وAccess Token وصلاحيات التطبيق داخل Meta.",
+        "تعذر التحقق من بيانات Meta. راجع معرّفات واتساب ورمز الربط وصلاحيات التطبيق داخل Meta، أو افتح تذكرة دعم.",
         502,
       );
     }

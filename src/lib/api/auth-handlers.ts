@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ensureAppUser, requireAuthenticatedUser, UnauthorizedError } from "@/lib/api/auth";
 import { resolveSignupRedirectUrl } from "@/lib/auth/redirect-url";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
+import { translateError } from "@/lib/errors/translateError";
 import { logger } from "@/lib/utils/logger";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { appEnv } from "@/lib/utils/env";
@@ -104,7 +105,7 @@ function enforceAuthRateLimit(request: Request, action: AuthAction, body: unknow
     return null;
   }
 
-  return jsonError("Too many authentication attempts. Please retry later.", 429, {
+  return jsonError("محاولات كثيرة لتسجيل الدخول. حاول مرة أخرى بعد قليل.", 429, {
     retryAfterSeconds: rateLimit.retryAfterSeconds,
     resetAt: rateLimit.resetAt.toISOString(),
   });
@@ -115,7 +116,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
   const action = resolveAction(pathAction, body);
 
   if (!action) {
-    return jsonError("Auth action must be one of login, signup, or logout.", 422);
+    return jsonError("إجراء المصادقة غير صحيح.", 422);
   }
 
   const rateLimitResponse = enforceAuthRateLimit(request, action, body);
@@ -156,7 +157,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
        * Detect that shape before syncing Prisma to avoid surfacing a 500.
        */
       if (isObfuscatedExistingUserResponse(data)) {
-        return jsonError("An account with this email already exists. Please log in.", 409);
+        return jsonError("يوجد حساب بهذا البريد بالفعل. سجّل الدخول بدلاً من إنشاء حساب جديد.", 409);
       }
 
       if (data.user) {
@@ -179,7 +180,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
       const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
 
       if (error || !data.user) {
-        return jsonError(error?.message ?? "Invalid login credentials.", 401);
+        return jsonError(translateError(error?.message, "البريد الإلكتروني أو كلمة المرور غير صحيحة."), 401);
       }
 
       const user = await ensureAppUser(data.user);
@@ -214,6 +215,6 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
     }
 
     logger.error("api.auth", "Auth route failed.", { error, action });
-    return jsonError("Auth request failed.", 500);
+    return jsonError("تعذر إكمال طلب تسجيل الدخول. حاول مرة أخرى.", 500);
   }
 }

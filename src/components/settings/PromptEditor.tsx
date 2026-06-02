@@ -25,10 +25,17 @@ type PromptEditorProps = {
   onChange: (value: string) => void;
 };
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  ar: "العربية",
+  en: "الإنجليزية",
+  fr: "الفرنسية",
+  es: "الإسبانية",
+};
+
 function interpolatePrompt(value: string, businessName: string, language: string, maxReplyLength: number) {
   return value
     .replaceAll("{businessName}", businessName || "نشاطك")
-    .replaceAll("{language}", language || "ar")
+    .replaceAll("{language}", (LANGUAGE_NAMES[language] ?? language) || "العربية")
     .replaceAll("{maxReplyLength}", String(maxReplyLength || 300));
 }
 
@@ -36,35 +43,40 @@ export function PromptEditor({ value, canEditCustomPrompt, businessName, languag
   const characterCount = value.length;
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <Label htmlFor="systemPrompt">تعليمات المساعد</Label>
-        <span className="text-xs text-muted-foreground">{characterCount.toLocaleString("ar-EG")}/٢٠٠٠ حرف</span>
+    <details className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+      <summary className="cursor-pointer text-body-sm font-semibold text-wa-gray-900">
+        تعليمات متقدمة للمساعد
+      </summary>
+      <div className="mt-4 space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <Label htmlFor="systemPrompt">نص التعليمات</Label>
+          <span className="text-xs text-muted-foreground">{characterCount.toLocaleString("ar-EG")}/٢٠٠٠ حرف</span>
+        </div>
+        {!canEditCustomPrompt ? (
+          <Alert>
+            <Lock className="size-4" aria-hidden="true" />
+            <AlertTitle>تعديل التعليمات المتقدمة متاح في Pro و Business</AlertTitle>
+            <AlertDescription>
+              <Link href="/billing" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
+                ترقية الخطة
+              </Link>{" "}
+              لتخصيص سلوك المساعد بشكل أعمق.
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        <Textarea
+          id="systemPrompt"
+          disabled={!canEditCustomPrompt}
+          rows={8}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        {error ? <p className="text-sm text-destructive">{error}</p> : null}
+        <div className="rounded-lg border bg-white p-4">
+          <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">معاينة</p>
+          <p className="whitespace-pre-wrap text-sm leading-6">{interpolatePrompt(value, businessName, language, maxReplyLength)}</p>
+        </div>
       </div>
-      {!canEditCustomPrompt ? (
-        <Alert>
-          <Lock className="size-4" aria-hidden="true" />
-          <AlertTitle>تعديل التعليمات المتقدمة متاح في Pro و Business</AlertTitle>
-          <AlertDescription>
-            <Link href="/billing" className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}>
-              ترقية الخطة
-            </Link>{" "}
-            لتخصيص سلوك المساعد بشكل أعمق.
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      <Textarea
-        id="systemPrompt"
-        disabled={!canEditCustomPrompt}
-        rows={8}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-      <div className="rounded-lg border bg-muted/30 p-4">
-        <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">معاينة</p>
-        <p className="whitespace-pre-wrap text-sm leading-6">{interpolatePrompt(value, businessName, language, maxReplyLength)}</p>
-      </div>
-    </div>
+    </details>
   );
 }

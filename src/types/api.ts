@@ -198,6 +198,7 @@ export type DeleteKnowledgeEntryResponse = {
 
 export type AssistantTestResponse = GenerateAiReplyResponse & {
   onboardingCompleted: boolean;
+  systemNotice?: boolean;
 };
 
 export type OnboardingUpdateResponse = {

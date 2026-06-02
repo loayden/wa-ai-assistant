@@ -6,7 +6,7 @@
  * Decision: The new shell uses a compact fixed top bar so the AI control, not
  * navigation chrome, remains the dominant dashboard element.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -82,6 +82,11 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const desktopPrimaryItems = navItems.filter((item) => desktopPrimaryHrefs.has(item.href) || (isAdmin && item.href === "/admin"));
   const desktopMoreItems = navItems.filter((item) => !desktopPrimaryItems.some((primaryItem) => primaryItem.href === item.href));
   const moreActive = desktopMoreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+
+  useEffect(() => {
+    setMenuOpen(false);
+    setProfileOpen(false);
+  }, [pathname]);
 
   function handleBilling() {
     if (onBilling) {

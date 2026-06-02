@@ -238,7 +238,7 @@ export function DashboardPageClient({
                 الردود الشهرية
               </p>
               <p className="mt-1 text-body font-semibold text-wa-gray-900">
-                استخدمت {user.monthlyReplyCount.toLocaleString()} من {planLimit.toLocaleString()} رد هذا الشهر.
+                استخدمت {user.monthlyReplyCount.toLocaleString("ar-EG")} من {planLimit.toLocaleString("ar-EG")} رد هذا الشهر.
               </p>
               <div className="mt-3 h-2 max-w-[520px] overflow-hidden rounded-full bg-wa-gray-100">
                 <div
@@ -386,7 +386,7 @@ export function DashboardPageClient({
               <div>
                 <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">استهلاك الردود</p>
                 <p className="mt-1 text-h3 font-semibold text-wa-gray-900">
-                  {user.monthlyReplyCount.toLocaleString()} / {planLimit.toLocaleString()}
+                  {user.monthlyReplyCount.toLocaleString("ar-EG")} / {planLimit.toLocaleString("ar-EG")}
                 </p>
               </div>
               <CreditCard className="size-5 text-wa-blue-600" aria-hidden="true" />

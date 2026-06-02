@@ -5,7 +5,6 @@
  * assistant toggle and conversation surfaces stay visually primary.
  */
 import { TopBar } from "@/components/shared/TopBar";
-import { AppFooter } from "@/components/shared/AppFooter";
 import { ensureAppUser } from "@/lib/api/auth";
 import { getUser } from "@/lib/supabase/server";
 
@@ -30,7 +29,6 @@ export default async function DashboardLayout({
       <main className="min-h-screen bg-wa-gray-50 pb-24 pt-14 md:pb-10 md:pt-16">
         {children}
       </main>
-      <AppFooter compact className="pb-24 md:pb-0" />
     </div>
   );
 }

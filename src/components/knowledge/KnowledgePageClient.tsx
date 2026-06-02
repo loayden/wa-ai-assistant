@@ -8,7 +8,7 @@
  */
 import { useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { ArrowRight, BookOpen, Bot, CheckCircle2, Clock3, HelpCircle, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowRight, BookOpen, Bot, CheckCircle2, Clock3, HelpCircle, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { cn } from "@/lib/utils";
 import type {
   AssistantTestResponse,
@@ -63,6 +64,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   const [editingFaqId, setEditingFaqId] = useState<string | null>(null);
   const [testMessage, setTestMessage] = useState("");
   const [testReply, setTestReply] = useState<string | null>(null);
+  const [testReplyIsSystemNotice, setTestReplyIsSystemNotice] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
 
   const businessInfoEntry = useMemo(() => entries.find((entry) => entry.type === "text") ?? null, [entries]);
@@ -100,7 +102,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       });
     } catch (error) {
       toast.error("لم يتم حفظ معلومات النشاط", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setIsSavingInfo(false);
@@ -127,7 +129,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       });
     } catch (error) {
       toast.error("لم تتم إضافة السؤال", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setIsAddingFaq(false);
@@ -148,7 +150,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       toast.success("تم تحديث السؤال");
     } catch (error) {
       toast.error("لم يتم تحديث السؤال", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     }
   }
@@ -162,7 +164,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       toast.success("تم حذف السؤال");
     } catch (error) {
       toast.error("لم يتم حذف السؤال", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     }
   }
@@ -183,7 +185,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       toast.success("تم حفظ ساعات العمل");
     } catch (error) {
       toast.error("لم يتم حفظ ساعات العمل", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setIsSavingHours(false);
@@ -193,6 +195,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   async function testAssistant() {
     setIsTesting(true);
     setTestReply(null);
+    setTestReplyIsSystemNotice(false);
 
     try {
       const response = await apiData<AssistantTestResponse>("/api/assistant/test", {
@@ -200,16 +203,16 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         body: JSON.stringify({ message: testMessage }),
       });
       setTestReply(response.replyText);
+      setTestReplyIsSystemNotice(Boolean(response.systemNotice));
 
-      if (response.onboardingCompleted) {
+      if (response.onboardingCompleted && !response.systemNotice) {
         toast.success("تم اختبار المساعد", {
           description: "اكتمل دليل الإعداد الأولي.",
         });
       }
     } catch (error) {
-      toast.error("فشل اختبار المساعد", {
-        description: error instanceof Error ? error.message : "راجعي إعدادات الذكاء الاصطناعي ثم حاولي مرة أخرى.",
-      });
+      setTestReply(translateError(error, "المساعد غير متاح الآن. جرّب مرة أخرى بعد قليل."));
+      setTestReplyIsSystemNotice(true);
     } finally {
       setIsTesting(false);
     }
@@ -397,8 +400,23 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
               </Button>
             </div>
             {testReply ? (
-              <div className="mt-4 rounded-[20px] border border-wa-success-bg bg-wa-success-bg/60 p-4">
-                <p className="text-label font-semibold uppercase tracking-widest text-wa-success">رد المساعد</p>
+              <div
+                className={cn(
+                  "mt-4 rounded-[20px] border p-4",
+                  testReplyIsSystemNotice
+                    ? "border-wa-gray-100 bg-wa-gray-50"
+                    : "border-wa-success-bg bg-wa-success-bg/60",
+                )}
+              >
+                <p
+                  className={cn(
+                    "flex items-center gap-2 text-label font-semibold uppercase tracking-widest",
+                    testReplyIsSystemNotice ? "text-wa-gray-600" : "text-wa-success",
+                  )}
+                >
+                  {testReplyIsSystemNotice ? <AlertCircle className="size-4" aria-hidden="true" /> : null}
+                  {testReplyIsSystemNotice ? "رسالة نظام" : "رد المساعد"}
+                </p>
                 <p className="mt-2 whitespace-pre-wrap text-body-sm leading-6 text-wa-gray-800">{testReply}</p>
               </div>
             ) : null}

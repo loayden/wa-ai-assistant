@@ -29,6 +29,7 @@ import {
   type WorkingDayKey,
 } from "@/lib/assistant/working-hours";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/notifications/preferences";
+import { translateError } from "@/lib/errors/translateError";
 import { DEFAULT_SYSTEM_PROMPT } from "@/lib/utils/constants";
 import { strictZodResolver } from "@/lib/validators/resolver";
 import { updateSettingsSchema, type UpdateSettingsInput } from "@/lib/validators/settings";
@@ -125,14 +126,14 @@ export function GeneralSettings() {
   }, [form, settingsResult.settings]);
 
   if (settingsResult.isLoading) {
-    return <Skeleton className="h-[560px] w-full" />;
+    return <SettingsLoadingSkeleton />;
   }
 
   if (settingsResult.error) {
     return (
       <Alert>
         <AlertTitle>الإعدادات غير متاحة</AlertTitle>
-        <AlertDescription>{settingsResult.error.message}</AlertDescription>
+        <AlertDescription>{translateError(settingsResult.error)}</AlertDescription>
       </Alert>
     );
   }
@@ -148,7 +149,7 @@ export function GeneralSettings() {
 
   const canEditCustomPrompt = settingsResult.user.planTier !== "FREE";
   const businessName = String(form.watch("businessName") ?? "");
-  const language = String(form.watch("language") ?? "en");
+  const language = String(form.watch("language") ?? "ar");
   const maxReplyLength = Number(form.watch("maxReplyLength") ?? 300);
   const systemPrompt = String(form.watch("systemPrompt") ?? DEFAULT_SYSTEM_PROMPT);
   const autoReplyEnabled = Boolean(form.watch("autoReplyEnabled"));
@@ -269,7 +270,7 @@ export function GeneralSettings() {
                     عند تعليق العميل بسؤال شراء مثل &quot;بكام؟&quot; أو &quot;متوفر؟&quot;، يرسل kallem رسالة خاصة ويسجل Lead.
                   </p>
                   <p className="mt-2 rounded-2xl bg-wa-blue-50 px-3 py-2 text-xs leading-5 text-wa-blue-800">
-                    يتطلب صلاحيات Meta: instagram_basic + pages_read_engagement + instagram_manage_comments.
+                    تحتاج هذه الميزة موافقة Meta قبل تشغيلها لكل العملاء. سنعرض حالتها من صفحة القنوات.
                   </p>
                 </div>
                 <Switch
@@ -426,7 +427,7 @@ export function GeneralSettings() {
                   ["angry", "عميل غاضب أو يحتاج اهتمام"] as const,
                   ["lead", "عميل محتمل جديد"] as const,
                   ["handoff", "طلب تدخل بشري"] as const,
-                  ["ai_failed", "فشل رد AI"] as const,
+                  ["ai_failed", "تعطل الرد التلقائي"] as const,
                   ["daily_summary", "ملخص يومي الساعة 9 صباحاً"] as const,
                   ["weekly_report", "تقرير أسبوعي كل يوم أحد"] as const,
                 ].map(([key, label]) => (
@@ -456,7 +457,7 @@ export function GeneralSettings() {
           {updateMutation.isError ? (
             <Alert>
               <AlertTitle>لم يتم حفظ الإعدادات</AlertTitle>
-              <AlertDescription>{updateMutation.error.message}</AlertDescription>
+              <AlertDescription>{translateError(updateMutation.error)}</AlertDescription>
             </Alert>
           ) : null}
           {updateMutation.isSuccess ? (
@@ -471,5 +472,47 @@ export function GeneralSettings() {
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+function SettingsLoadingSkeleton() {
+  return (
+    <div className="space-y-5" aria-busy="true" aria-label="جارٍ تحميل الإعدادات">
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-7 w-44" />
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 rounded-lg sm:h-14" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-12 rounded-lg sm:h-14" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-28 rounded-lg" />
+          </div>
+          <div className="rounded-lg border p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-56 max-w-full" />
+              </div>
+              <Skeleton className="h-8 w-14 rounded-full" />
+            </div>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-40 rounded-2xl" />
+          </div>
+          <Skeleton className="h-12 w-36 rounded-xl" />
+        </CardContent>
+      </Card>
+    </div>
   );
 }

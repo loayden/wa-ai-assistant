@@ -111,7 +111,7 @@ export async function GET(request: Request) {
         "passed",
         phoneProfile.display_phone_number
           ? `أرجعت Meta الرقم ${phoneProfile.display_phone_number}${phoneProfile.verified_name ? ` (${phoneProfile.verified_name})` : ""}.`
-          : "أكدت Meta صحة Phone Number ID.",
+          : "أكدت Meta صحة معرّف رقم واتساب.",
       ),
     );
 
@@ -134,7 +134,7 @@ export async function GET(request: Request) {
           "business-account",
           "ملكية حساب واتساب التجاري",
           "failed",
-          "لم يتم العثور على Phone Number ID داخل WhatsApp Business Account ID المحفوظ.",
+          "لم يتم العثور على معرّف رقم واتساب داخل حساب واتساب التجاري المحفوظ.",
         ),
       );
 

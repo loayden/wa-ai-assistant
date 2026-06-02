@@ -8,6 +8,7 @@ import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/api/response";
 import { createPaymobCheckoutSession, PaymobConfigurationError, PaymobRequestError } from "@/lib/paymob/client";
+import { detectPaymobMode } from "@/lib/paymob/mode";
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
 import { createCheckoutSchema } from "@/lib/validators/billing";
@@ -22,11 +23,17 @@ export async function POST(request: Request) {
     const parsed = createCheckoutSchema.safeParse(body);
 
     if (!parsed.success) {
-      return jsonError("A valid paid plan is required for checkout.", 422);
+      return jsonError("اختر خطة مدفوعة صحيحة قبل فتح الدفع.", 422);
     }
 
     if (user.planTier === parsed.data.planTier) {
-      return jsonError("You are already on this plan.", 409);
+      return jsonError("هذه الخطة مفعلة بالفعل.", 409);
+    }
+
+    const paymobMode = detectPaymobMode();
+
+    if (paymobMode !== "live") {
+      return jsonError("الدفع غير متاح الآن. سيتم تفعيله بعد ربط Paymob بوضع الإنتاج.", 503, { paymobMode });
     }
 
     const session = await createPaymobCheckoutSession({

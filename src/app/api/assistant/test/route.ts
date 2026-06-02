@@ -8,6 +8,7 @@ import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { getOrCreateUserSettings } from "@/lib/api/settings";
+import { getAIErrorMessage, logAIError } from "@/lib/ai/handleAIError";
 import { AIReplyError, generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
 import { logger } from "@/lib/utils/logger";
@@ -89,20 +90,14 @@ export async function POST(request: Request) {
     }
 
     if (error instanceof AIReplyError) {
-      if (error.code === "OPENAI_RATE_LIMIT") {
-        return jsonError(
-          "رصيد OpenAI غير كافٍ أو تم تجاوز حد الاستخدام. أضيفي رصيدًا أو فعّلي Billing في OpenAI ثم جرّبي مرة أخرى.",
-          503,
-          { code: error.code },
-        );
-      }
+      logAIError("api.assistant.test", error);
 
-      if (error.code === "OPENAI_TIMEOUT") {
-        return jsonError("اتصال OpenAI استغرق وقتًا طويلًا. انتظري دقيقة ثم جرّبي مرة أخرى.", 504, { code: error.code });
-      }
-
-      return jsonError("تعذر تشغيل اختبار المساعد من OpenAI الآن. راجعي مفتاح OpenAI والرصيد ثم حاولي مرة أخرى.", 503, {
-        code: error.code,
+      return jsonSuccess({
+        replyText: getAIErrorMessage(error),
+        modelUsed: "system-notice",
+        tokensUsed: 0,
+        onboardingCompleted: false,
+        systemNotice: true,
       });
     }
 

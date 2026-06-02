@@ -86,7 +86,7 @@ export function SetupFlow({
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
             <p className="text-body-sm font-semibold text-wa-blue-600">طريقة الربط المضمونة الآن</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700">
-              الربط بضغطة واحدة من Meta يحتاج حساب BSP أو Tech Provider. إلى أن يتاح ذلك، هذا المسار اليدوي هو المسار الآمن للإنتاج.
+              الربط بضغطة واحدة من Meta يحتاج اعتماداً إضافياً من Meta. إلى أن يتاح ذلك، نستخدم مساراً يدوياً آمناً ويمكن لفريق الدعم مساعدتك فيه.
             </p>
             <div className="mt-4 grid gap-2">
               {["الأرقام الإنتاجية ترد على العملاء الحقيقيين", "يتم التحقق قبل الحفظ", "يتم التشفير بعد نجاح التحقق"].map((item) => (
@@ -191,9 +191,9 @@ export function SetupFlow({
                 <p className="text-body-sm font-semibold text-wa-gray-900">ما الذي يحتاجه النشاط؟</p>
                 <div className="mt-3 space-y-3">
                   {[
-                    "صلاحية الوصول إلى تطبيق Meta الذي يملك رقم واتساب.",
-                    "Phone Number ID و WhatsApp Business Account ID من Meta.",
-                    "Access Token بصلاحيات واتساب للأعمال.",
+                    "صلاحية الوصول إلى Meta Business الذي يملك رقم واتساب.",
+                    "معرّف رقم واتساب ومعرّف حساب الأعمال من Meta.",
+                    "رمز ربط من Meta بصلاحيات واتساب للأعمال.",
                     "للعملاء الحقيقيين: رقم واتساب إنتاجي، وليس رقم Meta التجريبي +1 555.",
                   ].map((item) => (
                     <p key={item} className="flex gap-2 text-body-sm leading-6 text-wa-gray-600">

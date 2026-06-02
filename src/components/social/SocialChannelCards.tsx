@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, Loader2, Lock } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2, Lock } from "lucide-react";
 
 import { ChannelIcon, InstagramIcon, MessengerIcon, WhatsAppIcon } from "@/components/icons/ChannelIcons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiData, ApiClientError } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, MESSENGER_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
 import { cn } from "@/lib/utils";
 
@@ -185,9 +186,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     };
 
     if (oauthError) {
-      setError(`تم إلغاء أو رفض ربط Meta: ${oauthError}`);
-      cleanUrl();
-      return;
+        setError(translateError(oauthError, "تم إلغاء أو رفض ربط Meta. اضغط ربط حساب Meta مرة أخرى."));
+        cleanUrl();
+        return;
     }
 
     if (!code) {
@@ -209,7 +210,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
 
   const startMetaOAuthRedirect = useCallback(() => {
     if (!appId) {
-      setError("Meta Login غير جاهز في هذه البيئة. تأكد من وجود WHATSAPP_APP_ID أو NEXT_PUBLIC_META_APP_ID ثم حدّث الصفحة.");
+      setError("ربط Meta غير جاهز الآن. تواصل مع الدعم لتفعيل الربط.");
       return;
     }
 
@@ -310,9 +311,10 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           icon={<InstagramIcon className="size-6" />}
           title="إنستجرام"
           description="استقبل ورد على Instagram DMs من نفس الصندوق."
-          status={instagramConnection ? statusLabel(instagramConnection) : "يتطلب موافقة Meta"}
-          statusClassName={statusClass(instagramConnection)}
+          status={instagramConnection ? statusLabel(instagramConnection) : "قريباً"}
+          statusClassName={instagramConnection ? statusClass(instagramConnection) : "bg-wa-warning-bg text-wa-warning"}
           actionDisabled={connecting === "instagram" || !canConnectInstagram || !instagramConnection}
+          actionHidden={!instagramConnection}
           actionLabel={instagramConnection ? "تحديث إنستجرام" : "بانتظار موافقة Meta"}
           onAction={() => {
             const page = availablePages.find((item) => item.id === messengerConnection?.facebookPageId);
@@ -325,12 +327,18 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         >
           {!messengerConnection ? (
             <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-              اربط حساب Meta/صفحة Facebook أولاً. بعد موافقة Meta على صلاحيات إنستجرام سنفعّل الربط من هنا بدون API token.
+              اربط حساب Meta/صفحة Facebook أولاً. بعد موافقة Meta على رسائل إنستجرام سنفعّل الربط من هنا.
             </p>
           ) : !instagramConnection ? (
-            <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-              Messenger جاهز من نفس ربط Meta. إنستجرام يحتاج App Review لصلاحيات instagram_manage_messages قبل استخدامه مع العملاء.
-            </p>
+            <div className="mt-3 rounded-2xl border border-wa-warning-bg bg-white px-3 py-2 text-body-sm leading-6 text-wa-warning">
+              <p className="flex items-center gap-2 font-semibold">
+                <AlertTriangle className="size-4" aria-hidden="true" />
+                قيد مراجعة Meta
+              </p>
+              <p className="mt-1 text-wa-gray-700">
+                ماسنجر جاهز من نفس ربط Meta. رسائل إنستجرام تحتاج موافقة Meta قبل استخدامها مع العملاء الحقيقيين.
+              </p>
+            </div>
           ) : instagramMissing.length > 0 && instagramConnection ? (
             <MissingPermissions permissions={instagramMissing} />
           ) : null}
@@ -359,7 +367,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        العميل لا يكتب API tokens داخل Kallem. زر ربط Meta يطلب الصلاحيات ويحفظ Page token بشكل مشفر. للعموم، Meta قد تطلب App Review لصلاحيات `pages_messaging` و`instagram_manage_messages`.
+        ربط Meta يتم من زر واحد. قد تطلب Meta مراجعة التطبيق قبل فتح Messenger أو Instagram لكل العملاء.
       </div>
     </section>
   );
@@ -367,6 +375,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
 
 function ChannelCard({
   actionDisabled,
+  actionHidden = false,
   actionHref,
   actionLabel,
   children,
@@ -378,6 +387,7 @@ function ChannelCard({
   title,
 }: {
   actionDisabled?: boolean;
+  actionHidden?: boolean;
   actionHref?: string;
   actionLabel: string;
   children?: ReactNode;
@@ -406,7 +416,7 @@ function ChannelCard({
         </div>
       </div>
       {children}
-      {actionHref ? (
+      {actionHidden ? null : actionHref ? (
         <a className={actionClassName} href={actionHref}>
           {actionLabel}
         </a>
@@ -421,12 +431,21 @@ function ChannelCard({
 }
 
 function MissingPermissions({ permissions }: { permissions: string[] }) {
+  const friendlyLabels: Record<string, string> = {
+    instagram_basic: "قراءة حساب Instagram Business",
+    instagram_manage_comments: "إدارة تعليقات Instagram",
+    instagram_manage_messages: "إرسال واستقبال رسائل Instagram",
+    pages_manage_metadata: "إدارة إعدادات صفحة Facebook",
+    pages_messaging: "إرسال واستقبال رسائل الصفحة",
+    pages_read_engagement: "قراءة تفاعل الصفحة",
+  };
+
   return (
     <div className="mt-3 rounded-2xl border border-wa-warning-bg bg-white px-3 py-2 text-body-sm text-wa-warning">
       <p className="font-semibold">صلاحيات ناقصة:</p>
       <ul className="mt-1 list-inside list-disc">
         {permissions.map((permission) => (
-          <li key={permission}>{permission}</li>
+          <li key={permission}>{friendlyLabels[permission] ?? permission}</li>
         ))}
       </ul>
     </div>

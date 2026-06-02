@@ -6,7 +6,7 @@
  * Decision: Advanced content appears in a bottom sheet so the command center
  * keeps one primary action while preserving access to secondary controls.
  */
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { X } from "lucide-react";
 
@@ -24,6 +24,28 @@ export interface BottomSheetProps {
 export function BottomSheet({ children, className, onClose, open, title }: BottomSheetProps) {
   const reduceMotion = useReducedMotion();
 
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose, open]);
+
   if (!open) {
     return null;
   }
@@ -31,6 +53,7 @@ export function BottomSheet({ children, className, onClose, open, title }: Botto
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title ?? "لوحة خيارات"}>
       <motion.button
+        type="button"
         className="absolute inset-0 bg-black/30"
         aria-label="إغلاق اللوحة"
         initial={reduceMotion ? false : { opacity: 0 }}

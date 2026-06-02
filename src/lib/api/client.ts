@@ -5,6 +5,7 @@
  * unwrap API envelopes and surface HTTP errors consistently.
  */
 import type { ApiResponse } from "@/types/api";
+import { translateError } from "@/lib/errors/translateError";
 
 export class ApiClientError extends Error {
   public readonly status: number;
@@ -29,7 +30,7 @@ export async function apiRequest<T>(path: string, init?: RequestInit): Promise<A
   const payload = (await response.json()) as ApiResponse<T>;
 
   if (!response.ok || !payload.success) {
-    throw new ApiClientError(payload.error ?? "فشل الطلب. حاول مرة أخرى.", response.status, payload.meta);
+    throw new ApiClientError(translateError(payload.error, "فشل الطلب. حاول مرة أخرى."), response.status, payload.meta);
   }
 
   return payload;

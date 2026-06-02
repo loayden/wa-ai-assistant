@@ -88,7 +88,7 @@ export function EmbeddedSignupLauncher({
       script.async = true;
       script.defer = true;
       script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.onerror = () => setError("Meta login could not be loaded. Refresh and try again.");
+      script.onerror = () => setError("تعذر تحميل نافذة Meta. حدّث الصفحة وحاول مرة أخرى.");
       document.body.appendChild(script);
     }
   }, [apiVersion, appId, embeddedSignupEnabled]);
@@ -129,7 +129,7 @@ export function EmbeddedSignupLauncher({
 
         if (payload.event === "CANCEL") {
           setLaunchState("idle");
-          setError(payload.data?.current_step ? `Meta signup was cancelled during ${payload.data.current_step}.` : "Meta signup was cancelled.");
+          setError("تم إلغاء إعداد Meta قبل اكتمال الربط.");
         }
       } catch {
         // Ignore non-JSON chatter from the popup.
@@ -194,7 +194,7 @@ export function EmbeddedSignupLauncher({
 
   function launchEmbeddedSignup() {
     if (!embeddedSignupEnabled || !sdkReady || !window.FB || !configurationId) {
-      setError("Meta one-click onboarding is not configured yet for this environment.");
+      setError("الربط الموجّه من Meta غير جاهز حالياً. استخدم الربط اليدوي أو تواصل مع الدعم.");
       return;
     }
 
@@ -209,7 +209,7 @@ export function EmbeddedSignupLauncher({
 
         if (!code) {
           setLaunchState("idle");
-          setError("Meta sign-in was cancelled before permissions were granted.");
+          setError("تم إلغاء تسجيل الدخول إلى Meta قبل منح الصلاحيات.");
           return;
         }
 
@@ -239,7 +239,7 @@ export function EmbeddedSignupLauncher({
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <MessageSquareLock className="size-5 text-wa-blue-600" aria-hidden="true" />
           <p className="mt-3 text-body-sm font-medium text-wa-gray-900">بدون إعداد تقني</p>
-          <p className="mt-1 text-body-sm text-wa-gray-600">العميل لا يرى Phone Number ID أو Access Token.</p>
+          <p className="mt-1 text-body-sm text-wa-gray-600">العميل لا يرى معرّفات تقنية أو رموز ربط.</p>
         </div>
         <div className="rounded-xl border border-wa-gray-100 bg-wa-gray-50 p-4">
           <Smartphone className="size-5 text-wa-blue-600" aria-hidden="true" />

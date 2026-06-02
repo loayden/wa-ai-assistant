@@ -7,8 +7,9 @@
 
 import type { ReactNode } from "react";
 import { useState } from "react";
+import Link from "next/link";
 import { useMutation } from "@tanstack/react-query";
-import { Building2, CheckCircle2, KeyRound, Phone, PlugZap, ShieldCheck } from "lucide-react";
+import { BookOpen, Building2, CheckCircle2, KeyRound, LifeBuoy, Phone, PlugZap, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";
@@ -20,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { strictZodResolver } from "@/lib/validators/resolver";
 import { connectWhatsAppSchema } from "@/lib/validators/whatsapp";
 
@@ -65,7 +67,7 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
       onConnected();
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "تعذر ربط واتساب.";
+      const message = translateError(error, "تعذر ربط واتساب.");
       setFormError(message);
       toast.error("فشل الربط", {
         description: message,
@@ -94,6 +96,15 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
         </div>
       </CardHeader>
       <CardContent className="space-y-4 p-4 sm:space-y-5 sm:p-6">
+        <Link
+          href="/support"
+          className="flex items-center gap-2 rounded-2xl border border-wa-blue-100 bg-wa-blue-50 px-4 py-3 text-body-sm font-semibold text-wa-blue-700 transition hover:bg-wa-blue-100"
+        >
+          <BookOpen className="size-4 shrink-0" aria-hidden="true" />
+          دليل الإعداد خطوة بخطوة
+          <span className="mr-auto" aria-hidden="true">←</span>
+        </Link>
+
         {mockMode ? (
           <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
             <AlertTitle>وضع الاختبار المحلي مفعّل</AlertTitle>
@@ -125,9 +136,9 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="phoneNumberId">معرّف رقم واتساب</Label>
-                <Input className="ltr text-left" id="phoneNumberId" placeholder="Phone Number ID من Meta" {...form.register("phoneNumberId")} />
+                <Input className="ltr text-left" id="phoneNumberId" placeholder="معرّف رقم واتساب من Meta" {...form.register("phoneNumberId")} />
                 <p className="text-body-sm text-wa-gray-600">
-                  رقم تعريفي من Meta للرقم الذي سيراسله العملاء.
+                  ستجده في: Meta Business ← إدارة الحسابات ← WhatsApp ← رقم الهاتف ← معلومات الرقم.
                 </p>
                 {form.formState.errors.phoneNumberId ? (
                   <p className="text-body-sm text-wa-error">{form.formState.errors.phoneNumberId.message}</p>
@@ -135,8 +146,8 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
               </div>
               <div className="space-y-2">
                 <Label htmlFor="businessAccountId">معرّف حساب واتساب التجاري</Label>
-                <Input className="ltr text-left" id="businessAccountId" placeholder="WhatsApp Business Account ID" {...form.register("businessAccountId")} />
-                <p className="text-body-sm text-wa-gray-600">حساب الأعمال في Meta الذي يملك هذا الرقم.</p>
+                <Input className="ltr text-left" id="businessAccountId" placeholder="معرّف حساب واتساب التجاري" {...form.register("businessAccountId")} />
+                <p className="text-body-sm text-wa-gray-600">في نفس صفحة Meta: الإعدادات ← معلومات الحساب التجاري ← المعرّف.</p>
                 {form.formState.errors.businessAccountId ? (
                   <p className="text-body-sm text-wa-error">{form.formState.errors.businessAccountId.message}</p>
                 ) : null}
@@ -146,20 +157,50 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
 
           <FieldSection
             icon={KeyRound}
-            title="توكن الوصول"
-            description="يستخدم kallem هذا التوكن للتحقق من الحساب وتجهيز الربط."
+            title="رمز الربط من Meta"
+            description="يستخدم kallem هذا الرمز للتحقق من الحساب وتجهيز الربط، ثم يحفظه مشفراً."
           >
             <div className="space-y-2">
-              <Label htmlFor="accessToken">Access Token</Label>
-              <Input className="ltr text-left" id="accessToken" type="password" placeholder="توكن Meta بصلاحيات واتساب" {...form.register("accessToken")} />
+              <Label htmlFor="accessToken">رمز الربط</Label>
+              <Input className="ltr text-left" id="accessToken" type="password" placeholder="رمز Meta بصلاحيات واتساب" {...form.register("accessToken")} />
               <p className="text-body-sm text-wa-gray-600">
-                استخدمي توكن يملك صلاحيات قراءة أرقام واتساب، إدارة الحساب التجاري، وتفعيل الـ webhook.
+                من Meta Developers ← تطبيقك ← WhatsApp ← API Setup ← رمز الوصول المؤقت.
               </p>
               {form.formState.errors.accessToken ? (
                 <p className="text-body-sm text-wa-error">{form.formState.errors.accessToken.message}</p>
               ) : null}
             </div>
           </FieldSection>
+
+          <Alert className="border-wa-blue-100 bg-wa-blue-50 text-wa-blue-800">
+            <AlertTitle>لا تعرفين أين توجد هذه البيانات؟</AlertTitle>
+            <AlertDescription>
+              افتحي تذكرة دعم وسنرشدك خطوة بخطوة.{" "}
+              <Link href="/support" className="font-semibold underline underline-offset-4">
+                طلب مساعدة
+              </Link>
+            </AlertDescription>
+          </Alert>
+
+          <div className="rounded-2xl border border-wa-blue-100 bg-white p-4">
+            <div className="flex items-start gap-3">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
+                <LifeBuoy className="size-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-body-sm font-semibold text-wa-gray-900">تحتاجين مساعدة في الإعداد؟</p>
+                <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">
+                  افتحي تذكرة دعم وسنساعدك في ربط الرقم خطوة بخطوة.
+                </p>
+                <Link
+                  href="/support"
+                  className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-blue-600 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-blue-700"
+                >
+                  تواصل مع الدعم
+                </Link>
+              </div>
+            </div>
+          </div>
 
           <div className="rounded-2xl border border-wa-blue-100 bg-wa-blue-50 p-3 sm:rounded-[22px] sm:p-4">
             <div className="flex items-start gap-3">
@@ -195,8 +236,8 @@ export function ConnectForm({ mockMode, onConnected, ownerPhoneNumber }: Connect
           <AccordionItem title="أين أجد هذه القيم؟">
             <ol className="list-decimal space-y-2 pr-4 text-body-sm text-wa-gray-600">
               <li>افتحي تطبيقك في Meta Developers ثم WhatsApp ثم API Setup.</li>
-              <li>انسخي Phone Number ID و WhatsApp Business Account ID من نفس الصفحة.</li>
-              <li>استخدمي توكن بصلاحيات WhatsApp Business Management و Messaging.</li>
+              <li>انسخي معرّف رقم واتساب ومعرّف حساب واتساب التجاري من نفس الصفحة.</li>
+              <li>استخدمي رمز ربط بصلاحيات إدارة واتساب للأعمال وإرسال الرسائل.</li>
               <li>ارجعي هنا ودعي kallem يتحقق من الربط قبل حفظه.</li>
             </ol>
           </AccordionItem>

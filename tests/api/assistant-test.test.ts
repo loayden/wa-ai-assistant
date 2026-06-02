@@ -139,7 +139,7 @@ describe("assistant test API", () => {
     expect(apiMocks.prisma.user.update).not.toHaveBeenCalled();
   });
 
-  it("returns a clear Arabic error when OpenAI quota is unavailable", async () => {
+  it("returns a provider-hidden system notice when AI quota is unavailable", async () => {
     apiMocks.generateAIReply.mockRejectedValueOnce(
       new apiMocks.AIReplyError("OPENAI_RATE_LIMIT", "Insufficient quota."),
     );
@@ -147,9 +147,12 @@ describe("assistant test API", () => {
     const response = await POST(jsonRequest({ message: "هل يوجد توصيل؟" }));
     const body = await response.json();
 
-    expect(response.status).toBe(503);
-    expect(body.error).toContain("رصيد OpenAI غير كافٍ");
-    expect(body.meta.code).toBe("OPENAI_RATE_LIMIT");
+    expect(response.status).toBe(200);
+    expect(body.data.replyText).toBe("المساعد غير متاح مؤقتاً. جرّب مرة أخرى بعد قليل أو تواصل مع الدعم.");
+    expect(body.data.replyText).not.toContain("OpenAI");
+    expect(body.data.modelUsed).toBe("system-notice");
+    expect(body.data.tokensUsed).toBe(0);
+    expect(body.data.systemNotice).toBe(true);
     expect(apiMocks.prisma.whatsAppConnection.count).not.toHaveBeenCalled();
   });
 });

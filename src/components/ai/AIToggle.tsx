@@ -7,8 +7,10 @@
  * optimistic settings update directly and reverts on API failure.
  */
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import { useUpdateSettings } from "@/hooks/useSettings";
+import { translateError } from "@/lib/errors/translateError";
 import { cn } from "@/lib/utils";
 
 export interface AIToggleProps {
@@ -37,10 +39,15 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
     updateSettings.mutate(
       { autoReplyEnabled: next },
       {
+        onSuccess: () => {
+          toast.success(next ? "تم تشغيل المساعد" : "تم إيقاف المساعد", {
+            description: next ? "سيبدأ الرد التلقائي على الرسائل الجديدة." : "لن يرسل المساعد ردوداً تلقائية حتى تعيدي تشغيله.",
+          });
+        },
         onError: (mutationError) => {
           setLocalEnabled(previous);
           onOptimisticChange?.(previous);
-          setError(mutationError instanceof Error ? mutationError.message : "تعذر تحديث حالة المساعد.");
+          setError(translateError(mutationError, "تعذر تحديث حالة المساعد."));
         },
       },
     );
@@ -74,7 +81,19 @@ export function AIToggle({ className, disabled = false, enabled, onOptimisticCha
         />
       </button>
       <p className={cn("mt-3 text-body-sm transition duration-200 sm:mt-4", localEnabled ? "font-medium text-wa-success" : "text-wa-gray-400")}>
-        {localEnabled ? "يرد على العملاء" : "متوقف"}
+        {loading ? (
+          <span className="inline-flex items-center gap-2">
+            <span className="size-2 animate-pulse rounded-full bg-wa-blue-600" aria-hidden="true" />
+            جارٍ الحفظ...
+          </span>
+        ) : localEnabled ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <span className="size-2 animate-pulse-dot rounded-full bg-wa-success" aria-hidden="true" />
+            يرد على العملاء
+          </span>
+        ) : (
+          "متوقف"
+        )}
       </p>
       {error ? <p className="mt-3 rounded-lg bg-wa-error-bg px-3 py-2 text-body-sm text-wa-error">{error}</p> : null}
     </section>

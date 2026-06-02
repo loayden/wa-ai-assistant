@@ -10,7 +10,7 @@ import type { ReactNode } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Gift, LockKeyhole, Minus, ReceiptText, ShieldCheck } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Gift, LockKeyhole, Minus, ReceiptText, ShieldCheck } from "lucide-react";
 
 import { PlanCard } from "@/components/billing/PlanCard";
 import { SubscriptionStatus } from "@/components/billing/SubscriptionStatus";
@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription } from "@/hooks/useSubscription";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { PLAN_LIMITS, type PlanTier } from "@/types/subscription";
 
 type RedirectResponse = {
@@ -26,6 +27,11 @@ type RedirectResponse = {
 };
 
 type PaidPlanTier = Extract<PlanTier, "PRO" | "BUSINESS">;
+type PaymobMode = "live" | "test" | "missing";
+type BillingPageClientProps = {
+  isAdmin: boolean;
+  paymobMode: PaymobMode;
+};
 
 const planCopy: Record<
   PlanTier,
@@ -81,7 +87,7 @@ const comparisonRows = [
   { label: "إدارة الطلبات", free: false, pro: true, business: true },
 ];
 
-export function BillingPageClient() {
+export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProps) {
   const subscription = useSubscription();
   const searchParams = useSearchParams();
   const checkoutMutation = useMutation({
@@ -96,25 +102,16 @@ export function BillingPageClient() {
   });
 
   if (subscription.isLoading) {
-    return (
-      <div className="space-y-5">
-        <Skeleton className="h-[260px] w-full rounded-[28px]" />
-        <div className="grid gap-4 xl:grid-cols-3">
-          <Skeleton className="h-[560px] rounded-[28px]" />
-          <Skeleton className="h-[560px] rounded-[28px]" />
-          <Skeleton className="h-[560px] rounded-[28px]" />
-        </div>
-      </div>
-    );
+    return <BillingLoadingSkeleton />;
   }
 
   if (subscription.error) {
     return (
-      <Alert className="border-wa-error bg-wa-error-bg">
-        <AlertTitle>الفوترة غير متاحة الآن</AlertTitle>
-        <AlertDescription>{subscription.error.message}</AlertDescription>
-      </Alert>
-    );
+        <Alert className="border-wa-error bg-wa-error-bg">
+          <AlertTitle>الفوترة غير متاحة الآن</AlertTitle>
+        <AlertDescription>{translateError(subscription.error)}</AlertDescription>
+        </Alert>
+      );
   }
 
   if (!subscription.user) {
@@ -131,6 +128,7 @@ export function BillingPageClient() {
   const isPaidPlan = subscription.isPaidPlan;
   const mutationError = checkoutMutation.error;
   const billingBusy = checkoutMutation.isPending;
+  const paymentLocked = paymobMode !== "live";
   const checkoutStatus = searchParams.get("checkout");
   const trialDaysRemaining = getTrialDaysRemaining(user.trialEndsAt);
 
@@ -140,6 +138,10 @@ export function BillingPageClient() {
     }
 
     if (targetPlan === "FREE") {
+      return;
+    }
+
+    if (paymentLocked) {
       return;
     }
 
@@ -212,6 +214,17 @@ export function BillingPageClient() {
           <AlertDescription>{mutationError.message}</AlertDescription>
         </Alert>
       ) : null}
+      {paymentLocked ? (
+        <Alert className="border-wa-warning bg-wa-warning-bg text-wa-warning">
+          <AlertTriangle className="size-4" aria-hidden="true" />
+          <AlertTitle>{paymobMode === "test" ? "الدفع في وضع الاختبار" : "الدفع غير جاهز"}</AlertTitle>
+          <AlertDescription>
+            {isAdmin
+              ? "أزرار الترقية معطلة حتى يتم استبدال مفاتيح Paymob التجريبية بمفاتيح الإنتاج في Vercel."
+              : "الترقية غير متاحة الآن. يمكن تجربة الخطة المجانية، وسنفعل الدفع عندما يكتمل إعداد بوابة الدفع."}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <section id="plans" className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -236,7 +249,9 @@ export function BillingPageClient() {
               : plan === "FREE" && isPaidPlan
                 ? "تواصل مع الدعم"
                 : isPaidTarget
-                  ? isPaidPlan
+                  ? paymentLocked
+                    ? "الدفع غير متاح الآن"
+                    : isPaidPlan
                     ? `التبديل إلى ${plan}`
                     : `الترقية إلى ${plan}`
                   : "الخطة الحالية";
@@ -254,7 +269,7 @@ export function BillingPageClient() {
                 current={isCurrent}
                 recommended={copy.recommended}
                 actionLabel={billingBusy ? "جارٍ فتح Paymob..." : actionLabel}
-                disabled={billingBusy || (plan === "FREE" && isPaidPlan)}
+                disabled={billingBusy || (isPaidTarget && paymentLocked) || (plan === "FREE" && isPaidPlan)}
                 onAction={() => handlePlanAction(plan)}
               />
             );
@@ -341,6 +356,44 @@ export function BillingPageClient() {
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function BillingLoadingSkeleton() {
+  return (
+    <div className="space-y-5" aria-busy="true" aria-label="جارٍ تحميل الفوترة">
+      <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-72 max-w-full" />
+          </div>
+          <Skeleton className="h-16 w-full max-w-[220px] rounded-2xl" />
+        </div>
+      </section>
+      <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 sm:rounded-[28px] sm:p-6">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-7 w-64 max-w-full" />
+          <Skeleton className="h-4 w-[520px] max-w-full" />
+        </div>
+        <div className="mt-5 grid gap-4 xl:grid-cols-3">
+          {Array.from({ length: 3 }, (_, index) => (
+            <div key={index} className="rounded-[22px] border border-wa-gray-100 bg-white p-4 sm:rounded-[28px] sm:p-5">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="mt-5 h-10 w-44" />
+              <div className="mt-5 space-y-3">
+                <Skeleton className="h-14 rounded-2xl" />
+                <Skeleton className="h-14 rounded-2xl" />
+                <Skeleton className="h-14 rounded-2xl" />
+              </div>
+              <Skeleton className="mt-6 h-12 rounded-full" />
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

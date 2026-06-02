@@ -9,11 +9,14 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, FileText, RefreshCw, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { extractTemplateVariables, maskTemplateVariables, normalizeTemplateName } from "@/lib/templates/meta";
 import { cn } from "@/lib/utils";
 import type { MessageTemplateResponse, MessageTemplatesResponse } from "@/types/api";
@@ -30,6 +33,8 @@ type FormState = {
   buttonUrl: string;
 };
 
+type TemplateFormErrors = Partial<Record<keyof FormState, string>>;
+
 const defaultForm: FormState = {
   name: "follow_up_offer",
   displayName: "عرض متابعة",
@@ -41,6 +46,32 @@ const defaultForm: FormState = {
   buttonText: "",
   buttonUrl: "",
 };
+
+function validateTemplateForm(form: FormState): TemplateFormErrors {
+  const errors: TemplateFormErrors = {};
+
+  if (!normalizeTemplateName(form.name).trim()) {
+    errors.name = "اكتب اسماً داخلياً للقالب.";
+  }
+
+  if (!form.displayName.trim()) {
+    errors.displayName = "اكتب اسماً يظهر لك داخل التطبيق.";
+  }
+
+  if (!form.bodyText.trim()) {
+    errors.bodyText = "اكتب نص الرسالة.";
+  }
+
+  if (form.buttonText.trim() && !form.buttonUrl.trim()) {
+    errors.buttonUrl = "أضف رابط الزر أو احذف نص الزر.";
+  }
+
+  if (form.buttonUrl.trim() && !form.buttonText.trim()) {
+    errors.buttonText = "أضف نص الزر أو احذف الرابط.";
+  }
+
+  return errors;
+}
 
 const statusLabels: Record<MessageTemplateResponse["status"], string> = {
   draft: "مسودة",
@@ -97,6 +128,12 @@ function TemplateCard({ template }: { template: MessageTemplateResponse }) {
     mutationFn: () => apiData(`/api/templates/${template.id}`, { method: "DELETE" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast.success("تم حذف القالب");
+    },
+    onError: (error) => {
+      toast.error("تعذر حذف القالب", {
+        description: translateError(error, "حاول مرة أخرى."),
+      });
     },
   });
 
@@ -137,6 +174,8 @@ function TemplateCard({ template }: { template: MessageTemplateResponse }) {
 export function TemplatesPageClient() {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(defaultForm);
+  const [formErrors, setFormErrors] = useState<TemplateFormErrors>({});
+  const [createFeedbackState, setCreateFeedbackState] = useState<"idle" | "success" | "error">("idle");
   const templatesQuery = useQuery({
     queryKey: ["templates"],
     queryFn: () => apiData<MessageTemplatesResponse>("/api/templates"),
@@ -151,13 +190,31 @@ export function TemplatesPageClient() {
       }),
     onSuccess: () => {
       setForm(defaultForm);
+      setFormErrors({});
+      setCreateFeedbackState("success");
+      window.setTimeout(() => setCreateFeedbackState("idle"), 3000);
       void queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast.success("تم إرسال القالب إلى Meta", {
+        description: "سيظهر القالب في القائمة ويمكن مزامنة حالته لاحقاً.",
+      });
+    },
+    onError: (error) => {
+      setCreateFeedbackState("error");
+      toast.error("تعذر إرسال القالب", {
+        description: translateError(error, "راجع البيانات ثم حاول مرة أخرى."),
+      });
     },
   });
   const syncMutation = useMutation({
     mutationFn: () => apiData<MessageTemplatesResponse>("/api/templates/sync", { method: "POST" }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["templates"] });
+      toast.success("تمت مزامنة القوالب");
+    },
+    onError: (error) => {
+      toast.error("تعذر مزامنة القوالب", {
+        description: translateError(error, "حاول مرة أخرى."),
+      });
     },
   });
 
@@ -165,7 +222,17 @@ export function TemplatesPageClient() {
 
   function updateForm<Key extends keyof FormState>(key: Key, value: FormState[Key]) {
     setForm((current) => ({ ...current, [key]: value }));
+    setFormErrors((current) => ({ ...current, [key]: undefined }));
+    setCreateFeedbackState("idle");
   }
+
+  const createButtonLabel = createMutation.isPending
+    ? "جاري الإرسال..."
+    : createFeedbackState === "success"
+      ? "تم الإرسال بنجاح"
+      : createFeedbackState === "error"
+        ? "فشل الإرسال — حاول مجدداً"
+        : "إرسال إلى Meta";
 
   return (
     <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-8 pt-4 sm:px-6 sm:pt-8">
@@ -193,9 +260,17 @@ export function TemplatesPageClient() {
 
       <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form
+          noValidate
           className="rounded-[28px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:p-5"
           onSubmit={(event) => {
             event.preventDefault();
+            const errors = validateTemplateForm(form);
+
+            if (Object.keys(errors).length > 0) {
+              setFormErrors(errors);
+              return;
+            }
+
             createMutation.mutate({ ...form, name: normalizeTemplateName(form.name) });
           }}
         >
@@ -212,13 +287,22 @@ export function TemplatesPageClient() {
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">الاسم الداخلي</span>
               <Input
+                aria-invalid={Boolean(formErrors.name)}
+                hasError={Boolean(formErrors.name)}
                 value={form.name}
                 onChange={(event) => updateForm("name", normalizeTemplateName(event.target.value))}
               />
+              <FieldError>{formErrors.name}</FieldError>
             </label>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">الاسم الظاهر</span>
-              <Input value={form.displayName} onChange={(event) => updateForm("displayName", event.target.value)} />
+              <Input
+                aria-invalid={Boolean(formErrors.displayName)}
+                hasError={Boolean(formErrors.displayName)}
+                value={form.displayName}
+                onChange={(event) => updateForm("displayName", event.target.value)}
+              />
+              <FieldError>{formErrors.displayName}</FieldError>
             </label>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">الفئة</span>
@@ -250,10 +334,12 @@ export function TemplatesPageClient() {
             <label className="space-y-2 sm:col-span-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">نص الرسالة</span>
               <Textarea
+                aria-invalid={Boolean(formErrors.bodyText)}
                 value={form.bodyText}
                 onChange={(event) => updateForm("bodyText", event.target.value)}
                 placeholder="استخدم {{1}} و {{2}} للمتغيرات"
               />
+              <FieldError>{formErrors.bodyText}</FieldError>
               <span className="text-label text-wa-gray-400">
                 {variables.length > 0 ? `تم اكتشاف ${variables.length.toLocaleString("ar-EG")} متغير.` : "لا توجد متغيرات."}
               </span>
@@ -264,16 +350,28 @@ export function TemplatesPageClient() {
             </label>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">نص الزر اختياري</span>
-              <Input value={form.buttonText} onChange={(event) => updateForm("buttonText", event.target.value)} />
+              <Input
+                aria-invalid={Boolean(formErrors.buttonText)}
+                hasError={Boolean(formErrors.buttonText)}
+                value={form.buttonText}
+                onChange={(event) => updateForm("buttonText", event.target.value)}
+              />
+              <FieldError>{formErrors.buttonText}</FieldError>
             </label>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">رابط الزر اختياري</span>
-              <Input value={form.buttonUrl} onChange={(event) => updateForm("buttonUrl", event.target.value)} />
+              <Input
+                aria-invalid={Boolean(formErrors.buttonUrl)}
+                hasError={Boolean(formErrors.buttonUrl)}
+                value={form.buttonUrl}
+                onChange={(event) => updateForm("buttonUrl", event.target.value)}
+              />
+              <FieldError>{formErrors.buttonUrl}</FieldError>
             </label>
           </div>
-          {createMutation.error ? <p className="mt-4 text-body-sm text-wa-error">{createMutation.error.message}</p> : null}
-          <Button className="mt-5 w-full sm:w-auto" isLoading={createMutation.isPending} type="submit">
-            إرسال إلى Meta
+          {createMutation.error ? <p className="mt-4 text-body-sm text-wa-error">{translateError(createMutation.error)}</p> : null}
+          <Button className="mt-5 w-full sm:w-auto" disabled={createFeedbackState === "success"} isLoading={createMutation.isPending} type="submit">
+            {createButtonLabel}
           </Button>
         </form>
 

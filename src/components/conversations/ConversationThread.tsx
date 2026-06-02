@@ -227,7 +227,7 @@ export function ConversationThread({
                   </p>
                   <p className="mt-3 rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
                     {failedMessage.aiReplyText ??
-                      "راجعي رصيد OpenAI، صلاحيات القناة، وهل الاتصال جاهز لجمهور حقيقي وليس وضع اختبار فقط."}
+                      "راجعي صلاحيات القناة، وهل الاتصال جاهز لجمهور حقيقي وليس وضع اختبار فقط."}
                   </p>
                   <Link
                     href="/connect"

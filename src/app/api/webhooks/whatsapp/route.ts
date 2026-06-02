@@ -202,17 +202,11 @@ function describeWhatsAppSendFailure(error: unknown): string | null {
   }
 
   const metaCode = error.response?.error?.code;
-  const details = error.response?.error?.error_data?.details || error.response?.error?.message;
-
   if (metaCode === 131030) {
     return "تم تجهيز الرد، لكن Meta منعت الإرسال لأن الرقم رقم اختباري. أضف رقم العميل كمستلم اختبار داخل Meta، أو اربط رقم WhatsApp Business إنتاجي للعملاء الحقيقيين.";
   }
 
-  if (details) {
-    return `تم تجهيز الرد، لكن Meta منعت الإرسال: ${details}`;
-  }
-
-  return "تم تجهيز الرد، لكن Meta رفضت إرسال رسالة واتساب. راجع الرقم المتصل، صلاحيات Access Token، وهل الرقم جاهز للإنتاج.";
+  return "تم تجهيز الرد، لكن Meta رفضت إرسال رسالة واتساب. راجع الرقم المتصل وصلاحيات واتساب وهل الرقم جاهز للإنتاج.";
 }
 
 function describeAutomaticReplyFailure(primaryError: unknown, fallbackError: unknown): string {
@@ -224,17 +218,17 @@ function describeAutomaticReplyFailure(primaryError: unknown, fallbackError: unk
 
   if (primaryError instanceof AIReplyError) {
     if (primaryError.code === "OPENAI_RATE_LIMIT") {
-      return "لم يتم إرسال الرد التلقائي لأن رصيد أو حد مزود الذكاء الاصطناعي انتهى. أضف رصيد OpenAI أو استبدل مفتاح API.";
+      return "لم يتم إرسال الرد التلقائي لأن المساعد غير متاح مؤقتاً. حاول مرة أخرى بعد قليل أو تواصل مع الدعم.";
     }
 
     if (primaryError.code === "OPENAI_TIMEOUT") {
-      return "لم يتم إرسال الرد التلقائي لأن مزود الذكاء الاصطناعي تأخر في الاستجابة. حاول مرة أخرى أو راجع حالة OpenAI والفوترة.";
+      return "لم يتم إرسال الرد التلقائي لأن المساعد تأخر في الاستجابة. حاول مرة أخرى بعد دقيقة.";
     }
 
-    return "لم يتم إرسال الرد التلقائي لأن مزود الذكاء الاصطناعي رفض الطلب. راجع مفتاح OpenAI، الموديل، الفوترة، وحدود الاستخدام.";
+    return "لم يتم إرسال الرد التلقائي لأن المساعد غير متاح الآن. تواصل مع الدعم لمراجعة الإعداد.";
   }
 
-  return "لم يتم إرسال الرد التلقائي. راجع فوترة OpenAI وحدود الاستخدام، صلاحيات رمز واتساب، وهل تستخدم رقم WhatsApp Business إنتاجي.";
+  return "لم يتم إرسال الرد التلقائي. راجع صلاحيات واتساب، وهل تستخدم رقم WhatsApp Business إنتاجي للعملاء الحقيقيين.";
 }
 
 async function maybeNotifyOwner(params: {

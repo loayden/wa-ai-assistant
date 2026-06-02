@@ -128,6 +128,9 @@ const config: Config = {
           "0%": { transform: "scale(1)", opacity: "1" },
           "100%": { transform: "scale(1.4)", opacity: "0" },
         },
+        shimmer: {
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "slide-up": "slide-up 250ms cubic-bezier(0.0,0.0,0.2,1)",
@@ -135,6 +138,7 @@ const config: Config = {
         shake: "shake 250ms linear",
         "pulse-dot": "pulse-dot 2s ease-in-out infinite",
         "ring-pulse": "ring-pulse 2s ease-in-out infinite",
+        shimmer: "shimmer 1.5s infinite",
       },
     },
   },

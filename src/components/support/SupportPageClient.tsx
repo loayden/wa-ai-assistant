@@ -5,10 +5,12 @@ import { LifeBuoy, MessageSquare, Plus, RefreshCcw, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
+import { translateError } from "@/lib/errors/translateError";
 import { cn } from "@/lib/utils";
 
 type TicketStatus = "open" | "in_progress" | "waiting_customer" | "resolved" | "closed";
@@ -33,6 +35,8 @@ type Ticket = {
   messages?: TicketMessage[];
   messageCount: number;
 };
+
+type TicketFormErrors = Partial<Record<"subject" | "firstMessage", string>>;
 
 const STATUS_LABELS: Record<TicketStatus, string> = {
   open: "مفتوحة",
@@ -86,6 +90,7 @@ export function SupportPageClient() {
     category: "technical" as TicketCategory,
     firstMessage: "",
   });
+  const [formErrors, setFormErrors] = useState<TicketFormErrors>({});
 
   async function loadTickets() {
     setLoading(true);
@@ -97,7 +102,7 @@ export function SupportPageClient() {
       }
     } catch (error) {
       toast.error("تعذر تحميل تذاكر الدعم", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setLoading(false);
@@ -110,7 +115,7 @@ export function SupportPageClient() {
       setSelectedTicket(response.ticket);
     } catch (error) {
       toast.error("تعذر فتح التذكرة", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     }
   }
@@ -132,6 +137,21 @@ export function SupportPageClient() {
   const selectedClosed = selectedTicket?.status === "resolved" || selectedTicket?.status === "closed";
 
   async function createTicket() {
+    const errors: TicketFormErrors = {};
+
+    if (form.subject.trim().length < 3) {
+      errors.subject = "اكتب عنواناً مختصراً للمشكلة.";
+    }
+
+    if (form.firstMessage.trim().length < 10) {
+      errors.firstMessage = "اكتب تفاصيل أكثر حتى نقدر نساعدك بسرعة.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
     setSending(true);
     try {
       const response = await apiData<{ ticket: Ticket }>("/api/tickets", {
@@ -142,10 +162,11 @@ export function SupportPageClient() {
       setSelectedId(response.ticket.id);
       setNewTicketOpen(false);
       setForm({ subject: "", category: "technical", firstMessage: "" });
+      setFormErrors({});
       toast.success("تم فتح تذكرة الدعم");
     } catch (error) {
       toast.error("تعذر فتح التذكرة", {
-        description: error instanceof Error ? error.message : "راجعي التفاصيل ثم حاولي مرة أخرى.",
+        description: translateError(error, "راجعي التفاصيل ثم حاولي مرة أخرى."),
       });
     } finally {
       setSending(false);
@@ -175,7 +196,7 @@ export function SupportPageClient() {
       toast.success("تم إرسال الرد");
     } catch (error) {
       toast.error("تعذر إرسال الرد", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setSending(false);
@@ -195,9 +216,14 @@ export function SupportPageClient() {
       toast.success("تم إغلاق التذكرة");
     } catch (error) {
       toast.error("تعذر إغلاق التذكرة", {
-        description: error instanceof Error ? error.message : "حاولي مرة أخرى.",
+        description: translateError(error, "حاولي مرة أخرى."),
       });
     }
+  }
+
+  function updateForm<Key extends keyof typeof form>(key: Key, value: (typeof form)[Key]) {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFormErrors((current) => ({ ...current, [key]: undefined }));
   }
 
   return (
@@ -228,7 +254,10 @@ export function SupportPageClient() {
             </div>
             <button
               type="button"
-              onClick={() => setNewTicketOpen(true)}
+              onClick={() => {
+                setFormErrors({});
+                setNewTicketOpen(true);
+              }}
               className="inline-flex size-11 items-center justify-center rounded-full bg-wa-blue-600 text-white transition hover:bg-wa-blue-700"
               aria-label="فتح تذكرة جديدة"
             >
@@ -284,11 +313,17 @@ export function SupportPageClient() {
               <div className="mt-5 grid gap-4">
                 <label className="space-y-2">
                   <span className="text-body-sm font-semibold text-wa-gray-900">الموضوع</span>
-                  <Input value={form.subject} onChange={(event) => setForm((current) => ({ ...current, subject: event.target.value }))} />
+                  <Input
+                    aria-invalid={Boolean(formErrors.subject)}
+                    hasError={Boolean(formErrors.subject)}
+                    value={form.subject}
+                    onChange={(event) => updateForm("subject", event.target.value)}
+                  />
+                  <FieldError>{formErrors.subject}</FieldError>
                 </label>
                 <label className="space-y-2">
                   <span className="text-body-sm font-semibold text-wa-gray-900">التصنيف</span>
-                  <Select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value as TicketCategory }))}>
+                  <Select value={form.category} onChange={(event) => updateForm("category", event.target.value as TicketCategory)}>
                     {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -298,7 +333,12 @@ export function SupportPageClient() {
                 </label>
                 <label className="space-y-2">
                   <span className="text-body-sm font-semibold text-wa-gray-900">الرسالة</span>
-                  <Textarea value={form.firstMessage} onChange={(event) => setForm((current) => ({ ...current, firstMessage: event.target.value }))} />
+                  <Textarea
+                    aria-invalid={Boolean(formErrors.firstMessage)}
+                    value={form.firstMessage}
+                    onChange={(event) => updateForm("firstMessage", event.target.value)}
+                  />
+                  <FieldError>{formErrors.firstMessage}</FieldError>
                 </label>
                 <Button isLoading={sending} onClick={createTicket} className="rounded-full">
                   إرسال التذكرة

@@ -88,5 +88,5 @@ export function jsonValidationError(error: ZodError): NextResponse<ApiResponse<n
 }
 
 export function jsonMethodNotAllowed(method: string): NextResponse<ApiResponse<never>> {
-  return jsonError(`${method} is not allowed for this endpoint.`, 405);
+  return jsonError("هذا الإجراء غير متاح من هذه الشاشة.", 405, { method });
 }

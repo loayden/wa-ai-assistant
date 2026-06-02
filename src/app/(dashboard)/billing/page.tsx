@@ -5,8 +5,14 @@
  * checkout delegated to the billing API.
  */
 import { BillingPageClient } from "@/components/billing/BillingPageClient";
+import { ensureAppUser } from "@/lib/api/auth";
+import { detectPaymobMode } from "@/lib/paymob/mode";
+import { getUser } from "@/lib/supabase/server";
 
-export default function BillingPage() {
+export default async function BillingPage() {
+  const user = await getUser();
+  const appUser = user ? await ensureAppUser(user) : null;
+
   return (
     <div className="mx-auto max-w-[1120px] space-y-4 px-3 pb-8 pt-4 sm:space-y-6 sm:px-6 sm:pt-8">
       <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
@@ -28,7 +34,7 @@ export default function BillingPage() {
           </div>
         </div>
       </section>
-      <BillingPageClient />
+      <BillingPageClient isAdmin={Boolean(appUser?.isAdmin)} paymobMode={detectPaymobMode()} />
     </div>
   );
 }

@@ -20,7 +20,6 @@ export function buildContentSecurityPolicy(nonce: string, nodeEnv = process.env.
     "blob:",
     ...(developmentScriptPolicy ? [developmentScriptPolicy.trim()] : []),
     "https://connect.facebook.net",
-    "https://www.googletagmanager.com",
     "https://accounts.google.com",
     "https://www.gstatic.com",
     "https://vercel.live",

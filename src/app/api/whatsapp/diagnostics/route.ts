@@ -5,15 +5,19 @@
  * owners can verify credentials, WABA ownership, and webhook subscription after
  * setup without exposing tokens or relying on Meta Embedded Signup.
  */
+import { MessageDirection, MessageStatus } from "@prisma/client";
 import { z } from "zod";
 
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
+import { getOrCreateUserSettings } from "@/lib/api/settings";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
+import { isWithinWorkingHours } from "@/lib/assistant/working-hours";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkSubscriptionLimit } from "@/lib/utils/subscription";
 import { EmbeddedSignupError, getBusinessAccountPhoneNumber, getPhoneProfile, subscribeAppToBusinessAccount } from "@/lib/whatsapp/embedded-signup";
 
 export const runtime = "nodejs";
@@ -44,6 +48,16 @@ function isMetaSandboxPhone(displayPhoneNumber?: string, verifiedName?: string):
   return /test number/i.test(verifiedName ?? "") || digits === "15551421769";
 }
 
+function formatCount(value: number): string {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function truncateDiagnosticText(value: string, maxLength = 180): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
+}
+
 export async function GET(request: Request) {
   try {
     const user = await requireAppUser();
@@ -72,6 +86,24 @@ export async function GET(request: Request) {
     }
 
     const webhookUrl = `${appEnv.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/webhooks/whatsapp`;
+    const [settings, subscriptionLimit, recentAutomaticReplyFailure] = await Promise.all([
+      getOrCreateUserSettings(user.id),
+      checkSubscriptionLimit(user.id),
+      prisma.message.findFirst({
+        where: {
+          userId: user.id,
+          connectionId: connection.id,
+          direction: MessageDirection.INBOUND,
+          status: MessageStatus.FAILED,
+          aiReplyText: { not: null },
+        },
+        orderBy: { updatedAt: "desc" },
+        select: {
+          aiReplyText: true,
+        },
+      }),
+    ]);
+    const withinWorkingHours = isWithinWorkingHours(settings);
     const checks: DiagnosticCheck[] = [
       createCheck(
         "connection",
@@ -80,6 +112,34 @@ export async function GET(request: Request) {
         connection.isActive && connection.isVerified
           ? "هذا الرقم محفوظ ومفعّل داخل kallem."
           : "هذا الرقم محفوظ، لكنه لم يكتمل تفعيله بعد.",
+      ),
+      createCheck(
+        "auto-reply",
+        "تشغيل الرد التلقائي",
+        settings.autoReplyEnabled ? "passed" : "failed",
+        settings.autoReplyEnabled
+          ? "الردود التلقائية مفعلة لهذا الحساب."
+          : "الردود التلقائية متوقفة من إعدادات kallem. شغّل زر ردود AI قبل اختبار العملاء.",
+      ),
+      createCheck(
+        "reply-limit",
+        "رصيد الردود",
+        subscriptionLimit.allowed ? "passed" : "failed",
+        subscriptionLimit.allowed
+          ? subscriptionLimit.allowsOverage
+            ? `الخطة ${subscriptionLimit.planTier.toLowerCase()} تسمح بالردود. المتبقي ضمن الخطة: ${formatCount(subscriptionLimit.remaining)}.`
+            : `متبقي ${formatCount(subscriptionLimit.remaining)} من ${formatCount(subscriptionLimit.includedRepliesPerMonth)} رد هذا الشهر.`
+          : `انتهى رصيد الردود الشهري في خطة ${subscriptionLimit.planTier.toLowerCase()}. رقّ الخطة أو انتظر بداية الشهر لإعادة التفعيل.`,
+      ),
+      createCheck(
+        "working-hours",
+        "ساعات العمل",
+        withinWorkingHours ? "passed" : "warning",
+        !settings.workingHoursEnabled
+          ? "ساعات العمل غير مفعلة، لذلك يمكن للمساعد الرد في أي وقت."
+          : withinWorkingHours
+            ? "الوقت الحالي داخل ساعات العمل المحددة."
+            : "الوقت الحالي خارج ساعات العمل، لذلك سيرسل kallem رسالة خارج الدوام بدل رد AI كامل.",
       ),
       createCheck(
         "environment",
@@ -91,6 +151,17 @@ export async function GET(request: Request) {
       ),
       createCheck("webhook-url", "رابط استقبال الرسائل", "passed", webhookUrl),
     ];
+
+    if (recentAutomaticReplyFailure?.aiReplyText) {
+      checks.push(
+        createCheck(
+          "recent-auto-reply-failure",
+          "آخر فشل رد تلقائي",
+          "failed",
+          truncateDiagnosticText(recentAutomaticReplyFailure.aiReplyText),
+        ),
+      );
+    }
 
     if (appEnv.WHATSAPP_MOCK_MODE) {
       return jsonSuccess({

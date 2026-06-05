@@ -65,10 +65,14 @@ function validateKnowledgeText(label: string, value: string, maxLength: number) 
   }
 
   if (trimmedValue.length > maxLength) {
-    return `${label} طويل جدًا. الحد الأقصى ${maxLength.toLocaleString("ar-EG")} حرف.`;
+    return `${label} طويل جدًا. الحد الأقصى ${formatStableNumber(maxLength)} حرف.`;
   }
 
   return null;
+}
+
+function formatStableNumber(value: number) {
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps) {
@@ -310,7 +314,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
               <p className="text-body-sm text-wa-gray-500">
                 مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهرًا حتى 2 فجرًا، والتوصيل داخل القاهرة.
                 <span className="mt-1 block text-label font-semibold uppercase tracking-widest text-wa-gray-400">
-                  {businessInfo.length.toLocaleString("ar-EG")}/{KNOWLEDGE_CONTENT_MAX_LENGTH.toLocaleString("ar-EG")}
+                  {formatStableNumber(businessInfo.length)}/{formatStableNumber(KNOWLEDGE_CONTENT_MAX_LENGTH)}
                 </span>
               </p>
               <Button className="rounded-full" isLoading={isSavingInfo} onClick={saveBusinessInfo}>
@@ -531,7 +535,7 @@ function CharacterCounter({ maxLength, value }: { maxLength: number; value: stri
 
   return (
     <p className={cn("text-right text-label font-semibold uppercase tracking-widest", isNearLimit ? "text-wa-error" : "text-wa-gray-400")}>
-      {value.length.toLocaleString("ar-EG")}/{maxLength.toLocaleString("ar-EG")}
+      {formatStableNumber(value.length)}/{formatStableNumber(maxLength)}
     </p>
   );
 }

@@ -15,6 +15,8 @@ describe("security middleware", () => {
     expect(csp).toContain("worker-src 'self' blob:");
     expect(csp).toContain("https://accounts.google.com");
     expect(csp?.match(/script-src[^;]*/)?.[0]).toContain("https://vercel.live");
+    expect(csp).not.toContain("https://www.googletagmanager.com");
+    expect(csp).not.toContain("https://www.google-analytics.com");
     expect(csp).not.toContain("script-src-elem");
     expect(csp).not.toContain("style-src-elem");
     expect(csp).not.toContain("'unsafe-eval'");

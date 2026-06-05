@@ -44,4 +44,24 @@ describe("buildFallbackMessage", () => {
       "دورة صيفية لتعليم البرمجة للطلاب.",
     );
   });
+
+  it("ignores the legacy English default fallback so business context can personalize the reply", () => {
+    const reply = buildFallbackMessage(
+      settings({
+        businessContext: "معسكر صيفي لتعليم البرمجة للأطفال من 10 سنوات.",
+        fallbackMessage: "Thanks for your message. A team member will follow up soon.",
+      }),
+    );
+
+    expect(reply).toContain("Genius Academy");
+    expect(reply).toContain("معسكر صيفي");
+  });
+
+  it("allows fallback replies up to the configured 1000 character maximum", () => {
+    const businessContext = "تفاصيل النشاط ".repeat(55);
+    const reply = buildFallbackMessage(settings({ businessContext, maxReplyLength: 1000 }));
+
+    expect(reply.length).toBeGreaterThan(500);
+    expect(reply.length).toBeLessThanOrEqual(1000);
+  });
 });

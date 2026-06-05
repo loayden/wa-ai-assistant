@@ -29,6 +29,16 @@ type WhatsAppSubscribedAppsResponse = {
   success?: boolean;
 };
 
+export type WhatsAppSubscribedApp = {
+  id?: string;
+  name?: string;
+  subscribed_fields?: string[];
+};
+
+type WhatsAppSubscribedAppsListResponse = {
+  data?: WhatsAppSubscribedApp[];
+};
+
 export type WhatsAppPhoneProfile = {
   id: string;
   display_phone_number?: string;
@@ -125,6 +135,24 @@ export async function subscribeAppToBusinessAccount(businessAccountId: string, a
     },
     body: JSON.stringify({}),
   });
+}
+
+export async function getSubscribedAppsForBusinessAccount(
+  businessAccountId: string,
+  accessToken: string,
+): Promise<WhatsAppSubscribedApp[]> {
+  const url = new URL(buildGraphUrl(`${businessAccountId}/subscribed_apps`));
+  url.searchParams.set("fields", "id,name,subscribed_fields");
+
+  const response = await requestGraph<WhatsAppSubscribedAppsListResponse>(url.toString(), {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+    },
+  });
+
+  return response.data ?? [];
 }
 
 export async function getPhoneProfile(phoneNumberId: string, accessToken: string): Promise<WhatsAppPhoneProfile> {

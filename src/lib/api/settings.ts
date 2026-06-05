@@ -155,7 +155,7 @@ export async function updateUserSettings(userId: string, data: UserSettingsUpdat
 }
 
 function clampFallbackMessage(value: string, maxReplyLength: number): string {
-  const limit = Math.min(500, Math.max(120, maxReplyLength || 300));
+  const limit = Math.min(1000, Math.max(120, maxReplyLength || 300));
 
   if (value.length <= limit) {
     return value;
@@ -164,10 +164,14 @@ function clampFallbackMessage(value: string, maxReplyLength: number): string {
   return `${value.slice(0, limit - 3).trim()}...`;
 }
 
+function isLegacyGenericFallback(value: string): boolean {
+  return value.trim().toLowerCase() === "thanks for your message. a team member will follow up soon.";
+}
+
 export function buildFallbackMessage(settings: UserSettings): string {
   const customFallback = settings.fallbackMessage?.trim();
 
-  if (customFallback) {
+  if (customFallback && !isLegacyGenericFallback(customFallback)) {
     return clampFallbackMessage(customFallback, settings.maxReplyLength);
   }
 

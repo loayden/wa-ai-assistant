@@ -18,7 +18,12 @@ import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 import { checkSubscriptionLimit } from "@/lib/utils/subscription";
-import { EmbeddedSignupError, getBusinessAccountPhoneNumber, getPhoneProfile, subscribeAppToBusinessAccount } from "@/lib/whatsapp/embedded-signup";
+import {
+  EmbeddedSignupError,
+  getBusinessAccountPhoneNumber,
+  getPhoneProfile,
+  getSubscribedAppsForBusinessAccount,
+} from "@/lib/whatsapp/embedded-signup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -58,6 +63,45 @@ function truncateDiagnosticText(value: string, maxLength = 180): string {
   return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
 }
 
+function formatDiagnosticDate(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+function createAutomaticReplyHistoryCheck(
+  latestAttempt:
+    | {
+        status: MessageStatus;
+        aiReplyText: string | null;
+        processedAt: Date | null;
+        updatedAt: Date;
+      }
+    | null,
+): DiagnosticCheck | null {
+  if (!latestAttempt?.aiReplyText) {
+    return null;
+  }
+
+  const attemptAt = latestAttempt.processedAt ?? latestAttempt.updatedAt;
+
+  if (latestAttempt.status !== MessageStatus.FAILED) {
+    return createCheck(
+      "last-auto-reply",
+      "آخر رد تلقائي",
+      "passed",
+      `آخر محاولة رد تلقائي اكتملت في ${formatDiagnosticDate(attemptAt)}.`,
+    );
+  }
+
+  const isOldFailure = Date.now() - attemptAt.getTime() > 7 * 24 * 60 * 60 * 1000;
+
+  return createCheck(
+    "recent-auto-reply-failure",
+    isOldFailure ? "فشل قديم في الرد التلقائي" : "آخر فشل رد تلقائي",
+    isOldFailure ? "warning" : "failed",
+    `${truncateDiagnosticText(latestAttempt.aiReplyText)} حدث في ${formatDiagnosticDate(attemptAt)}.`,
+  );
+}
+
 export async function GET(request: Request) {
   try {
     const user = await requireAppUser();
@@ -86,7 +130,7 @@ export async function GET(request: Request) {
     }
 
     const webhookUrl = `${appEnv.NEXT_PUBLIC_APP_URL.replace(/\/$/, "")}/api/webhooks/whatsapp`;
-    const [settings, subscriptionLimit, recentAutomaticReplyFailure] = await Promise.all([
+    const [settings, subscriptionLimit, latestAutomaticReplyAttempt] = await Promise.all([
       getOrCreateUserSettings(user.id),
       checkSubscriptionLimit(user.id),
       prisma.message.findFirst({
@@ -94,12 +138,14 @@ export async function GET(request: Request) {
           userId: user.id,
           connectionId: connection.id,
           direction: MessageDirection.INBOUND,
-          status: MessageStatus.FAILED,
           aiReplyText: { not: null },
         },
-        orderBy: { updatedAt: "desc" },
+        orderBy: [{ processedAt: "desc" }, { updatedAt: "desc" }],
         select: {
+          status: true,
           aiReplyText: true,
+          processedAt: true,
+          updatedAt: true,
         },
       }),
     ]);
@@ -152,15 +198,10 @@ export async function GET(request: Request) {
       createCheck("webhook-url", "رابط استقبال الرسائل", "passed", webhookUrl),
     ];
 
-    if (recentAutomaticReplyFailure?.aiReplyText) {
-      checks.push(
-        createCheck(
-          "recent-auto-reply-failure",
-          "آخر فشل رد تلقائي",
-          "failed",
-          truncateDiagnosticText(recentAutomaticReplyFailure.aiReplyText),
-        ),
-      );
+    const automaticReplyHistoryCheck = createAutomaticReplyHistoryCheck(latestAutomaticReplyAttempt);
+
+    if (automaticReplyHistoryCheck) {
+      checks.push(automaticReplyHistoryCheck);
     }
 
     if (appEnv.WHATSAPP_MOCK_MODE) {
@@ -226,13 +267,17 @@ export async function GET(request: Request) {
       ),
     );
 
-    await subscribeAppToBusinessAccount(connection.businessAccountId, accessToken);
+    const subscribedApps = await getSubscribedAppsForBusinessAccount(connection.businessAccountId, accessToken);
+    const hasWebhookSubscription = subscribedApps.length > 0;
+
     checks.push(
       createCheck(
         "webhook-subscription",
         "اشتراك استقبال الرسائل",
-        "passed",
-        "قبلت Meta اشتراك التطبيق لهذا الحساب التجاري.",
+        hasWebhookSubscription ? "passed" : "failed",
+        hasWebhookSubscription
+          ? "Meta تؤكد أن هذا الحساب التجاري مشترك في Webhook لاستقبال الرسائل."
+          : "لا يوجد اشتراك Webhook نشط لهذا الحساب التجاري داخل Meta. أعيدي الربط أو شغلي الاشتراك من إعدادات Meta.",
       ),
     );
 

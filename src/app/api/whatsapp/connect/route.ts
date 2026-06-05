@@ -154,6 +154,7 @@ export async function POST(request: Request) {
         normalizeOwnerPhoneNumber(phoneProfile?.display_phone_number),
       isActive: true,
       isVerified: true,
+      webhookSubscribed: !appEnv.WHATSAPP_MOCK_MODE,
     };
 
     const connection = existingConnection

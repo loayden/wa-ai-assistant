@@ -118,6 +118,7 @@ export async function POST(request: Request) {
             ownerPhoneNumber: normalizeOwnerPhoneNumber(phoneProfile?.display_phone_number),
             isActive: true,
             isVerified: true,
+            webhookSubscribed: true,
           },
         })
       : await prisma.whatsAppConnection.create({
@@ -131,6 +132,7 @@ export async function POST(request: Request) {
             ownerPhoneNumber: normalizeOwnerPhoneNumber(phoneProfile?.display_phone_number),
             isActive: true,
             isVerified: true,
+            webhookSubscribed: true,
           },
         });
 

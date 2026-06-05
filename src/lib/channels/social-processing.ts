@@ -156,6 +156,68 @@ function describeSocialAiFailure(error: unknown): string {
   return "وصلت الرسالة لكن الرد التلقائي على قناة Meta لم يكتمل. راجع صلاحيات القناة أو تواصل مع الدعم.";
 }
 
+async function sendSocialFallbackReply(params: {
+  connection: NonNullable<Awaited<ReturnType<typeof findConnectionForMessage>>>;
+  inboundMessageId: string;
+  msg: NormalizedInboundMessage;
+  settings: Awaited<ReturnType<typeof getOrCreateUserSettings>>;
+  accessToken: string;
+  reason: unknown;
+}) {
+  const fallbackText = buildFallbackMessage(params.settings);
+  const adapter = getAdapter(params.msg.channel);
+  const sendResult = await adapter.sendText({
+    connectionId: params.connection.id,
+    recipientId: params.msg.externalThreadId,
+    text: fallbackText,
+    accessToken: params.accessToken,
+    pageId: params.msg.pageId,
+  });
+
+  if (!sendResult.success) {
+    await prisma.message.update({
+      where: { id: params.inboundMessageId },
+      data: {
+        status: MessageStatus.FAILED,
+        aiReplyText: describeSocialAiFailure(params.reason),
+        processedAt: new Date(),
+      },
+    });
+    return;
+  }
+
+  await prisma.$transaction([
+    prisma.message.update({
+      where: { id: params.inboundMessageId },
+      data: {
+        status: MessageStatus.REPLIED,
+        aiReplyText: fallbackText,
+        aiModelUsed: "fallback-ai-unavailable",
+        processedAt: new Date(),
+      },
+    }),
+    prisma.message.create({
+      data: {
+        userId: params.connection.userId,
+        connectionId: params.connection.id,
+        waMessageId: outboundSocialMessageId(params.msg.channel, sendResult.externalMessageId),
+        direction: MessageDirection.OUTBOUND,
+        fromNumber: params.msg.pageId ?? params.msg.instagramAccountId ?? params.connection.phoneNumberId,
+        toNumber: params.msg.externalThreadId,
+        bodyText: fallbackText,
+        status: MessageStatus.REPLIED,
+        aiModelUsed: "fallback-ai-unavailable",
+        channel: params.msg.channel,
+        externalMessageId: sendResult.externalMessageId,
+        externalThreadId: params.msg.externalThreadId,
+        processedAt: new Date(),
+      },
+    }),
+  ]);
+
+  await incrementReplyCount(params.connection.userId);
+}
+
 function intentTag(intent: SocialIntent) {
   if (intent === "spam") return "spam";
   if (intent === "complaint") return "complaint";
@@ -593,6 +655,18 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
     await incrementReplyCount(connection.userId);
   } catch (error) {
     logger.error("meta.social", "Social AI reply processing failed.", { error });
+
+    if (error instanceof AIReplyError) {
+      await sendSocialFallbackReply({
+        connection,
+        inboundMessageId: inboundMessage.id,
+        msg,
+        settings,
+        accessToken,
+        reason: error,
+      });
+      return;
+    }
 
     await prisma.message.update({
       where: { id: inboundMessage.id },

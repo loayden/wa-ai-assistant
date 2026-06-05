@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
+import { KNOWLEDGE_CONTENT_MAX_LENGTH, KNOWLEDGE_TITLE_MAX_LENGTH } from "@/lib/knowledge/constants";
 import { cn } from "@/lib/utils";
 import type {
   AssistantTestResponse,
@@ -56,6 +57,20 @@ function buildHoursText(openTime: string, closeTime: string, closedDays: string[
   return `يفتح النشاط يوميًا من ${openTime} إلى ${closeTime}. أيام الإغلاق: ${closedLabel}.`;
 }
 
+function validateKnowledgeText(label: string, value: string, maxLength: number) {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    return `${label} مطلوب.`;
+  }
+
+  if (trimmedValue.length > maxLength) {
+    return `${label} طويل جدًا. الحد الأقصى ${maxLength.toLocaleString("ar-EG")} حرف.`;
+  }
+
+  return null;
+}
+
 export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps) {
   const [entries, setEntries] = useState(() => sortEntries(initialEntries));
   const [isSavingInfo, setIsSavingInfo] = useState(false);
@@ -85,6 +100,16 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   }
 
   async function saveBusinessInfo() {
+    const trimmedBusinessInfo = businessInfo.trim();
+    const validationError = validateKnowledgeText("معلومات النشاط", trimmedBusinessInfo, KNOWLEDGE_CONTENT_MAX_LENGTH);
+
+    if (validationError) {
+      toast.error("لم يتم حفظ معلومات النشاط", {
+        description: validationError,
+      });
+      return;
+    }
+
     setIsSavingInfo(true);
 
     try {
@@ -93,10 +118,11 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         body: JSON.stringify({
           type: "text",
           title: "معلومات النشاط",
-          content: businessInfo,
+          content: trimmedBusinessInfo,
         }),
       });
       upsertEntry(response.entry);
+      setBusinessInfo(response.entry.content);
       toast.success("تم حفظ معلومات النشاط", {
         description: "سيستخدم المساعد هذه المعلومات عند الرد على العملاء.",
       });
@@ -110,6 +136,19 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   }
 
   async function addFaq() {
+    const trimmedQuestion = faqQuestion.trim();
+    const trimmedAnswer = faqAnswer.trim();
+    const validationError =
+      validateKnowledgeText("السؤال", trimmedQuestion, KNOWLEDGE_TITLE_MAX_LENGTH) ??
+      validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH);
+
+    if (validationError) {
+      toast.error("لم تتم إضافة السؤال", {
+        description: validationError,
+      });
+      return;
+    }
+
     setIsAddingFaq(true);
 
     try {
@@ -117,8 +156,8 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         method: "POST",
         body: JSON.stringify({
           type: "faq",
-          title: faqQuestion,
-          content: faqAnswer,
+          title: trimmedQuestion,
+          content: trimmedAnswer,
         }),
       });
       upsertEntry(response.entry);
@@ -137,12 +176,25 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   }
 
   async function saveFaq(id: string) {
+    const trimmedQuestion = editingQuestion.trim();
+    const trimmedAnswer = editingAnswer.trim();
+    const validationError =
+      validateKnowledgeText("السؤال", trimmedQuestion, KNOWLEDGE_TITLE_MAX_LENGTH) ??
+      validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH);
+
+    if (validationError) {
+      toast.error("لم يتم تحديث السؤال", {
+        description: validationError,
+      });
+      return;
+    }
+
     try {
       const response = await apiData<KnowledgeEntryMutationResponse>(`/api/knowledge/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
-          title: editingQuestion,
-          content: editingAnswer,
+          title: trimmedQuestion,
+          content: trimmedAnswer,
         }),
       });
       upsertEntry(response.entry);
@@ -249,12 +301,18 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
           >
             <Textarea
               minRows={7}
+              maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
               value={businessInfo}
               onChange={(event) => setBusinessInfo(event.target.value)}
               placeholder="مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهراً حتى 2 فجراً، نوصّل لكل القاهرة..."
             />
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-body-sm text-wa-gray-500">مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهرًا حتى 2 فجرًا، والتوصيل داخل القاهرة.</p>
+              <p className="text-body-sm text-wa-gray-500">
+                مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهرًا حتى 2 فجرًا، والتوصيل داخل القاهرة.
+                <span className="mt-1 block text-label font-semibold uppercase tracking-widest text-wa-gray-400">
+                  {businessInfo.length.toLocaleString("ar-EG")}/{KNOWLEDGE_CONTENT_MAX_LENGTH.toLocaleString("ar-EG")}
+                </span>
+              </p>
               <Button className="rounded-full" isLoading={isSavingInfo} onClick={saveBusinessInfo}>
                 <Save className="size-4" aria-hidden="true" />
                 حفظ المعلومات
@@ -269,8 +327,25 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
             body="أضيفي إجابات دقيقة للأسئلة المتكررة. اجعلي الإجابات قصيرة وواضحة."
           >
             <div className="grid gap-3 rounded-[20px] border border-wa-gray-100 bg-wa-gray-50 p-3 sm:p-4">
-              <Input value={faqQuestion} onChange={(event) => setFaqQuestion(event.target.value)} placeholder="ما هي أسعاركم؟" />
-              <Textarea minRows={3} value={faqAnswer} onChange={(event) => setFaqAnswer(event.target.value)} placeholder="اكتب إجابة واضحة يمكن إرسالها للعميل..." />
+              <div className="space-y-1.5">
+                <Input
+                  value={faqQuestion}
+                  maxLength={KNOWLEDGE_TITLE_MAX_LENGTH}
+                  onChange={(event) => setFaqQuestion(event.target.value)}
+                  placeholder="ما هي أسعاركم؟"
+                />
+                <CharacterCounter value={faqQuestion} maxLength={KNOWLEDGE_TITLE_MAX_LENGTH} />
+              </div>
+              <div className="space-y-1.5">
+                <Textarea
+                  minRows={3}
+                  maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
+                  value={faqAnswer}
+                  onChange={(event) => setFaqAnswer(event.target.value)}
+                  placeholder="اكتب إجابة واضحة يمكن إرسالها للعميل..."
+                />
+                <CharacterCounter value={faqAnswer} maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH} />
+              </div>
               <Button className="w-full rounded-full sm:w-fit" disabled={!faqQuestion.trim() || !faqAnswer.trim()} isLoading={isAddingFaq} onClick={addFaq}>
                 <Plus className="size-4" aria-hidden="true" />
                 إضافة سؤال
@@ -286,8 +361,23 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                     <div key={entry.id} className="rounded-[18px] border border-wa-gray-100 bg-white p-3 sm:p-4">
                       {editing ? (
                         <div className="space-y-3">
-                          <Input value={editingQuestion} onChange={(event) => setEditingQuestion(event.target.value)} />
-                          <Textarea minRows={3} value={editingAnswer} onChange={(event) => setEditingAnswer(event.target.value)} />
+                          <div className="space-y-1.5">
+                            <Input
+                              value={editingQuestion}
+                              maxLength={KNOWLEDGE_TITLE_MAX_LENGTH}
+                              onChange={(event) => setEditingQuestion(event.target.value)}
+                            />
+                            <CharacterCounter value={editingQuestion} maxLength={KNOWLEDGE_TITLE_MAX_LENGTH} />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Textarea
+                              minRows={3}
+                              maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
+                              value={editingAnswer}
+                              onChange={(event) => setEditingAnswer(event.target.value)}
+                            />
+                            <CharacterCounter value={editingAnswer} maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH} />
+                          </div>
                           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                             <Button variant="outline" className="rounded-full" onClick={() => setEditingFaqId(null)}>
                               إلغاء
@@ -433,6 +523,16 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         </aside>
       </section>
     </div>
+  );
+}
+
+function CharacterCounter({ maxLength, value }: { maxLength: number; value: string }) {
+  const isNearLimit = value.length > maxLength * 0.9;
+
+  return (
+    <p className={cn("text-right text-label font-semibold uppercase tracking-widest", isNearLimit ? "text-wa-error" : "text-wa-gray-400")}>
+      {value.length.toLocaleString("ar-EG")}/{maxLength.toLocaleString("ar-EG")}
+    </p>
   );
 }
 

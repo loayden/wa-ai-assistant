@@ -7,8 +7,10 @@
 import { describe, expect, it } from "vitest";
 
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
+import { KNOWLEDGE_CONTENT_MAX_LENGTH, KNOWLEDGE_TITLE_MAX_LENGTH } from "@/lib/knowledge/constants";
 import { inboundWebhookSchema } from "@/lib/validators/message";
 import { BUSINESS_CONTEXT_MAX_LENGTH, updateSettingsSchema } from "@/lib/validators/settings";
+import { createKnowledgeEntrySchema, updateKnowledgeEntrySchema } from "@/lib/validators/knowledge";
 import { connectWhatsAppSchema, webhookVerifySchema } from "@/lib/validators/whatsapp";
 
 const validWebhookPayload = {
@@ -99,6 +101,36 @@ describe("settings validators", () => {
 
   it("rejects empty settings updates", () => {
     expect(updateSettingsSchema.safeParse({}).success).toBe(false);
+  });
+});
+
+describe("knowledge validators", () => {
+  it("accepts FAQ questions up to the shared knowledge title limit", () => {
+    expect(
+      createKnowledgeEntrySchema.safeParse({
+        type: "faq",
+        title: "س".repeat(KNOWLEDGE_TITLE_MAX_LENGTH),
+        content: "الإجابة واضحة.",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects FAQ questions over the shared knowledge title limit", () => {
+    expect(
+      createKnowledgeEntrySchema.safeParse({
+        type: "faq",
+        title: "س".repeat(KNOWLEDGE_TITLE_MAX_LENGTH + 1),
+        content: "الإجابة واضحة.",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects knowledge content over the shared content limit", () => {
+    expect(
+      updateKnowledgeEntrySchema.safeParse({
+        content: "x".repeat(KNOWLEDGE_CONTENT_MAX_LENGTH + 1),
+      }).success,
+    ).toBe(false);
   });
 });
 

@@ -6,20 +6,22 @@
  */
 import { z } from "zod";
 
+import { KNOWLEDGE_CONTENT_MAX_LENGTH, KNOWLEDGE_TITLE_MAX_LENGTH } from "@/lib/knowledge/constants";
+
 export const knowledgeTypeSchema = z.enum(["text", "faq", "hours"]);
 
 export const createKnowledgeEntrySchema = z
   .object({
     type: knowledgeTypeSchema,
-    title: z.string().trim().min(1).max(120),
-    content: z.string().trim().min(1).max(8_000),
+    title: z.string().trim().min(1).max(KNOWLEDGE_TITLE_MAX_LENGTH),
+    content: z.string().trim().min(1).max(KNOWLEDGE_CONTENT_MAX_LENGTH),
   })
   .strict();
 
 export const updateKnowledgeEntrySchema = z
   .object({
-    title: z.string().trim().min(1).max(120).optional(),
-    content: z.string().trim().min(1).max(8_000).optional(),
+    title: z.string().trim().min(1).max(KNOWLEDGE_TITLE_MAX_LENGTH).optional(),
+    content: z.string().trim().min(1).max(KNOWLEDGE_CONTENT_MAX_LENGTH).optional(),
   })
   .strict()
   .refine((value) => value.title !== undefined || value.content !== undefined, {

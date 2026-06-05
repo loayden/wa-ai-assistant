@@ -162,6 +162,11 @@ describe("generateAIReply", () => {
   it("adds saved knowledge entries to the system prompt", async () => {
     prismaMock.knowledgeBaseEntry.findMany.mockResolvedValueOnce([
       {
+        type: "text",
+        title: "Business Info",
+        content: "We source clothes from boutiques and resell them to customers.",
+      },
+      {
         type: "faq",
         title: "Delivery",
         content: "Delivery is available across Cairo until midnight.",
@@ -187,6 +192,8 @@ describe("generateAIReply", () => {
       }),
     );
     expect(request.messages[0].content).toContain("Business Knowledge");
+    expect(request.messages[0].content).toContain("[Business info: Business Info]");
+    expect(request.messages[0].content).toContain("We source clothes from boutiques and resell them to customers.");
     expect(request.messages[0].content).toContain("[FAQ: Delivery]");
     expect(request.messages[0].content).toContain("Delivery is available across Cairo until midnight.");
   });

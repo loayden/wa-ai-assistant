@@ -52,12 +52,21 @@ type SocialChannelCardsProps = {
 };
 
 const META_OAUTH_STATE_STORAGE_KEY = "kallem_meta_oauth_state";
-const META_OAUTH_SCOPES = [
+const META_OAUTH_INTENT_STORAGE_KEY = "kallem_meta_oauth_intent";
+const META_MESSENGER_OAUTH_SCOPES = [
   "pages_show_list",
   "pages_messaging",
   "pages_manage_metadata",
   "pages_read_engagement",
-].join(",");
+];
+const META_INSTAGRAM_OAUTH_SCOPES = [
+  ...META_MESSENGER_OAUTH_SCOPES,
+  "instagram_basic",
+  "instagram_manage_messages",
+  "instagram_manage_comments",
+];
+
+type MetaOAuthIntent = "messenger" | "instagram";
 
 function statusLabel(connection?: SocialConnection | null) {
   if (!connection) return "غير متصل";
@@ -79,6 +88,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
   const [availablePages, setAvailablePages] = useState<MetaPage[]>([]);
   const [loadingConnections, setLoadingConnections] = useState(true);
   const [connecting, setConnecting] = useState<"messenger" | "instagram" | null>(null);
+  const [oauthIntent, setOauthIntent] = useState<MetaOAuthIntent>("messenger");
   const [error, setError] = useState<string | null>(null);
 
   const messengerConnection = useMemo(() => connections.find((connection) => connection.channel === "messenger") ?? null, [connections]);
@@ -139,10 +149,50 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     [refreshConnections],
   );
 
+  const connectInstagram = useCallback(
+    async (page: MetaPage) => {
+      if (!page.instagram_business_account?.id) {
+        setError("هذه الصفحة لا تحتوي على حساب Instagram Business مرتبط.");
+        return;
+      }
+
+      setConnecting("instagram");
+      try {
+        await apiData("/api/meta/connect-instagram", {
+          method: "POST",
+          body: JSON.stringify({
+            pageId: page.id,
+            instagramAccountId: page.instagram_business_account.id,
+            instagramUsername: page.instagram_business_account.username,
+            instagramProfilePicture: page.instagram_business_account.profile_picture_url,
+          }),
+        });
+        await refreshConnections();
+      } catch (requestError) {
+        setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط إنستجرام.");
+      } finally {
+        setConnecting(null);
+      }
+    },
+    [refreshConnections],
+  );
+
+  const connectPageForIntent = useCallback(
+    async (page: MetaPage, intent: MetaOAuthIntent) => {
+      await connectSelectedPage(page);
+
+      if (intent === "instagram") {
+        await connectInstagram(page);
+      }
+    },
+    [connectInstagram, connectSelectedPage],
+  );
+
   const exchangeMetaCode = useCallback(
-    async (code: string) => {
+    async (code: string, intent: MetaOAuthIntent) => {
       setError(null);
-      setConnecting("messenger");
+      setOauthIntent(intent);
+      setConnecting(intent);
 
       try {
         const data = await apiData<{ pages: MetaPage[] }>("/api/meta/oauth/exchange", {
@@ -156,15 +206,15 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         setAvailablePages(data.pages);
 
         if (data.pages.length === 1) {
-          await connectSelectedPage(data.pages[0]);
+          await connectPageForIntent(data.pages[0], intent);
         }
       } catch (requestError) {
-        setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط ماسنجر.");
+        setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط حساب Meta.");
       } finally {
         setConnecting(null);
       }
     },
-    [connectSelectedPage],
+    [connectPageForIntent],
   );
 
   useEffect(() => {
@@ -186,9 +236,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     };
 
     if (oauthError) {
-        setError(translateError(oauthError, "تم إلغاء أو رفض ربط Meta. اضغط ربط حساب Meta مرة أخرى."));
-        cleanUrl();
-        return;
+      setError(translateError(oauthError, "تم إلغاء أو رفض ربط Meta. اضغط ربط حساب Meta مرة أخرى."));
+      cleanUrl();
+      return;
     }
 
     if (!code) {
@@ -197,7 +247,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     }
 
     const expectedState = window.sessionStorage.getItem(META_OAUTH_STATE_STORAGE_KEY);
+    const storedIntent = window.sessionStorage.getItem(META_OAUTH_INTENT_STORAGE_KEY);
     window.sessionStorage.removeItem(META_OAUTH_STATE_STORAGE_KEY);
+    window.sessionStorage.removeItem(META_OAUTH_INTENT_STORAGE_KEY);
 
     if (!expectedState || !state || expectedState !== state) {
       setError("انتهت جلسة ربط Meta أو تغيّر رمز الحماية. اضغط ربط حساب Meta مرة أخرى.");
@@ -205,10 +257,11 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       return;
     }
 
-    void exchangeMetaCode(code).finally(cleanUrl);
+    const intent: MetaOAuthIntent = storedIntent === "instagram" ? "instagram" : "messenger";
+    void exchangeMetaCode(code, intent).finally(cleanUrl);
   }, [appId, exchangeMetaCode]);
 
-  const startMetaOAuthRedirect = useCallback(() => {
+  const startMetaOAuthRedirect = useCallback((intent: MetaOAuthIntent) => {
     if (!appId) {
       setError("ربط Meta غير جاهز الآن. تواصل مع الدعم لتفعيل الربط.");
       return;
@@ -216,14 +269,17 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
 
     const state = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     window.sessionStorage.setItem(META_OAUTH_STATE_STORAGE_KEY, state);
+    window.sessionStorage.setItem(META_OAUTH_INTENT_STORAGE_KEY, intent);
+    setOauthIntent(intent);
 
     const authUrl = new URL(`https://www.facebook.com/${apiVersion}/dialog/oauth`);
+    const scopes = intent === "instagram" ? META_INSTAGRAM_OAUTH_SCOPES : META_MESSENGER_OAUTH_SCOPES;
     authUrl.search = new URLSearchParams({
       auth_type: "rerequest",
       client_id: appId,
       redirect_uri: `${window.location.origin}/connect`,
       response_type: "code",
-      scope: META_OAUTH_SCOPES,
+      scope: scopes.join(","),
       state,
     }).toString();
 
@@ -232,37 +288,34 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
   }, [apiVersion, appId]);
 
   const connectMessenger = useCallback(() => {
-    startMetaOAuthRedirect();
+    startMetaOAuthRedirect("messenger");
   }, [startMetaOAuthRedirect]);
 
-  async function connectInstagram(page: MetaPage) {
-    if (!page.instagram_business_account?.id) {
-      setError("هذه الصفحة لا تحتوي على حساب Instagram Business مرتبط.");
+  const connectInstagramFromCard = useCallback(() => {
+    if (!messengerConnection) {
+      setError("اربط صفحة Facebook أولاً قبل ربط إنستجرام.");
       return;
     }
 
-    setConnecting("instagram");
-    try {
-      await apiData("/api/meta/connect-instagram", {
-        method: "POST",
-        body: JSON.stringify({
-          pageId: page.id,
-          instagramAccountId: page.instagram_business_account.id,
-          instagramUsername: page.instagram_business_account.username,
-          instagramProfilePicture: page.instagram_business_account.profile_picture_url,
-        }),
-      });
-      await refreshConnections();
-    } catch (requestError) {
-      setError(requestError instanceof ApiClientError ? requestError.message : "فشل ربط إنستجرام.");
-    } finally {
-      setConnecting(null);
+    const page = availablePages.find((item) => item.id === messengerConnection.facebookPageId);
+
+    if (page && oauthIntent === "instagram") {
+      void connectInstagram(page);
+      return;
     }
-  }
+
+    startMetaOAuthRedirect("instagram");
+  }, [availablePages, connectInstagram, messengerConnection, oauthIntent, startMetaOAuthRedirect]);
 
   const messengerMissing = missingPermissionLabels(messengerConnection?.permissions ?? [], MESSENGER_PERMISSION_REQUIREMENTS);
   const instagramMissing = missingPermissionLabels(instagramConnection?.permissions ?? [], INSTAGRAM_DM_PERMISSION_REQUIREMENTS);
   const canConnectInstagram = Boolean(messengerConnection);
+  const instagramStatus = instagramConnection ? statusLabel(instagramConnection) : messengerConnection ? "جاهز للربط" : "غير متصل";
+  const instagramStatusClass = instagramConnection
+    ? statusClass(instagramConnection)
+    : messengerConnection
+      ? "bg-wa-blue-50 text-wa-blue-600"
+      : "bg-wa-gray-50 text-wa-gray-600";
 
   return (
     <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
@@ -311,32 +364,24 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           icon={<InstagramIcon className="size-6" />}
           title="إنستجرام"
           description="استقبل ورد على Instagram DMs من نفس الصندوق."
-          status={instagramConnection ? statusLabel(instagramConnection) : "قريباً"}
-          statusClassName={instagramConnection ? statusClass(instagramConnection) : "bg-wa-warning-bg text-wa-warning"}
-          actionDisabled={connecting === "instagram" || !canConnectInstagram || !instagramConnection}
-          actionHidden={!instagramConnection}
-          actionLabel={instagramConnection ? "تحديث إنستجرام" : "بانتظار موافقة Meta"}
-          onAction={() => {
-            const page = availablePages.find((item) => item.id === messengerConnection?.facebookPageId);
-            if (page) {
-              void connectInstagram(page);
-            } else {
-              connectMessenger();
-            }
-          }}
+          status={instagramStatus}
+          statusClassName={instagramStatusClass}
+          actionDisabled={connecting === "instagram" || connecting === "messenger" || !canConnectInstagram}
+          actionLabel={instagramConnection ? "تحديث إنستجرام" : "ربط إنستجرام"}
+          onAction={connectInstagramFromCard}
         >
           {!messengerConnection ? (
             <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-              اربط حساب Meta/صفحة Facebook أولاً. بعد موافقة Meta على رسائل إنستجرام سنفعّل الربط من هنا.
+              اربط حساب Meta/صفحة Facebook أولاً، ثم اربط حساب Instagram Business المرتبط بنفس الصفحة.
             </p>
           ) : !instagramConnection ? (
             <div className="mt-3 rounded-2xl border border-wa-warning-bg bg-white px-3 py-2 text-body-sm leading-6 text-wa-warning">
               <p className="flex items-center gap-2 font-semibold">
                 <AlertTriangle className="size-4" aria-hidden="true" />
-                قيد مراجعة Meta
+                يحتاج حساب Instagram Business
               </p>
               <p className="mt-1 text-wa-gray-700">
-                ماسنجر جاهز من نفس ربط Meta. رسائل إنستجرام تحتاج موافقة Meta قبل استخدامها مع العملاء الحقيقيين.
+                اضغط ربط إنستجرام لتحديث صلاحيات Meta واختيار الصفحة المرتبطة بحساب Instagram Business.
               </p>
             </div>
           ) : instagramMissing.length > 0 && instagramConnection ? (
@@ -354,7 +399,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
                 key={page.id}
                 type="button"
                 className="rounded-2xl border border-wa-gray-100 bg-white p-3 text-right transition hover:border-wa-blue-100 hover:bg-wa-blue-50"
-                onClick={() => void connectSelectedPage(page)}
+                onClick={() => void connectPageForIntent(page, oauthIntent)}
               >
                 <span className="block text-body-sm font-semibold text-wa-gray-900">{page.name}</span>
                 <span className="mt-1 block text-label text-wa-gray-500">

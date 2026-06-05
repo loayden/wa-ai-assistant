@@ -7,7 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Package, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { CheckCircle2, Package, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
 import { cn } from "@/lib/utils";
+import { formatStableMoney, formatStableNumber } from "@/lib/utils/format";
 
 type Product = {
   id: string;
@@ -60,9 +61,10 @@ const emptyForm: ProductForm = {
 };
 
 type ProductFormErrors = Partial<Record<keyof ProductForm, string>>;
+type AvailabilityFilter = "all" | "available" | "paused";
 
 function formatPrice(value: number) {
-  return new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(value);
+  return formatStableMoney(value);
 }
 
 function buildPayload(form: ProductForm) {
@@ -96,19 +98,45 @@ export function ProductsPageClient() {
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [formErrors, setFormErrors] = useState<ProductFormErrors>({});
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const productsQuery = useQuery({
     queryKey: ["products"],
     queryFn: () => apiData<ProductsResponse>("/api/products"),
   });
   const products = useMemo(() => productsQuery.data?.products ?? [], [productsQuery.data?.products]);
   const availableCount = useMemo(() => products.filter((product) => product.isAvailable).length, [products]);
+  const categories = useMemo(() => {
+    return Array.from(new Set(products.map((product) => product.category || "بدون فئة"))).sort((a, b) => a.localeCompare(b));
+  }, [products]);
+  const filteredProducts = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const category = product.category || "بدون فئة";
+      const matchesSearch =
+        !normalizedSearch ||
+        [product.name, product.nameEn, product.description, product.category]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedSearch));
+      const matchesCategory = categoryFilter === "all" || category === categoryFilter;
+      const matchesAvailability =
+        availabilityFilter === "all" ||
+        (availabilityFilter === "available" && product.isAvailable) ||
+        (availabilityFilter === "paused" && !product.isAvailable);
+
+      return matchesSearch && matchesCategory && matchesAvailability;
+    });
+  }, [availabilityFilter, categoryFilter, products, search]);
   const groupedProducts = useMemo(() => {
-    return products.reduce<Record<string, Product[]>>((groups, product) => {
+    return filteredProducts.reduce<Record<string, Product[]>>((groups, product) => {
       const category = product.category || "بدون فئة";
       groups[category] = [...(groups[category] ?? []), product];
       return groups;
     }, {});
-  }, [products]);
+  }, [filteredProducts]);
+  const filtersActive = Boolean(search.trim()) || categoryFilter !== "all" || availabilityFilter !== "all";
 
   const saveMutation = useMutation({
     mutationFn: (payload: ProductForm) => {
@@ -179,18 +207,18 @@ export function ProductsPageClient() {
   return (
     <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-8" dir="rtl">
       <section className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[28px]">
-        <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div>
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">المنتجات</p>
-            <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px]">قائمة المنتجات</h1>
+            <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[40px]">منتجات وأسعار يفهمها المساعد</h1>
             <p className="mt-3 max-w-[720px] text-body-sm leading-7 text-wa-gray-600 sm:text-body-lg">
-              أضف منتجاتك وأسعارك حتى يستطيع المساعد الرد على أسئلة الأسعار وتسجيل الطلبات من محادثات السوشيال.
+              أضيفي المنتجات، الأسعار، والفئات مرة واحدة حتى تظهر في الردود والطلبات بدون شرح متكرر.
             </p>
           </div>
           <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">المنتجات المتاحة</p>
-            <p className="mt-1 text-[34px] font-semibold text-wa-gray-900">{availableCount.toLocaleString("ar-EG")}</p>
-            <p className="mt-1 text-body-sm text-wa-gray-600">من {products.length.toLocaleString("ar-EG")} منتج محفوظ.</p>
+            <p className="mt-1 text-[34px] font-semibold text-wa-gray-900">{formatStableNumber(availableCount)}</p>
+            <p className="mt-1 text-body-sm text-wa-gray-600">من {formatStableNumber(products.length)} منتج محفوظ.</p>
           </div>
         </div>
       </section>
@@ -217,7 +245,7 @@ export function ProductsPageClient() {
             </span>
             <div>
               <h2 className="text-body-lg font-semibold text-wa-gray-900">{editingId ? "تعديل المنتج" : "إضافة منتج"}</h2>
-              <p className="text-body-sm text-wa-gray-500">البيانات دي هتستخدم في ردود AI.</p>
+              <p className="text-body-sm text-wa-gray-500">هذه البيانات يستخدمها المساعد في إجابات الأسعار والطلبات.</p>
             </div>
           </div>
           <div className="mt-5 space-y-4">
@@ -297,14 +325,55 @@ export function ProductsPageClient() {
         </form>
 
         <div className="rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
-          <div className="flex items-center justify-between gap-3 border-b border-wa-gray-100 p-4 sm:p-5">
+          <div className="space-y-4 border-b border-wa-gray-100 p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-body-lg font-semibold text-wa-gray-900">المنتجات المحفوظة</h2>
-              <p className="mt-1 text-body-sm text-wa-gray-500">رتّب منتجاتك بالفئات وخلي غير المتاح متوقف.</p>
+              <p className="mt-1 text-body-sm text-wa-gray-500">
+                {formatStableNumber(filteredProducts.length)} معروض من {formatStableNumber(products.length)} منتج.
+              </p>
             </div>
-            <Button size="sm" variant="outline" onClick={() => void queryClient.invalidateQueries({ queryKey: ["products"] })}>
+            <Button aria-label="تحديث المنتجات" size="sm" variant="outline" onClick={() => void queryClient.invalidateQueries({ queryKey: ["products"] })}>
               <RefreshCw className="size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">تحديث</span>
             </Button>
+            </div>
+            <div className="grid gap-3">
+              <label className="relative block">
+                <Search className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400" aria-hidden="true" />
+                <span className="sr-only">البحث في المنتجات</span>
+                <Input
+                  className="h-11 rounded-2xl bg-wa-gray-50 pr-10"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="ابحثي بالاسم، الفئة، أو الوصف"
+                />
+              </label>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                <FilterChip active={categoryFilter === "all"} label="كل الفئات" onClick={() => setCategoryFilter("all")} />
+                {categories.map((category) => (
+                  <FilterChip key={category} active={categoryFilter === category} label={category} onClick={() => setCategoryFilter(category)} />
+                ))}
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                <FilterChip active={availabilityFilter === "all"} label="كل الحالات" onClick={() => setAvailabilityFilter("all")} />
+                <FilterChip active={availabilityFilter === "available"} label="متاح للبيع" onClick={() => setAvailabilityFilter("available")} />
+                <FilterChip active={availabilityFilter === "paused"} label="متوقف" onClick={() => setAvailabilityFilter("paused")} />
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    className="min-h-9 shrink-0 rounded-full px-3 text-body-sm font-semibold text-wa-blue-600 transition hover:bg-wa-blue-50"
+                    onClick={() => {
+                      setSearch("");
+                      setCategoryFilter("all");
+                      setAvailabilityFilter("all");
+                    }}
+                  >
+                    مسح الفلاتر
+                  </button>
+                ) : null}
+              </div>
+            </div>
           </div>
           {productsQuery.isLoading ? (
             <div className="space-y-3 p-4 sm:p-5">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-24 rounded-2xl" />)}</div>
@@ -316,11 +385,34 @@ export function ProductsPageClient() {
               <p className="mt-4 text-h3 font-semibold text-wa-gray-900">أضف أول منتج</p>
               <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">بعد إضافة المنتجات، سيقدر المساعد يفهم الطلبات ويحسب الإجمالي تلقائياً.</p>
             </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="p-8 text-center">
+              <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-wa-blue-50">
+                <Search className="size-7 text-wa-blue-600" aria-hidden="true" />
+              </div>
+              <p className="mt-4 text-h3 font-semibold text-wa-gray-900">لا توجد منتجات مطابقة</p>
+              <p className="mx-auto mt-2 max-w-[420px] text-body-sm leading-6 text-wa-gray-600">
+                غيّري البحث أو أزيلي الفلاتر لعرض كل المنتجات المحفوظة.
+              </p>
+              <Button
+                className="mt-4 rounded-full"
+                variant="outline"
+                onClick={() => {
+                  setSearch("");
+                  setCategoryFilter("all");
+                  setAvailabilityFilter("all");
+                }}
+              >
+                عرض كل المنتجات
+              </Button>
+            </div>
           ) : (
             <div className="space-y-5 p-4 sm:p-5">
               {Object.entries(groupedProducts).map(([category, items]) => (
                 <div key={category}>
-                  <p className="mb-2 text-label font-semibold uppercase tracking-widest text-wa-gray-400">{category}</p>
+                  <p className="mb-2 text-label font-semibold uppercase tracking-widest text-wa-gray-400">
+                    {category} · {formatStableNumber(items.length)}
+                  </p>
                   <div className="space-y-2.5">
                     {items.map((product) => (
                       <article key={product.id} className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3 sm:p-4">
@@ -338,7 +430,8 @@ export function ProductsPageClient() {
                                 {product.isAvailable ? "متاح" : "متوقف"}
                               </span>
                             </div>
-                            <p className="mt-1 text-body-sm text-wa-gray-600">{formatPrice(product.priceEGP)} جنيه</p>
+                            <p className="mt-1 text-body-sm font-semibold text-wa-gray-700">{formatPrice(product.priceEGP)} جنيه</p>
+                            {product.nameEn ? <p className="mt-1 text-body-sm text-wa-gray-500" dir="ltr">{product.nameEn}</p> : null}
                             {product.description ? <p className="mt-2 line-clamp-2 text-body-sm leading-6 text-wa-gray-500">{product.description}</p> : null}
                           </div>
                           <div className="flex flex-wrap gap-2">
@@ -368,5 +461,20 @@ export function ProductsPageClient() {
         </div>
       </section>
     </div>
+  );
+}
+
+function FilterChip({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "min-h-9 shrink-0 rounded-full border px-3 text-body-sm font-semibold transition-colors",
+        active ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800" : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
+      )}
+      onClick={onClick}
+    >
+      {label}
+    </button>
   );
 }

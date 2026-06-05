@@ -151,7 +151,7 @@ export function ConversationCard({
           ) : aiGenerated ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-wa-blue-50 px-2 py-0.5 text-[10px] font-semibold text-wa-blue-700">
               <Bot className="size-3" aria-hidden="true" />
-              AI
+              تلقائي
             </span>
           ) : null}
           {preview}

@@ -145,7 +145,7 @@ export function MessageList() {
             <InboxHeroStat label="المعروض" value={String(filteredMessages.length)} />
             <InboxHeroStat label="تحتاج رد" value={String(unansweredCount)} tone={unansweredCount > 0 ? "attention" : "calm"} />
             <InboxHeroStat label="تدخل بشري" value={String(handoffCount)} tone={handoffCount > 0 ? "attention" : "calm"} />
-            <InboxHeroStat label="ردود AI" value={String(aiRepliesCount)} />
+            <InboxHeroStat label="ردود تلقائية" value={String(aiRepliesCount)} />
             {failedCount > 0 ? <InboxHeroStat label="تحتاج إعداد" value={String(failedCount)} tone="attention" /> : null}
           </div>
         </div>
@@ -323,7 +323,7 @@ export function MessageList() {
               />
               <InboxHealthRow
                 icon={<Bot className="size-4" aria-hidden="true" />}
-                label="مساعدة AI"
+                label="مساعدة المساعد"
                 value={`${aiRepliesCount} رد`}
                 tone="blue"
               />
@@ -371,7 +371,7 @@ export function MessageList() {
             <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">طريقة العمل اليومية</p>
             <div className="mt-4 space-y-3">
               <WorkflowRow icon={<Inbox className="size-4" aria-hidden="true" />} title="راجعي الرسائل الجديدة" body="ابدئي بالمحادثات المعلّمة بأنها تحتاج رد." />
-              <WorkflowRow icon={<MessageSquareText className="size-4" aria-hidden="true" />} title="افتحي المحادثة" body="راجعي رسالة العميل ورد AI في السياق الكامل." />
+              <WorkflowRow icon={<MessageSquareText className="size-4" aria-hidden="true" />} title="افتحي المحادثة" body="راجعي رسالة العميل ورد المساعد في السياق الكامل." />
               <WorkflowRow icon={<Clock3 className="size-4" aria-hidden="true" />} title="تابعي يدويًا" body="ارسلي ردًا مباشرًا عندما يحتاج الأمر تدخل صاحب النشاط." />
             </div>
             <Link

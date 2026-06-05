@@ -5,6 +5,7 @@
  * while paid tiers also surface overage once they move past the included cap.
  */
 import { Progress } from "@/components/ui/progress";
+import { formatStableNumber } from "@/lib/utils/format";
 import { PLAN_LIMITS, type PlanTier } from "@/types/subscription";
 
 type UsageBarProps = {
@@ -22,16 +23,16 @@ export function UsageBar({ planTier, used }: UsageBarProps) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
-        <span className="font-medium">ردود الذكاء هذا الشهر</span>
-        <span className="text-muted-foreground">{`${used.toLocaleString("ar-EG")} / ${includedReplies.toLocaleString("ar-EG")} ضمن الخطة`}</span>
+        <span className="font-medium">الردود هذا الشهر</span>
+        <span className="text-muted-foreground">{`${formatStableNumber(used)} / ${formatStableNumber(includedReplies)} ضمن الخطة`}</span>
       </div>
       <Progress value={percentage} />
       <p className="text-xs text-muted-foreground">
         {overageReplies > 0
-          ? `${overageReplies.toLocaleString("ar-EG")} رد إضافي هذا الشهر.`
+          ? `${formatStableNumber(overageReplies)} رد إضافي هذا الشهر.`
           : planLimits.allowsOverage
-            ? `${remainingIncludedReplies.toLocaleString("ar-EG")} رد ضمن الخطة قبل احتساب الردود الإضافية.`
-            : `${remainingIncludedReplies.toLocaleString("ar-EG")} رد متبقٍ هذا الشهر.`}
+            ? `${formatStableNumber(remainingIncludedReplies)} رد ضمن الخطة قبل احتساب الردود الإضافية.`
+            : `${formatStableNumber(remainingIncludedReplies)} رد متبقٍ هذا الشهر.`}
       </p>
     </div>
   );

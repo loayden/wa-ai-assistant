@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useSubscription } from "@/hooks/useSubscription";
 import { apiData } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
+import { formatStableNumber } from "@/lib/utils/format";
 import { PLAN_LIMITS, type PlanTier } from "@/types/subscription";
 
 type RedirectResponse = {
@@ -65,7 +66,7 @@ const planCopy: Record<
 };
 
 function formatReplies(count: number) {
-  return `${count.toLocaleString("ar-EG")} رد / شهر`;
+  return `${formatStableNumber(count)} رد / شهر`;
 }
 
 function getTrialDaysRemaining(trialEndsAt: string | null | undefined) {
@@ -230,9 +231,9 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الخطط</p>
-            <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">اختاري حجم العمل الذي يديره المساعد.</h2>
+            <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">اختاري الخطة المناسبة لحجم رسائلك.</h2>
             <p className="mt-2 max-w-[640px] text-body-sm leading-6 text-wa-gray-600">
-              الأسعار بالجنيه المصري ومناسبة للأعمال الصغيرة. الترقية تفتح صفحة دفع آمنة من Paymob، وkallem لا يخزن أرقام البطاقات.
+              الترقية تتم في صفحة Paymob الآمنة، ثم يتم تفعيل الخطة تلقائياً بعد تأكيد الدفع.
             </p>
           </div>
           {isPaidPlan ? <p className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-4 py-2 text-body-sm font-medium text-wa-gray-600">الخطة الحالية مفعّلة</p> : null}
@@ -260,10 +261,10 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
               <PlanCard
                 key={plan}
                 title={plan}
-                priceLabel={limits.monthlyPriceEgp === 0 ? "مجاناً" : `${limits.monthlyPriceEgp.toLocaleString("ar-EG")} جنيه/شهر`}
+                priceLabel={limits.monthlyPriceEgp === 0 ? "مجاناً" : `${formatStableNumber(limits.monthlyPriceEgp)} جنيه/شهر`}
                 description={`${copy.useCase}. ${copy.description}`}
                 includedRepliesLabel={formatReplies(limits.includedRepliesPerMonth)}
-                numberLimitLabel={`${limits.maxConnections.toLocaleString("ar-EG")} ${limits.maxConnections === 1 ? "رقم" : "أرقام"}`}
+                numberLimitLabel={`${formatStableNumber(limits.maxConnections)} ${limits.maxConnections === 1 ? "رقم" : "أرقام"}`}
                 overageLabel={copy.overageLabel}
                 features={copy.features}
                 current={isCurrent}
@@ -282,7 +283,7 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مقارنة الخطط</p>
           <h2 className="mt-2 text-[24px] font-semibold leading-tight text-wa-gray-900 sm:text-[28px]">اعرف بالضبط ماذا تفتح كل خطة</h2>
           <p className="mt-2 max-w-[760px] text-body-sm leading-6 text-wa-gray-600">
-            الفرق بين Free و Pro أقل من تكلفة عميل واحد إضافي في الشهر لمعظم الأنشطة. الهدف هو ألا يتوقف المساعد وقت ما الرسائل تزيد.
+            قارني الحدود الأساسية بسرعة، ثم اختاري الخطة التي تمنع توقف الردود وقت زيادة الرسائل.
           </p>
         </div>
         <div className="overflow-x-auto">

@@ -10,6 +10,7 @@ import { CalendarClock, CreditCard, MessageCircle, Phone } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { UsageBar } from "@/components/dashboard/UsageBar";
+import { formatStableNumber } from "@/lib/utils/format";
 import { PLAN_LIMITS, type PlanTier } from "@/types/subscription";
 
 type SubscriptionStatusProps = {
@@ -64,14 +65,14 @@ export function SubscriptionStatus({ planTier, subscriptionStatus, monthlyReplyC
           <StatusMetric
             icon={<MessageCircle className="size-4" aria-hidden="true" />}
             label="الردود المستخدمة"
-            value={`${monthlyReplyCount.toLocaleString("ar-EG")} / ${limits.includedRepliesPerMonth.toLocaleString("ar-EG")}`}
+            value={`${formatStableNumber(monthlyReplyCount)} / ${formatStableNumber(limits.includedRepliesPerMonth)}`}
           />
           <StatusMetric
             icon={<MessageCircle className="size-4" aria-hidden="true" />}
             label="المتبقي"
-            value={`${remaining.toLocaleString("ar-EG")} رد`}
+            value={`${formatStableNumber(remaining)} رد`}
           />
-          <StatusMetric icon={<Phone className="size-4" aria-hidden="true" />} label="الأرقام" value={`حد أقصى ${limits.maxConnections.toLocaleString("ar-EG")}`} />
+          <StatusMetric icon={<Phone className="size-4" aria-hidden="true" />} label="الأرقام" value={`حد أقصى ${formatStableNumber(limits.maxConnections)}`} />
           <StatusMetric
             icon={planTier === "FREE" ? <CreditCard className="size-4" aria-hidden="true" /> : <CalendarClock className="size-4" aria-hidden="true" />}
             label={planTier === "FREE" ? "الفوترة" : "الدفع القادم"}

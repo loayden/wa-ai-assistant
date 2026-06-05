@@ -7,6 +7,7 @@
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { CreditCard, RefreshCw, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiData } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
+import { formatStableMoney, formatStableNumber } from "@/lib/utils/format";
 
 type OrderStatus = "new" | "confirmed" | "preparing" | "delivered" | "cancelled";
 
@@ -86,7 +88,7 @@ function formatDate(value: string) {
 }
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat("ar-EG", { maximumFractionDigits: 0 }).format(value);
+  return formatStableMoney(value);
 }
 
 function normalizeItems(items: unknown): OrderItem[] {
@@ -147,15 +149,15 @@ export function OrdersPageClient() {
         <div className="grid gap-4 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-5 sm:grid-cols-3 sm:p-8">
           <div className="sm:col-span-2">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الطلبات</p>
-            <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px]">الطلبات</h1>
+            <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[40px]">طلبات العملاء في مكان واحد</h1>
             <p className="mt-3 max-w-[700px] text-body-sm leading-7 text-wa-gray-600 sm:text-body-lg">
-              تابع الطلبات القادمة من واتساب، حدّث حالة العميل، وأرسل رابط دفع من نفس المكان.
+              تابعي الطلبات القادمة من المحادثات، حدّثي الحالة، وأرسلي رابط الدفع بدون البحث بين الصفحات.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-1">
             <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
               <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">طلبات جديدة</p>
-              <p className="mt-1 text-[34px] font-semibold text-wa-gray-900">{newOrders.toLocaleString("ar-EG")}</p>
+              <p className="mt-1 text-[34px] font-semibold text-wa-gray-900">{formatStableNumber(newOrders)}</p>
             </div>
             <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
               <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">إيراد اليوم</p>
@@ -185,7 +187,7 @@ export function OrdersPageClient() {
                 </button>
               ))}
             </div>
-            <Button size="sm" variant="outline" onClick={() => void queryClient.invalidateQueries({ queryKey: ["orders"] })}>
+            <Button aria-label="تحديث الطلبات" size="sm" variant="outline" onClick={() => void queryClient.invalidateQueries({ queryKey: ["orders"] })}>
               <RefreshCw className="size-4" aria-hidden="true" />
               تحديث
             </Button>
@@ -207,6 +209,12 @@ export function OrdersPageClient() {
             <p className="mx-auto mt-2 max-w-[520px] text-body-sm leading-6 text-wa-gray-600">
               عندما يطلب العميل منتجاً بوضوح، سيظهر الطلب هنا مع الإجمالي وحالة الدفع.
             </p>
+            <Link
+              href="/products"
+              className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-wa-blue-600 px-5 text-body-sm font-semibold text-white transition hover:bg-wa-blue-700"
+            >
+              تجهيز المنتجات أولاً
+            </Link>
           </div>
         ) : (
           <div className="grid gap-3 p-4 sm:p-5 lg:grid-cols-2">

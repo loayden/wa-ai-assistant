@@ -322,9 +322,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">القنوات</p>
-          <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط قنوات السوشيال</h2>
+          <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط قنوات العملاء</h2>
           <p className="mt-2 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            ابدأ بربط حساب Meta مرة واحدة لقراءة صفحات Facebook وتشغيل Messenger. إنستجرام يحتاج موافقة Meta منفصلة قبل تفعيله للعموم.
+            اربطي صفحة Facebook مرة واحدة، ثم فعّلي Messenger وإنستجرام من نفس المكان عندما تكون الصلاحيات جاهزة.
           </p>
         </div>
         {loadingConnections ? <Loader2 className="size-5 animate-spin text-wa-blue-600" aria-hidden="true" /> : null}
@@ -342,7 +342,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         <ChannelCard
           icon={<WhatsAppIcon className="size-6" />}
           title="واتساب"
-          description="الرد على العملاء عبر رقم WhatsApp Business."
+          description="استقبال رسائل العملاء والرد من رقم واتساب التجاري."
           status={whatsappConnected ? "متصل" : "غير متصل"}
           statusClassName={whatsappConnected ? "bg-wa-success-bg text-wa-success" : "bg-wa-gray-50 text-wa-gray-600"}
           actionHref="/whatsapp"
@@ -351,7 +351,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         <ChannelCard
           icon={<MessengerIcon className="size-6" />}
           title="ماسنجر"
-          description="استقبل ورد على رسائل صفحة Facebook."
+          description="استقبال رسائل صفحة Facebook والرد عليها."
           status={statusLabel(messengerConnection)}
           statusClassName={statusClass(messengerConnection)}
           actionDisabled={connecting === "messenger" || !appId}
@@ -363,7 +363,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         <ChannelCard
           icon={<InstagramIcon className="size-6" />}
           title="إنستجرام"
-          description="استقبل ورد على Instagram DMs من نفس الصندوق."
+          description="استقبال رسائل إنستجرام والرد عليها من نفس الصندوق."
           status={instagramStatus}
           statusClassName={instagramStatusClass}
           actionDisabled={connecting === "instagram" || connecting === "messenger" || !canConnectInstagram}
@@ -372,16 +372,16 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         >
           {!messengerConnection ? (
             <p className="mt-3 rounded-2xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-              اربط حساب Meta/صفحة Facebook أولاً، ثم اربط حساب Instagram Business المرتبط بنفس الصفحة.
+              اربطي صفحة Facebook أولاً، ثم اربطي حساب إنستجرام التجاري المرتبط بنفس الصفحة.
             </p>
           ) : !instagramConnection ? (
             <div className="mt-3 rounded-2xl border border-wa-warning-bg bg-white px-3 py-2 text-body-sm leading-6 text-wa-warning">
               <p className="flex items-center gap-2 font-semibold">
                 <AlertTriangle className="size-4" aria-hidden="true" />
-                يحتاج حساب Instagram Business
+                يحتاج حساب إنستجرام تجاري
               </p>
               <p className="mt-1 text-wa-gray-700">
-                اضغط ربط إنستجرام لتحديث صلاحيات Meta واختيار الصفحة المرتبطة بحساب Instagram Business.
+                اضغطي ربط إنستجرام لاختيار الصفحة المرتبطة بحساب إنستجرام التجاري.
               </p>
             </div>
           ) : instagramMissing.length > 0 && instagramConnection ? (
@@ -403,7 +403,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
               >
                 <span className="block text-body-sm font-semibold text-wa-gray-900">{page.name}</span>
                 <span className="mt-1 block text-label text-wa-gray-500">
-                  {page.instagram_business_account?.username ? `Instagram @${page.instagram_business_account.username}` : "لا يوجد Instagram Business ظاهر"}
+                  {page.instagram_business_account?.username ? `إنستجرام @${page.instagram_business_account.username}` : "لا يظهر حساب إنستجرام تجاري"}
                 </span>
               </button>
             ))}
@@ -412,7 +412,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        ربط Meta يتم من زر واحد. قد تطلب Meta مراجعة التطبيق قبل فتح Messenger أو Instagram لكل العملاء.
+        قد تطلب Meta مراجعة بعض الصلاحيات قبل تشغيل Messenger أو إنستجرام لكل العملاء.
       </div>
     </section>
   );

@@ -98,7 +98,7 @@ export function LiveConnectionCheck({ connectionId }: LiveConnectionCheckProps) 
           <ol className="mt-3 list-decimal space-y-2 pr-4 text-body-sm leading-6 text-wa-gray-600">
             <li>العميل يرسل رسالة إلى رقم واتساب المتصل.</li>
             <li>kallem يستقبل الرسالة من خلال Webhook.</li>
-            <li>المساعد يكتب ويرسل الرد تلقائيًا عندما يكون رصيد AI وإرسال واتساب متاحين.</li>
+            <li>المساعد يكتب ويرسل الرد تلقائيًا عندما يكون رصيد الردود وإرسال واتساب متاحين.</li>
           </ol>
           <p className="mt-3 rounded-xl bg-white px-3 py-2 text-body-sm leading-6 text-wa-gray-700">
             العملاء الحقيقيون يحتاجون رقم WhatsApp Business إنتاجي. أرقام Meta التجريبية للعرض فقط وتحتاج أرقام اختبار معتمدة.

@@ -43,6 +43,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { PLAN_LIMITS } from "@/types/subscription";
 import { cn } from "@/lib/utils";
+import { formatStableNumber } from "@/lib/utils/format";
 
 type DashboardPageClientProps = {
   initialConnection: WhatsAppConnectionSummary | null;
@@ -238,7 +239,7 @@ export function DashboardPageClient({
                 الردود الشهرية
               </p>
               <p className="mt-1 text-body font-semibold text-wa-gray-900">
-                استخدمت {user.monthlyReplyCount.toLocaleString("ar-EG")} من {planLimit.toLocaleString("ar-EG")} رد هذا الشهر.
+                استخدمت {formatStableNumber(user.monthlyReplyCount)} من {formatStableNumber(planLimit)} رد هذا الشهر.
               </p>
               <div className="mt-3 h-2 max-w-[520px] overflow-hidden rounded-full bg-wa-gray-100">
                 <div
@@ -320,27 +321,27 @@ export function DashboardPageClient({
         <div className="grid divide-y divide-wa-gray-100 border-t border-wa-gray-100 md:grid-cols-5 md:divide-x md:divide-y-0">
           <CommandSignal
             icon={<Zap className="size-4 text-wa-blue-600" aria-hidden="true" />}
-            label="ردود AI"
+            label="الردود التلقائية"
             value={autoReplyEnabled ? "يرد الآن" : "متوقف"}
             detail={autoReplyEnabled ? "العملاء يحصلون على رد تلقائي" : "الردود تنتظر مراجعة يدوية"}
           />
           <CommandSignal
             icon={<RadioTower className="size-4 text-wa-success" aria-hidden="true" />}
-            label="قنوات Meta"
+            label="القنوات"
             value={connected ? "متصل" : "غير متصل"}
             detail={connected ? connection?.displayName ?? "قناة النشاط جاهزة" : "وصّلي واتساب أو إنستجرام أو ماسنجر"}
           />
           <CommandSignal
             icon={<MessageSquareText className="size-4 text-wa-gray-500" aria-hidden="true" />}
             label="الرسائل"
-            value={`${inboundCount} رسالة`}
+            value={`${formatStableNumber(inboundCount)} رسالة`}
             detail={lastMessage ? `آخر نشاط ${formatTimestamp(lastMessage.createdAt)}` : "لا توجد رسائل بعد"}
           />
           <CommandSignal
             href="/leads"
             icon={<UserPlus className="size-4 text-wa-blue-600" aria-hidden="true" />}
-            label="Leads هذا الشهر"
-            value={String(initialMonthlyLeadsCount)}
+            label="عملاء مهتمون"
+            value={formatStableNumber(initialMonthlyLeadsCount)}
             detail={initialMonthlyLeadsCount > 0 ? "تم اكتشاف عملاء مهتمين" : "طلبات الشراء ستظهر هنا"}
           />
           <CommandSignal
@@ -367,7 +368,7 @@ export function DashboardPageClient({
               <NextStepRow
                 done={autoReplyEnabled}
                 icon={<Bot className="size-4" aria-hidden="true" />}
-                title="تشغيل ردود AI"
+                title="تشغيل الردود التلقائية"
                 body={autoReplyEnabled ? "المساعد يعمل الآن." : "شغّلي الردود من الزر الرئيسي."}
                 href="/dashboard"
               />
@@ -386,7 +387,7 @@ export function DashboardPageClient({
               <div>
                 <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">استهلاك الردود</p>
                 <p className="mt-1 text-h3 font-semibold text-wa-gray-900">
-                  {user.monthlyReplyCount.toLocaleString("ar-EG")} / {planLimit.toLocaleString("ar-EG")}
+                  {formatStableNumber(user.monthlyReplyCount)} / {formatStableNumber(planLimit)}
                 </p>
               </div>
               <CreditCard className="size-5 text-wa-blue-600" aria-hidden="true" />

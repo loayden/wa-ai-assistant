@@ -209,7 +209,7 @@ export function ConversationThread({
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-wa-gray-900">المساعد متوقف — أنت تتحكم الآن</p>
-                  <p className="mt-1 text-wa-gray-600">أي رسالة جديدة من هذا العميل ستظهر هنا ولن يرد عليها AI حتى تضغط استئناف.</p>
+                  <p className="mt-1 text-wa-gray-600">أي رسالة جديدة من هذا العميل ستظهر هنا ولن يرد عليها المساعد حتى تضغط استئناف.</p>
                 </div>
               </div>
             </div>
@@ -269,7 +269,7 @@ export function ConversationThread({
                       )}
                     >
                       {humanSent ? <UserRoundCheck className="size-3" aria-hidden="true" /> : <Bot className="size-3" aria-hidden="true" />}
-                      {message.aiModelUsed === "human-corrected" ? "أنت صححت الرد" : humanSent ? "أنت" : "رد AI"}
+                      {message.aiModelUsed === "human-corrected" ? "أنت صححت الرد" : humanSent ? "أنت" : "رد المساعد"}
                     </span>
                   ) : null}
                   <div
@@ -308,7 +308,7 @@ export function ConversationThread({
                   {correctingMessageId === message.id ? (
                     <div className="mt-2 w-full max-w-[88%] rounded-2xl border border-wa-blue-100 bg-white p-3 shadow-[0_12px_30px_rgba(37,99,235,0.08)] sm:max-w-[82%]">
                       <label className="text-label font-semibold uppercase tracking-widest text-wa-gray-400" htmlFor={`correct-${message.id}`}>
-                        تصحيح رد AI
+                        تصحيح رد المساعد
                       </label>
                       <Textarea
                         id={`correct-${message.id}`}
@@ -373,7 +373,7 @@ export function ConversationThread({
                 className="min-h-[88px] border-none bg-transparent px-1 py-1 focus-visible:border-none focus-visible:bg-transparent focus-visible:ring-0 sm:min-h-[112px]"
               />
               <div className="flex items-center justify-between gap-3">
-                <p className="text-xs leading-5 text-wa-gray-500 sm:text-body-sm">الرد اليدوي لا يستهلك من رصيد ردود AI.</p>
+                <p className="text-xs leading-5 text-wa-gray-500 sm:text-body-sm">الرد اليدوي لا يستهلك من رصيد الردود التلقائية.</p>
                 <button
                   type="submit"
                   className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wa-blue-600 text-white transition active:scale-[0.98] disabled:bg-wa-gray-200 disabled:text-wa-gray-400 sm:size-11 sm:rounded-2xl"
@@ -389,7 +389,7 @@ export function ConversationThread({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-body-sm font-semibold text-wa-gray-900">عايز ترد بنفسك؟</p>
-                  <p className="mt-1 text-body-sm leading-5 text-wa-gray-600">سلّم المحادثة للبشر لإيقاف AI على هذا العميل فقط.</p>
+                  <p className="mt-1 text-body-sm leading-5 text-wa-gray-600">سلّم المحادثة للبشر لإيقاف الردود التلقائية على هذا العميل فقط.</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <button

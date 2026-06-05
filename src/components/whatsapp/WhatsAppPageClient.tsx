@@ -112,12 +112,12 @@ export function WhatsAppPageClient({
     },
     {
       icon: RadioTower,
-      label: "Webhook جاهز",
+      label: "استقبال الرسائل",
       value: "الرسائل تصل إلى الصندوق",
     },
     {
       icon: Bot,
-      label: "ردود AI",
+      label: "الردود التلقائية",
       value: autoReplyEnabled ? "يرد على العملاء" : "متوقف من المالك",
     },
   ];
@@ -159,7 +159,7 @@ export function WhatsAppPageClient({
               المساعد جاهز للقنوات المتصلة.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              شغّلي أو أوقفي ردود AI، راجعي تفاصيل واتساب، وأضيفي إنستجرام وماسنجر من نفس شاشة القنوات.
+              شغّلي أو أوقفي الردود التلقائية، راجعي تفاصيل واتساب، وأضيفي إنستجرام وماسنجر من نفس شاشة القنوات.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">

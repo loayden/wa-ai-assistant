@@ -61,9 +61,9 @@ const META_MESSENGER_OAUTH_SCOPES = [
 ];
 const META_INSTAGRAM_OAUTH_SCOPES = [
   ...META_MESSENGER_OAUTH_SCOPES,
-  "instagram_basic",
-  "instagram_manage_messages",
-  "instagram_manage_comments",
+  "instagram_business_basic",
+  "instagram_business_manage_messages",
+  "instagram_business_manage_comments",
 ];
 
 type MetaOAuthIntent = "messenger" | "instagram";
@@ -478,8 +478,11 @@ function ChannelCard({
 function MissingPermissions({ permissions }: { permissions: string[] }) {
   const friendlyLabels: Record<string, string> = {
     instagram_basic: "قراءة حساب Instagram Business",
+    instagram_business_basic: "قراءة حساب Instagram Business",
     instagram_manage_comments: "إدارة تعليقات Instagram",
+    instagram_business_manage_comments: "إدارة تعليقات Instagram",
     instagram_manage_messages: "إرسال واستقبال رسائل Instagram",
+    instagram_business_manage_messages: "إرسال واستقبال رسائل Instagram",
     pages_manage_metadata: "إدارة إعدادات صفحة Facebook",
     pages_messaging: "إرسال واستقبال رسائل الصفحة",
     pages_read_engagement: "قراءة تفاعل الصفحة",

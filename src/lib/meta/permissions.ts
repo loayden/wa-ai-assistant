@@ -9,15 +9,15 @@ export const MESSENGER_PERMISSION_REQUIREMENTS: PermissionRequirement[] = [
 ];
 
 export const INSTAGRAM_DM_PERMISSION_REQUIREMENTS: PermissionRequirement[] = [
-  { label: "instagram_basic", aliases: ["instagram_basic", "instagram_business_basic"] },
-  { label: "instagram_manage_messages", aliases: ["instagram_manage_messages", "instagram_business_manage_messages"] },
+  { label: "instagram_business_basic", aliases: ["instagram_business_basic", "instagram_basic"] },
+  { label: "instagram_business_manage_messages", aliases: ["instagram_business_manage_messages", "instagram_manage_messages"] },
   { label: "pages_messaging", aliases: ["pages_messaging"] },
 ];
 
 export const INSTAGRAM_COMMENT_PERMISSION_REQUIREMENTS: PermissionRequirement[] = [
-  { label: "instagram_basic", aliases: ["instagram_basic", "instagram_business_basic"] },
+  { label: "instagram_business_basic", aliases: ["instagram_business_basic", "instagram_basic"] },
   { label: "pages_read_engagement", aliases: ["pages_read_engagement"] },
-  { label: "instagram_manage_comments", aliases: ["instagram_manage_comments", "instagram_business_manage_comments"] },
+  { label: "instagram_business_manage_comments", aliases: ["instagram_business_manage_comments", "instagram_manage_comments"] },
 ];
 
 export function hasPermissionRequirement(grantedPermissions: string[], requirement: PermissionRequirement): boolean {

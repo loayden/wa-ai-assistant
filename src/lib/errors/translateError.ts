@@ -7,6 +7,7 @@ const ERROR_TRANSLATIONS: Array<[RegExp, string]> = [
   [/database temporarily unavailable|can't reach database|connection terminated|connection refused/i, "الخدمة غير متاحة مؤقتاً. حاول مرة أخرى بعد قليل."],
   [/too many requests|rate limit/i, "طلبات كثيرة في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى."],
   [/openai|api key|quota|billing|model|provider/i, "المساعد غير متاح الآن. حاول مرة أخرى بعد قليل أو تواصل مع الدعم."],
+  [/application does not have the capability|capability to make this api call/i, "رفضت Meta الإرسال من هذا المسار. أعد المحاولة بعد تحديث الربط أو استكمال مراجعة Meta."],
   [/paymob|payment setup|checkout/i, "الدفع غير متاح الآن. سنفعله بعد اكتمال إعداد مزود الدفع."],
   [/meta signup was cancelled|meta sign-in was cancelled/i, "تم إلغاء نافذة Meta قبل اكتمال الربط."],
   [/meta connected successfully/i, "تم تسجيل الدخول إلى Meta، لكن لم يكتمل حفظ الربط داخل kallem."],

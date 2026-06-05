@@ -122,6 +122,58 @@ describe("Meta social channel adapters", () => {
 
     vi.doUnmock("@/lib/utils/env");
   });
+
+  it("falls back to the Page send endpoint when Meta rejects the Instagram account endpoint capability", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/utils/env", () => ({
+      appEnv: {
+        WHATSAPP_API_VERSION: "v19.0",
+        WHATSAPP_MOCK_MODE: false,
+      },
+    }));
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json(
+          {
+            error: {
+              message: "(#3) Application does not have the capability to make this API call.",
+              type: "OAuthException",
+              code: 3,
+            },
+          },
+          { status: 403 },
+        ),
+      )
+      .mockResolvedValueOnce(Response.json({ message_id: "page-out-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { instagramAdapter: realInstagramAdapter } = await import("@/lib/channels/adapters/instagram");
+    await expect(
+      realInstagramAdapter.sendText({
+        connectionId: "connection-1",
+        recipientId: "igsid-1",
+        text: "أهلاً",
+        accessToken: "page-token",
+        pageId: "page-1",
+        phoneNumberId: "ig-1",
+      }),
+    ).resolves.toEqual({ success: true, externalMessageId: "page-out-1" });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://graph.facebook.com/v19.0/ig-1/messages",
+      expect.objectContaining({ method: "POST" }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://graph.facebook.com/v19.0/page-1/messages",
+      expect.objectContaining({ method: "POST" }),
+    );
+
+    vi.doUnmock("@/lib/utils/env");
+  });
 });
 
 describe("Meta social webhook signature", () => {

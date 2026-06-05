@@ -56,10 +56,39 @@ async function parseMetaSendResponse(res: Response): Promise<ChannelSendResult> 
   };
 }
 
+function isCapabilityError(result: ChannelSendResult): boolean {
+  if (result.success || !result.error) {
+    return false;
+  }
+
+  return /application does not have the capability|\"code\"\s*:\s*3/i.test(result.error);
+}
+
+async function sendInstagramText(params: {
+  accessToken: string;
+  recipientId: string;
+  senderId: string;
+  text: string;
+}): Promise<ChannelSendResult> {
+  const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/${params.senderId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${params.accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipient: { id: params.recipientId },
+      message: { text: params.text },
+    }),
+  });
+
+  return parseMetaSendResponse(res);
+}
+
 export const instagramAdapter: ChannelAdapter = {
   channel: "instagram",
 
-  async sendText({ accessToken, recipientId, text, phoneNumberId }) {
+  async sendText({ accessToken, recipientId, text, pageId, phoneNumberId }) {
     if (appEnv.WHATSAPP_MOCK_MODE) {
       return {
         success: true,
@@ -68,19 +97,29 @@ export const instagramAdapter: ChannelAdapter = {
     }
 
     const senderId = phoneNumberId?.trim() || "me";
-    const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/${senderId}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        recipient: { id: recipientId },
-        message: { text },
-      }),
+    const primaryResult = await sendInstagramText({
+      accessToken,
+      recipientId,
+      senderId,
+      text,
     });
 
-    return parseMetaSendResponse(res);
+    if (!isCapabilityError(primaryResult)) {
+      return primaryResult;
+    }
+
+    const fallbackSenderId = pageId?.trim() || "me";
+
+    if (fallbackSenderId === senderId) {
+      return primaryResult;
+    }
+
+    return sendInstagramText({
+      accessToken,
+      recipientId,
+      senderId: fallbackSenderId,
+      text,
+    });
   },
 
   normalizeWebhookEvent(entry: unknown): NormalizedInboundMessage[] {

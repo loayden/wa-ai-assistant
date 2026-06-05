@@ -61,9 +61,9 @@ const META_MESSENGER_OAUTH_SCOPES = [
 ];
 const META_INSTAGRAM_OAUTH_SCOPES = [
   ...META_MESSENGER_OAUTH_SCOPES,
-  "instagram_business_basic",
-  "instagram_business_manage_messages",
-  "instagram_business_manage_comments",
+  "business_management",
+  "instagram_basic",
+  "instagram_manage_messages",
 ];
 
 type MetaOAuthIntent = "messenger" | "instagram";

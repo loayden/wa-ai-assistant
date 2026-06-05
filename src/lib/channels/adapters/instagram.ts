@@ -59,7 +59,7 @@ async function parseMetaSendResponse(res: Response): Promise<ChannelSendResult> 
 export const instagramAdapter: ChannelAdapter = {
   channel: "instagram",
 
-  async sendText({ accessToken, recipientId, text }) {
+  async sendText({ accessToken, recipientId, text, phoneNumberId }) {
     if (appEnv.WHATSAPP_MOCK_MODE) {
       return {
         success: true,
@@ -67,7 +67,8 @@ export const instagramAdapter: ChannelAdapter = {
       };
     }
 
-    const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/me/messages`, {
+    const senderId = phoneNumberId?.trim() || "me";
+    const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/${senderId}/messages`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,

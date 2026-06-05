@@ -26,7 +26,7 @@ const socialMocks = vi.hoisted(() => {
     incrementReplyCount: vi.fn(),
     prisma: {
       whatsAppConnection: { findFirst: vi.fn() },
-      message: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+      message: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
       conversationHandoff: { findUnique: vi.fn(), upsert: vi.fn() },
       routingRule: { findMany: vi.fn() },
       lead: { findFirst: vi.fn(), create: vi.fn() },
@@ -177,6 +177,7 @@ describe("processSocialMessage", () => {
         ...data,
       }),
     );
+    socialMocks.prisma.message.findUnique.mockResolvedValue({ metadata: {} });
     socialMocks.prisma.message.update.mockResolvedValue({});
     socialMocks.prisma.conversationHandoff.findUnique.mockResolvedValue(null);
     socialMocks.prisma.routingRule.findMany.mockResolvedValue([]);
@@ -197,6 +198,7 @@ describe("processSocialMessage", () => {
     expect(socialMocks.sendText).toHaveBeenCalledWith(
       expect.objectContaining({
         accessToken: "page-token",
+        phoneNumberId: "ig-account-1",
         recipientId: "igsid-1",
         text: FALLBACK_TEXT,
       }),
@@ -231,6 +233,15 @@ describe("processSocialMessage", () => {
       data: expect.objectContaining({
         status: MessageStatus.FAILED,
         aiReplyText: "لم يتم إرسال الرد لأن المساعد غير متاح مؤقتاً.",
+        aiModelUsed: "fallback-send-failed",
+        metadata: expect.objectContaining({
+          autoReplyFailure: expect.objectContaining({
+            stage: "fallback_send",
+            channel: "instagram",
+            metaError: "Meta send failed",
+            aiFailure: "OPENAI_RATE_LIMIT",
+          }),
+        }),
       }),
     });
     expect(socialMocks.incrementReplyCount).not.toHaveBeenCalled();

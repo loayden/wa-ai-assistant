@@ -170,6 +170,7 @@ export async function processInstagramComment(commentData: InstagramCommentData,
     recipientId: commenterId,
     text: dmText,
     accessToken,
+    phoneNumberId: instagramAccountId,
   });
 
   const lead = await prisma.lead.create({

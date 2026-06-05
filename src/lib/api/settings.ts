@@ -154,6 +154,30 @@ export async function updateUserSettings(userId: string, data: UserSettingsUpdat
   return getOrCreateUserSettings(userId);
 }
 
+function clampFallbackMessage(value: string, maxReplyLength: number): string {
+  const limit = Math.min(500, Math.max(120, maxReplyLength || 300));
+
+  if (value.length <= limit) {
+    return value;
+  }
+
+  return `${value.slice(0, limit - 3).trim()}...`;
+}
+
 export function buildFallbackMessage(settings: UserSettings): string {
-  return settings.fallbackMessage?.trim() || "شكراً لتواصلك. سيقوم أحد أفراد الفريق بالرد عليك قريباً.";
+  const customFallback = settings.fallbackMessage?.trim();
+
+  if (customFallback) {
+    return clampFallbackMessage(customFallback, settings.maxReplyLength);
+  }
+
+  const businessContext = settings.businessContext?.trim();
+
+  if (businessContext) {
+    const businessPrefix = settings.businessName?.trim() ? `أهلاً بك في ${settings.businessName.trim()}. ` : "أهلاً بك. ";
+
+    return clampFallbackMessage(`${businessPrefix}هذه أهم التفاصيل المتاحة: ${businessContext}`, settings.maxReplyLength);
+  }
+
+  return "شكراً لتواصلك. سيقوم أحد أفراد الفريق بالرد عليك قريباً.";
 }

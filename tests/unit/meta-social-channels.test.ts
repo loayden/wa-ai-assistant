@@ -81,6 +81,47 @@ describe("Meta social channel adapters", () => {
       messageType: "unknown",
     });
   });
+
+  it("sends Instagram replies from the Instagram account endpoint", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/utils/env", () => ({
+      appEnv: {
+        WHATSAPP_API_VERSION: "v19.0",
+        WHATSAPP_MOCK_MODE: false,
+      },
+    }));
+
+    const fetchMock = vi.fn(async () => Response.json({ message_id: "ig-out-1" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { instagramAdapter: realInstagramAdapter } = await import("@/lib/channels/adapters/instagram");
+    await expect(
+      realInstagramAdapter.sendText({
+        connectionId: "connection-1",
+        recipientId: "igsid-1",
+        text: "أهلاً",
+        accessToken: "page-token",
+        phoneNumberId: "ig-1",
+      }),
+    ).resolves.toEqual({ success: true, externalMessageId: "ig-out-1" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://graph.facebook.com/v19.0/ig-1/messages",
+      expect.objectContaining({
+        method: "POST",
+        headers: expect.objectContaining({
+          Authorization: "Bearer page-token",
+          "Content-Type": "application/json",
+        }),
+      }),
+    );
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)).toEqual({
+      recipient: { id: "igsid-1" },
+      message: { text: "أهلاً" },
+    });
+
+    vi.doUnmock("@/lib/utils/env");
+  });
 });
 
 describe("Meta social webhook signature", () => {

@@ -156,6 +156,38 @@ function describeSocialAiFailure(error: unknown): string {
   return "وصلت الرسالة لكن الرد التلقائي على قناة Meta لم يكتمل. راجع صلاحيات القناة أو تواصل مع الدعم.";
 }
 
+function getSocialSenderId(
+  msg: NormalizedInboundMessage,
+  connection: NonNullable<Awaited<ReturnType<typeof findConnectionForMessage>>>,
+) {
+  if (msg.channel === "instagram") {
+    return msg.instagramAccountId ?? connection.instagramAccountId ?? connection.phoneNumberId;
+  }
+
+  return connection.phoneNumberId;
+}
+
+function getJsonObject(value: Prisma.JsonValue | null | undefined): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  return value as Record<string, unknown>;
+}
+
+function withAutoReplyFailureMetadata(
+  metadata: Prisma.JsonValue | null | undefined,
+  failure: Record<string, unknown>,
+): Prisma.InputJsonValue {
+  return {
+    ...getJsonObject(metadata),
+    autoReplyFailure: {
+      ...failure,
+      at: new Date().toISOString(),
+    },
+  } as Prisma.InputJsonValue;
+}
+
 async function sendSocialFallbackReply(params: {
   connection: NonNullable<Awaited<ReturnType<typeof findConnectionForMessage>>>;
   inboundMessageId: string;
@@ -172,14 +204,27 @@ async function sendSocialFallbackReply(params: {
     text: fallbackText,
     accessToken: params.accessToken,
     pageId: params.msg.pageId,
+    phoneNumberId: getSocialSenderId(params.msg, params.connection),
   });
 
   if (!sendResult.success) {
+    const inboundMessage = await prisma.message.findUnique({
+      where: { id: params.inboundMessageId },
+      select: { metadata: true },
+    });
+
     await prisma.message.update({
       where: { id: params.inboundMessageId },
       data: {
         status: MessageStatus.FAILED,
         aiReplyText: describeSocialAiFailure(params.reason),
+        aiModelUsed: "fallback-send-failed",
+        metadata: withAutoReplyFailureMetadata(inboundMessage?.metadata, {
+          stage: "fallback_send",
+          channel: params.msg.channel,
+          metaError: sendResult.error ?? "Meta send failed",
+          aiFailure: params.reason instanceof AIReplyError ? params.reason.code : "unknown",
+        }),
         processedAt: new Date(),
       },
     });
@@ -403,6 +448,7 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       text: handoffReply,
       accessToken,
       pageId: msg.pageId,
+      phoneNumberId: getSocialSenderId(msg, connection),
     });
 
     await upsertThreadState({
@@ -442,6 +488,7 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       text: settings.offHoursMessage,
       accessToken,
       pageId: msg.pageId,
+      phoneNumberId: getSocialSenderId(msg, connection),
     });
 
     await prisma.$transaction([
@@ -528,6 +575,7 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
         text: handoffReply,
         accessToken,
         pageId: msg.pageId,
+        phoneNumberId: getSocialSenderId(msg, connection),
       });
 
       await prisma.conversationHandoff.upsert({
@@ -615,6 +663,7 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       text: replyText,
       accessToken,
       pageId: msg.pageId,
+      phoneNumberId: getSocialSenderId(msg, connection),
     });
 
     if (!sendResult.success) {
@@ -673,6 +722,11 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       data: {
         status: MessageStatus.FAILED,
         aiReplyText: describeSocialAiFailure(error),
+        metadata: withAutoReplyFailureMetadata(inboundMessage.metadata, {
+          stage: "primary_reply",
+          channel: msg.channel,
+          error: error instanceof Error ? error.message : String(error),
+        }),
         processedAt: new Date(),
       },
     });

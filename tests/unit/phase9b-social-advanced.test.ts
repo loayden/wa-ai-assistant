@@ -120,6 +120,7 @@ describe("Instagram Comment-to-DM", () => {
         recipientId: "ig-user-1",
         text: "أهلاً! السعر والتفاصيل في الرسالة الخاصة.",
         accessToken: "page-token",
+        phoneNumberId: "ig-1",
       }),
     );
     expect(prismaMock.lead.create).toHaveBeenCalledWith(

@@ -19,6 +19,22 @@ function isMessagingChannel(value: string): value is MessagingChannel {
   return value === "whatsapp" || value === "instagram" || value === "messenger";
 }
 
+function getOutboundSenderNumber(channel: MessagingChannel, connection: {
+  facebookPageId: string | null;
+  instagramAccountId: string | null;
+  phoneNumberId: string;
+}) {
+  if (channel === "whatsapp") {
+    return connection.phoneNumberId;
+  }
+
+  if (channel === "instagram") {
+    return connection.instagramAccountId ?? connection.phoneNumberId;
+  }
+
+  return connection.facebookPageId ?? connection.phoneNumberId;
+}
+
 type RouteContext = {
   params: Promise<{
     id: string;
@@ -77,7 +93,7 @@ export async function POST(request: Request, context: RouteContext) {
         connectionId: thread.connection.id,
         waMessageId,
         direction: MessageDirection.OUTBOUND,
-        fromNumber: channel === "whatsapp" ? thread.connection.phoneNumberId : thread.connection.facebookPageId ?? thread.connection.instagramAccountId ?? thread.connection.phoneNumberId,
+        fromNumber: getOutboundSenderNumber(channel, thread.connection),
         toNumber: recipientId,
         bodyText: parsed.data.message,
         channel,

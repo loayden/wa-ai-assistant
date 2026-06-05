@@ -15,6 +15,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+const BUSINESS_CONTEXT_MAX_LENGTH = 1000;
+
 export interface CustomizeDrawerValues {
   tone: ToneValue;
   businessName: string;
@@ -67,12 +69,12 @@ export function CustomizeDrawer({
           </div>
           <Input value={values.businessName} placeholder="اسم النشاط التجاري" onChange={(event) => onChange({ businessName: event.target.value })} />
           <Textarea
-            maxLength={300}
+            maxLength={BUSINESS_CONTEXT_MAX_LENGTH}
             placeholder="اكتبي باختصار ماذا تبيعين أو كيف تساعدين العملاء"
             value={values.businessContext}
             onChange={(event) => onChange({ businessContext: event.target.value })}
           />
-          <p className="text-right text-body-sm text-wa-gray-400">{values.businessContext.length}/300</p>
+          <p className="text-right text-body-sm text-wa-gray-400">{values.businessContext.length}/{BUSINESS_CONTEXT_MAX_LENGTH}</p>
           <Select value={values.language} onChange={(event) => onChange({ language: event.target.value })}>
             <option value="ar">العربية</option>
             <option value="en">الإنجليزية</option>

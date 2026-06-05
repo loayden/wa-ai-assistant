@@ -156,7 +156,7 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("Acme Bakery");
     expect(request.messages[0].content).toContain("Respond in en");
     expect(request.messages[0].content).toContain("Keep replies under\n80 characters");
-    expect(request.messages[0].content).toContain("We sell fresh bread and close at 7 PM.");
+    expect(request.messages[0].content).toContain("Business context:\nWe sell fresh bread and close at 7 PM.");
   });
 
   it("adds saved knowledge entries to the system prompt", async () => {

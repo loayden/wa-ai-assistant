@@ -8,7 +8,7 @@ import { describe, expect, it } from "vitest";
 
 import { loginSchema, signupSchema } from "@/lib/validators/auth";
 import { inboundWebhookSchema } from "@/lib/validators/message";
-import { updateSettingsSchema } from "@/lib/validators/settings";
+import { BUSINESS_CONTEXT_MAX_LENGTH, updateSettingsSchema } from "@/lib/validators/settings";
 import { connectWhatsAppSchema, webhookVerifySchema } from "@/lib/validators/whatsapp";
 
 const validWebhookPayload = {
@@ -83,9 +83,14 @@ describe("settings validators", () => {
         autoReplyEnabled: true,
         language: "en-US",
         businessName: "Acme",
+        businessContext: "x".repeat(BUSINESS_CONTEXT_MAX_LENGTH),
         maxReplyLength: 300,
       }).success,
     ).toBe(true);
+  });
+
+  it("rejects business context over the dashboard limit", () => {
+    expect(updateSettingsSchema.safeParse({ businessContext: "x".repeat(BUSINESS_CONTEXT_MAX_LENGTH + 1) }).success).toBe(false);
   });
 
   it.each([49, 1001])("rejects maxReplyLength boundary %s", (maxReplyLength) => {

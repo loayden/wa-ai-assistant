@@ -10,6 +10,8 @@ import { z } from "zod";
 import { WORKING_DAY_KEYS } from "@/lib/assistant/working-hours";
 import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/notifications/preferences";
 
+export const BUSINESS_CONTEXT_MAX_LENGTH = 1000;
+
 function optionalTrimmedString(maxLength: number) {
   return z
     .string()
@@ -46,7 +48,7 @@ export const updateSettingsSchema = z
     autoReplyEnabled: z.boolean().optional(),
     language: languageSchema.optional(),
     businessName: optionalTrimmedString(120),
-    businessContext: optionalTrimmedString(4000),
+    businessContext: optionalTrimmedString(BUSINESS_CONTEXT_MAX_LENGTH),
     fallbackMessage: optionalTrimmedString(500),
     maxReplyLength: z.number().int().min(50).max(1000).optional(),
     workingHoursEnabled: z.boolean().optional(),

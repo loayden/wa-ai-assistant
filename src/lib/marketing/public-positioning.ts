@@ -20,7 +20,7 @@ export const publicMarketingRoutes = {
 } as const;
 
 export const publicNavItems = [
-  { label: "واتساب AI", href: publicMarketingRoutes.whatsapp },
+  { label: "القنوات الثلاثة", href: publicMarketingRoutes.whatsapp },
   { label: "إنستجرام وماسنجر", href: publicMarketingRoutes.social },
   { label: "المساعد", href: publicMarketingRoutes.ai },
   { label: "الصندوق", href: publicMarketingRoutes.inbox },
@@ -54,7 +54,7 @@ const planText: Record<
     description: "لتجربة المنتج بأمان قبل استقبال حجم رسائل كبير.",
     bestFor: "تجربة أول قناة ومراجعة جودة الردود",
     ctaLabel: "ابدأ مجانًا",
-    features: ["تجربة الردود الأساسية", "إعداد قناة واحدة", "لوحة رسائل بسيطة"],
+    features: ["تجربة الردود الأساسية", "إعداد قناة واحدة من الثلاثة", "لوحة رسائل بسيطة"],
   },
   PRO: {
     title: "Pro",
@@ -134,25 +134,25 @@ export const trustSignals = [
 
 export const channelPages = {
   whatsapp: {
-    eyebrow: "WhatsApp AI Assistant",
-    title: "حوّل رسائل واتساب إلى ردود واضحة وطلبات قابلة للمتابعة.",
-    body: "اربط رقم النشاط، أضف معلوماتك ومنتجاتك، ودع kallem يرد على الأسئلة المتكررة مع إظهار أي مشكلة تشغيل قبل أن تؤثر على العميل.",
-    asset: "/assets/3dicons/mobile-dynamic-premium.png",
-    primaryCta: "ابدأ ربط واتساب",
+    eyebrow: "واتساب + إنستجرام + ماسنجر",
+    title: "اربط قنوات عملائك الثلاثة من مركز واحد.",
+    body: "ابدأ بالقناة الجاهزة لديك، ثم أضف واتساب وإنستجرام وماسنجر في نفس صندوق الرسائل. kallem يوضح حالة كل قناة قبل تشغيل الردود على العملاء الحقيقيين.",
+    asset: "/assets/3dicons/chat-text-dynamic-color.png",
+    primaryCta: "ابدأ ربط القنوات",
     primaryHref: "/signup?next=%2Fconnect",
-    secondaryCta: "شاهد الأسعار",
-    secondaryHref: publicMarketingRoutes.pricing,
+    secondaryCta: "شاهد الصندوق الموحد",
+    secondaryHref: publicMarketingRoutes.inbox,
     useCases: [
-      "أسئلة السعر والتوصيل والمواعيد",
-      "الرد خارج ساعات العمل برسالة واضحة",
-      "اكتشاف نية الشراء وتحويل المحادثة إلى طلب",
-      "تسليم المحادثة للبشر عند انخفاض الثقة",
+      "ردود WhatsApp على أسئلة السعر والتوصيل والمواعيد",
+      "استقبال Instagram DMs من حساب Professional مرتبط بالصفحة",
+      "إدارة Messenger لرسائل صفحة Facebook من نفس الصندوق",
+      "تسليم أي محادثة للبشر عند انخفاض الثقة أو وجود مشكلة قناة",
     ],
     readiness: [
-      "رقم WhatsApp Business إنتاجي",
-      "Webhook متصل ويستقبل الرسائل",
-      "OpenAI مفعّل ومموّل",
-      "المنتجات والمعرفة مضافة",
+      "WhatsApp Business رقم إنتاجي أو اختبار واضح",
+      "Messenger Page webhook مشترك وصلاحياته جاهزة",
+      "Instagram Professional مربوط بصفحة Facebook",
+      "OpenAI والمعرفة والمنتجات جاهزة للردود عبر القنوات",
     ],
   },
   social: {

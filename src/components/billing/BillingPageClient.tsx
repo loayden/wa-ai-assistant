@@ -46,20 +46,20 @@ const planCopy: Record<
 > = {
   FREE: {
     description: "مناسبة لتجربة المساعد على عدد قليل من الرسائل.",
-    features: ["سلوك مساعد افتراضي", "وصول أساسي لصندوق الرسائل", "إعداد واتساب موجّه"],
+    features: ["سلوك مساعد افتراضي", "وصول أساسي لصندوق الرسائل", "إعداد قناة موجّه"],
     useCase: "الأفضل للتجربة الأولى",
     overageLabel: "يتوقف بعد 50 رد",
   },
   PRO: {
     description: "للأنشطة الصغيرة النشطة التي تحتاج ردود يومية من المساعد.",
-    features: ["تعليمات خاصة للمساعد", "حتى 3 أرقام واتساب", "متابعة واضحة بعد الردود المتاحة"],
+    features: ["تعليمات خاصة للمساعد", "حتى 3 قنوات", "متابعة واضحة بعد الردود المتاحة"],
     useCase: "الأفضل للنشاط المتنامي",
     overageLabel: "متابعة بعد 2,000 رد",
     recommended: true,
   },
   BUSINESS: {
     description: "للفِرق التي تدير حجم محادثات أعلى وتحتاج مساحة تشغيل أكبر.",
-    features: ["حد ردود أعلى", "حتى 10 أرقام متصلة", "أولوية دعم ومساحة تشغيل للفِرق"],
+    features: ["حد ردود أعلى", "حتى 10 قنوات متصلة", "أولوية دعم ومساحة تشغيل للفِرق"],
     useCase: "الأفضل للفِرق المشغولة",
     overageLabel: "متابعة بعد 10,000 رد",
   },
@@ -79,7 +79,7 @@ function getTrialDaysRemaining(trialEndsAt: string | null | undefined) {
 
 const comparisonRows = [
   { label: "الردود شهرياً", free: "50", pro: "2,000", business: "10,000" },
-  { label: "أرقام واتساب", free: "1", pro: "3", business: "10" },
+  { label: "القنوات المتصلة", free: "1", pro: "3", business: "10" },
   { label: "قاعدة المعرفة", free: true, pro: true, business: true },
   { label: "التحليلات", free: false, pro: true, business: true },
   { label: "استخراج العملاء المحتملين", free: false, pro: true, business: true },

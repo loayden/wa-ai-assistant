@@ -20,12 +20,12 @@ const setupSteps = [
   },
   {
     title: "تأكيد البريد",
-    body: "افتحي رابط التأكيد، وبعدها يفتح kallem شاشة ربط واتساب تلقائياً.",
+    body: "افتحي رابط التأكيد، وبعدها يفتح kallem مركز ربط القنوات تلقائياً.",
     icon: MailCheck,
   },
   {
-    title: "ربط واتساب",
-    body: "أدخلي بيانات Meta مرة واحدة. التطبيق يتحقق منها قبل الحفظ.",
+    title: "ربط القنوات",
+    body: "ابدئي بواتساب أو Meta، ثم أضيفي إنستجرام وماسنجر من نفس المكان.",
     icon: RadioTower,
   },
   {
@@ -36,9 +36,9 @@ const setupSteps = [
 ];
 
 const authPoints = [
-  "ربط رقم النشاط وإدارته من شاشة واحدة واضحة.",
-  "الذكاء يرد على الرسائل الأولى مع بقاء المالك متحكماً بالكامل.",
-  "مراجعة محادثات العملاء من صندوق رسائل هادئ بدلاً من لوحة تقنية.",
+  "ربط واتساب وإنستجرام وماسنجر من مركز واحد واضح.",
+  "الذكاء يرد على رسائل القنوات المتصلة مع بقاء المالك متحكماً بالكامل.",
+  "مراجعة كل محادثات العملاء من صندوق رسائل هادئ بدلاً من لوحات متفرقة.",
 ];
 
 export default function AuthLayout({
@@ -64,7 +64,7 @@ export default function AuthLayout({
             />
             <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_52px_rgba(13,20,33,0.10)] backdrop-blur sm:inset-x-5 sm:bottom-5 sm:rounded-[24px] sm:p-5">
               <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">إعداد جاهز للعمل</p>
-              <p className="mt-2 max-w-[620px] text-body font-medium text-wa-gray-900">طريقة واضحة لربط واتساب، تشغيل ردود الذكاء، ومتابعة العملاء بدون تعقيد.</p>
+              <p className="mt-2 max-w-[620px] text-body font-medium text-wa-gray-900">طريقة واضحة لربط واتساب وإنستجرام وماسنجر، تشغيل ردود الذكاء، ومتابعة العملاء بدون تعقيد.</p>
             </div>
           </div>
 
@@ -73,7 +73,7 @@ export default function AuthLayout({
               <p className="text-label font-semibold tracking-widest text-wa-blue-600">لماذا تختار الأنشطة kallem</p>
               <h1 className="mt-3 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:text-[42px] sm:leading-[1.08]">لوحة هادئة لإدارة محادثات العملاء اليومية.</h1>
               <p className="mt-3 text-body-sm leading-6 text-wa-gray-600 sm:mt-4 sm:text-body-lg">
-                استخدمي هذا الحساب لربط رقم النشاط، ضبط أسلوب الرد، ومتابعة الرسائل والفوترة من مكان واحد.
+                استخدمي هذا الحساب لربط قنوات النشاط، ضبط أسلوب الرد، ومتابعة الرسائل والفوترة من مكان واحد.
               </p>
 
               <div className="mt-5 grid gap-2.5 sm:mt-6 sm:gap-3">

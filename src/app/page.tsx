@@ -22,6 +22,7 @@ import {
 
 import { AppFooter } from "@/components/shared/AppFooter";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+import { InstagramIcon, MessengerIcon, WhatsAppIcon } from "@/components/icons/ChannelIcons";
 import { CinematicScrollEffects } from "@/components/landing/CinematicScrollEffects";
 import { MagneticLink } from "@/components/landing/MagneticLink";
 import { MotionReveal } from "@/components/landing/MotionReveal";
@@ -30,18 +31,25 @@ import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "واتساب", href: "/whatsapp-ai" },
-  { label: "إنستجرام وماسنجر", href: "/instagram-messenger-ai" },
+  { label: "القنوات الثلاثة", href: "#connect" },
+  { label: "الصندوق الموحد", href: "/features/inbox" },
+  { label: "المساعد", href: "/features/ai" },
   { label: "الأسعار", href: "/pricing" },
   { label: "الأمان", href: "/security" },
   { label: "المقارنة", href: "/compare/respondio" },
 ];
 
 const heroStats = [
-  { label: "البدء", value: "مجاني" },
+  { label: "القنوات", value: "3" },
+  { label: "الصندوق", value: "موحد" },
   { label: "اللغة", value: "عربي" },
-  { label: "الدفع", value: "Paymob" },
   { label: "التحكم", value: "فوري" },
+];
+
+const channelPreview = [
+  { label: "واتساب", body: "رسائل الرقم التجاري", icon: WhatsAppIcon, className: "bg-[#E9FBF0] text-[#0B8F45]" },
+  { label: "إنستجرام", body: "DM وتعليقات العملاء", icon: InstagramIcon, className: "bg-[#FFF0F7] text-[#C13584]" },
+  { label: "ماسنجر", body: "رسائل صفحة Facebook", icon: MessengerIcon, className: "bg-[#EEF6FF] text-[#0078FF]" },
 ];
 
 const workflowSteps = [
@@ -144,7 +152,7 @@ const pricingPlans = [
     cta: "اختر Pro",
     href: "/signup",
     featured: true,
-    features: ["قاعدة معرفة", "Leads وتحليلات", "قوالب ورسائل متابعة", "ساعات عمل وتقييمات"],
+    features: ["واتساب + إنستجرام + ماسنجر", "قاعدة معرفة", "Leads وتحليلات", "ساعات عمل وتقييمات"],
   },
   {
     name: "BUSINESS",
@@ -231,6 +239,24 @@ function ProductPreview() {
           </span>
         </div>
 
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {channelPreview.map((channel) => {
+            const Icon = channel.icon;
+
+            return (
+              <div key={channel.label} className="flex items-center gap-2 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 px-3 py-2">
+                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-white", channel.className)}>
+                  <Icon className="size-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-wa-gray-900">{channel.label}</span>
+                  <span className="block truncate text-[11px] text-wa-gray-500">{channel.body}</span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="grid gap-3 py-3 sm:grid-cols-3">
           {[
             { label: "الردود", value: "جاهزة" },
@@ -246,7 +272,7 @@ function ProductPreview() {
 
         <div className="grid gap-3 lg:grid-cols-[0.92fr_1.08fr]">
           <div className="rounded-[18px] border border-wa-gray-100 bg-wa-gray-50 p-3">
-            <p className="text-xs font-semibold text-wa-gray-400">محادثة من السوشيال</p>
+            <p className="text-xs font-semibold text-wa-gray-400">محادثة واردة من أي قناة</p>
             <div className="mt-3 space-y-2">
               <div className="max-w-[86%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 text-sm leading-6 text-wa-gray-700">
                 عايز أعرف السعر والتوصيل؟
@@ -315,7 +341,7 @@ function PromoVideoSection() {
               عرض سريع لمدة ٣٠ ثانية يوضح الربط السهل، الردود التلقائية، الصندوق الموحد، اكتشاف Leads، وتدريب المساعد بالعربية.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
-              {["ربط Meta", "واتساب", "إنستجرام", "ماسنجر", "Leads"].map((item) => (
+              {["واتساب", "إنستجرام", "ماسنجر", "صندوق موحد", "Leads"].map((item) => (
                 <span key={item} className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-3 py-2 text-xs font-semibold text-wa-gray-600">
                   {item}
                 </span>
@@ -480,8 +506,8 @@ export default function Home() {
         <div className="mx-auto max-w-[1200px] px-3 sm:px-6">
           <SectionHeading
             eyebrow="مميزات المنتج"
-            title="الصفحة الآن تشرح كل قيمة kallem بعد المراحل الجديدة."
-            body="بدل ما المنتج يظهر كأنه أداة ردود فقط، الهوم يوضح أنه نظام تشغيل لخدمة العملاء: محادثات، معرفة، طلبات، دفع، قوالب، تحليلات ودعم."
+            title="كل قنوات العملاء في تجربة واحدة واضحة."
+            body="kallem ليس أداة واتساب فقط. هو مركز رسائل يربط واتساب وإنستجرام وماسنجر مع معرفة النشاط، الطلبات، الدفع، التحليلات، وتسليم المحادثات للبشر عند الحاجة."
           />
           <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
             {featureGroups.map((feature) => (
@@ -505,9 +531,9 @@ export default function Home() {
             </div>
             <div className="grid gap-3 p-4 sm:p-6">
               {[
-                { title: "قنوات Meta", value: "واتساب جاهز، والسوشيال قابل للإضافة", icon: ShieldCheck },
-                { title: "إنستجرام وماسنجر", value: "ربط Meta وصلاحيات واضحة", icon: MessageSquareText },
-                { title: "الردود الذكية", value: "تعمل حسب قواعد كل قناة", icon: Zap },
+                { title: "واتساب", value: "رقم النشاط التجاري والـ webhook", icon: ShieldCheck },
+                { title: "إنستجرام", value: "DM من حساب Professional مرتبط بالصفحة", icon: MessageSquareText },
+                { title: "ماسنجر", value: "رسائل صفحة Facebook بنفس الصندوق", icon: Zap },
                 { title: "المالك", value: "يقدر يوقف أو يتدخل يدويًا", icon: SlidersHorizontal },
               ].map((item) => {
                 const Icon = item.icon;

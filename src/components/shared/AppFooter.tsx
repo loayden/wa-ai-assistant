@@ -14,7 +14,7 @@ const footerSections = [
   {
     title: "المنتج",
     links: [
-      { label: "مساعد واتساب AI", href: publicMarketingRoutes.whatsapp },
+      { label: "قنوات العملاء الثلاثة", href: publicMarketingRoutes.whatsapp },
       { label: "إنستجرام وماسنجر AI", href: publicMarketingRoutes.social },
       { label: "لوحة التحكم", href: "/dashboard" },
       { label: "إعداد القنوات", href: "/connect" },

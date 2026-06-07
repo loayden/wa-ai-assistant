@@ -352,9 +352,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">القنوات</p>
-          <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط قنوات العملاء</h2>
+          <h2 className="mt-2 text-h2 font-semibold text-wa-gray-900">ربط واتساب وإنستجرام وماسنجر</h2>
           <p className="mt-2 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            اربطي صفحة Facebook مرة واحدة، ثم فعّلي Messenger وإنستجرام من نفس المكان عندما تكون الصلاحيات جاهزة.
+            هذه هي شاشة القنوات الأساسية. اربطي واتساب للرقم التجاري، وصفحة Facebook لماسنجر، وحساب إنستجرام Professional من نفس المكان.
           </p>
         </div>
         {loadingConnections ? <Loader2 className="size-5 animate-spin text-wa-blue-600" aria-hidden="true" /> : null}
@@ -398,11 +398,11 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         <ChannelCard
           icon={<WhatsAppIcon className="size-6" />}
           title="واتساب"
-          description="استقبال رسائل العملاء والرد من رقم واتساب التجاري."
+          description="استقبال رسائل الرقم التجاري والرد عليها من نفس صندوق العملاء."
           status={whatsappConnected ? "متصل" : "غير متصل"}
           statusClassName={whatsappConnected ? "bg-wa-success-bg text-wa-success" : "bg-wa-gray-50 text-wa-gray-600"}
           actionHref="/whatsapp"
-          actionLabel={whatsappConnected ? "إدارة واتساب" : "ربط واتساب"}
+          actionLabel={whatsappConnected ? "إدارة رقم واتساب" : "ربط رقم واتساب"}
         />
         <ChannelCard
           icon={<MessengerIcon className="size-6" />}
@@ -468,7 +468,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       ) : null}
 
       <div className="mt-4 rounded-2xl border border-blue-100 bg-blue-50 p-3 text-body-sm leading-6 text-blue-800">
-        قد تطلب Meta مراجعة بعض الصلاحيات قبل تشغيل Messenger أو إنستجرام لكل العملاء.
+        يعمل kallem كصندوق واحد للقنوات الثلاث، لكن Meta قد تطلب مراجعة بعض صلاحيات Messenger أو إنستجرام قبل تشغيلها لكل العملاء.
       </div>
     </section>
   );

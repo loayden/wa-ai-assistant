@@ -75,21 +75,21 @@ export function SetupFlow({
       <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
         <div className="grid gap-4 p-4 sm:gap-6 sm:p-8 lg:grid-cols-[1fr_0.74fr] lg:items-end">
           <div>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">إعداد واتساب</p>
+            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مركز القنوات</p>
             <h1 className="mt-2 max-w-[640px] text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[54px] sm:leading-[1.06]">
-              اربطي رقم النشاط الذي يراسله العملاء بالفعل.
+              ابدئي بواتساب، ثم أضيفي إنستجرام وماسنجر من نفس المركز.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              يتحقق {BRAND_NAME} من بيانات Meta قبل حفظها، ويخزّن التوكن بشكل مشفر، ثم يستخدم نفس الربط للردود الذكية وتتبع المحادثات.
+              يتحقق {BRAND_NAME} من بيانات كل قناة قبل تشغيل الردود عليها. هذه الخطوة تربط رقم واتساب التجاري، وبعدها تظهر بطاقات إنستجرام وماسنجر في نفس الصفحة.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
-            <p className="text-body-sm font-semibold text-wa-blue-600">طريقة الربط المضمونة الآن</p>
+            <p className="text-body-sm font-semibold text-wa-blue-600">القنوات التي يديرها kallem</p>
             <p className="mt-2 text-body-sm leading-6 text-wa-gray-700">
-              الربط بضغطة واحدة من Meta يحتاج اعتماداً إضافياً من Meta. إلى أن يتاح ذلك، نستخدم مساراً يدوياً آمناً ويمكن لفريق الدعم مساعدتك فيه.
+              الهدف ليس واتساب فقط. الهدف أن تصل رسائل العملاء من واتساب وإنستجرام وماسنجر إلى صندوق واحد، مع حالة جاهزية واضحة لكل قناة.
             </p>
             <div className="mt-4 grid gap-2">
-              {["الأرقام الإنتاجية ترد على العملاء الحقيقيين", "يتم التحقق قبل الحفظ", "يتم التشفير بعد نجاح التحقق"].map((item) => (
+              {["واتساب: رقم Business وإرسال رسائل", "إنستجرام: DMs من حساب Professional", "ماسنجر: رسائل صفحة Facebook"].map((item) => (
                 <div key={item} className="flex items-center gap-2 text-body-sm font-medium text-wa-gray-800">
                   <CheckCircle2 className="size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
                   {item}
@@ -129,8 +129,8 @@ export function SetupFlow({
             <div className="grid gap-2.5 sm:grid-cols-3 sm:gap-3">
               <StepSummary
                 icon={RadioTower}
-                step="١. رقم النشاط"
-                description="حددي رقم واتساب الذي سيديره المساعد."
+                step="١. قناة واتساب"
+                description="حددي رقم واتساب التجاري الذي سيديره المساعد."
               />
               <StepSummary
                 icon={KeyRound}
@@ -218,7 +218,7 @@ export function SetupFlow({
             <Bot className="size-5 text-wa-blue-600 sm:size-6" aria-hidden="true" />
             <p className="mt-4 text-body-sm font-semibold text-wa-gray-900">ماذا بعد الربط؟</p>
             <p className="mt-2 text-body-sm text-wa-gray-600">
-              بعد التحقق ستظهر شاشة حالة الرقم. من هناك يمكنك تشغيل أو إيقاف الردود الذكية، مراجعة الرسائل، وتعديل سلوك المساعد من مكان واحد.
+              بعد التحقق ستظهر شاشة مركز القنوات. من هناك يمكنك تشغيل أو إيقاف الردود الذكية، مراجعة الرسائل، وإضافة إنستجرام وماسنجر من مكان واحد.
             </p>
           </section>
 

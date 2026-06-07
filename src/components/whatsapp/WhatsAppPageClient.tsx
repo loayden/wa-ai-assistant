@@ -107,13 +107,13 @@ export function WhatsAppPageClient({
   const connectedFacts = [
     {
       icon: CheckCircle2,
-      label: "واتساب موثق",
+      label: "القناة الحالية",
       value: connection.displayName ?? "واتساب متصل",
     },
     {
       icon: RadioTower,
-      label: "استقبال الرسائل",
-      value: "الرسائل تصل إلى الصندوق",
+      label: "الصندوق الموحد",
+      value: "واتساب، إنستجرام، وماسنجر",
     },
     {
       icon: Bot,
@@ -159,7 +159,7 @@ export function WhatsAppPageClient({
               المساعد جاهز للقنوات المتصلة.
             </h1>
             <p className="mt-3 max-w-[680px] text-body-sm leading-6 text-wa-gray-600 sm:mt-5 sm:text-body-lg">
-              شغّلي أو أوقفي الردود التلقائية، راجعي تفاصيل واتساب، وأضيفي إنستجرام وماسنجر من نفس شاشة القنوات.
+              شغّلي أو أوقفي الردود التلقائية، راجعي حالة كل قناة، وأديري واتساب وإنستجرام وماسنجر من نفس شاشة القنوات.
             </p>
           </div>
           <div className="rounded-[20px] border border-wa-blue-100 bg-wa-blue-50 p-4 sm:rounded-[26px] sm:p-5">
@@ -184,9 +184,9 @@ export function WhatsAppPageClient({
       <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-body-sm font-semibold text-wa-gray-900">اتصالات واتساب</p>
+            <p className="text-body-sm font-semibold text-wa-gray-900">قناة واتساب التجارية</p>
             <p className="mt-1 text-body-sm text-wa-gray-500">
-              مستخدم {connections.length} من {planLimit} اتصال واتساب في خطة {planTier.toLowerCase()}.
+              هذا جزء من مركز القنوات. مستخدم {connections.length} من {planLimit} اتصال واتساب في خطة {planTier.toLowerCase()}، ويمكنك إدارة إنستجرام وماسنجر بالأسفل.
             </p>
           </div>
           <button
@@ -201,7 +201,7 @@ export function WhatsAppPageClient({
             onClick={() => setShowSetup(true)}
           >
             <Plus className="size-4" aria-hidden="true" />
-            إضافة واتساب
+            إضافة رقم واتساب
           </button>
         </div>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-wa-gray-100">
@@ -209,7 +209,7 @@ export function WhatsAppPageClient({
         </div>
         {atConnectionLimit ? (
           <p className="mt-3 rounded-2xl bg-amber-50 px-3 py-2 text-body-sm text-amber-800">
-            خطتك تسمح بعدد {planLimit} من اتصالات واتساب النشطة. يمكنك الترقية من الفوترة لإضافة المزيد.
+            خطتك تسمح بعدد {planLimit} من اتصالات واتساب النشطة. الترقية تفتح مساحة أكبر للقنوات المتصلة.
           </p>
         ) : null}
         <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">

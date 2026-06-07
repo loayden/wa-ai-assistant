@@ -92,7 +92,12 @@ describe("settings validators", () => {
   });
 
   it("rejects business context over the dashboard limit", () => {
-    expect(updateSettingsSchema.safeParse({ businessContext: "x".repeat(BUSINESS_CONTEXT_MAX_LENGTH + 1) }).success).toBe(false);
+    const parsed = updateSettingsSchema.safeParse({ businessContext: "x".repeat(BUSINESS_CONTEXT_MAX_LENGTH + 1) });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]?.message).toContain("النص طويل جدًا");
+    }
   });
 
   it.each([49, 1001])("rejects maxReplyLength boundary %s", (maxReplyLength) => {
@@ -116,21 +121,42 @@ describe("knowledge validators", () => {
   });
 
   it("rejects FAQ questions over the shared knowledge title limit", () => {
-    expect(
-      createKnowledgeEntrySchema.safeParse({
-        type: "faq",
-        title: "س".repeat(KNOWLEDGE_TITLE_MAX_LENGTH + 1),
-        content: "الإجابة واضحة.",
-      }).success,
-    ).toBe(false);
+    const parsed = createKnowledgeEntrySchema.safeParse({
+      type: "faq",
+      title: "س".repeat(KNOWLEDGE_TITLE_MAX_LENGTH + 1),
+      content: "الإجابة واضحة.",
+    });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]?.message).toContain("العنوان طويل جدًا");
+    }
   });
 
   it("rejects knowledge content over the shared content limit", () => {
-    expect(
-      updateKnowledgeEntrySchema.safeParse({
-        content: "x".repeat(KNOWLEDGE_CONTENT_MAX_LENGTH + 1),
-      }).success,
-    ).toBe(false);
+    const parsed = updateKnowledgeEntrySchema.safeParse({
+      content: "x".repeat(KNOWLEDGE_CONTENT_MAX_LENGTH + 1),
+    });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues[0]?.message).toContain("المحتوى طويل جدًا");
+    }
+  });
+
+  it("returns Arabic field messages for empty FAQ input", () => {
+    const parsed = createKnowledgeEntrySchema.safeParse({
+      type: "faq",
+      title: "",
+      content: "",
+    });
+
+    expect(parsed.success).toBe(false);
+    if (!parsed.success) {
+      expect(parsed.error.issues.map((issue) => issue.message)).toEqual(
+        expect.arrayContaining(["السؤال أو العنوان مطلوب.", "الإجابة أو المحتوى مطلوب."]),
+      );
+    }
   });
 });
 

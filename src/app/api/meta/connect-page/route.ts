@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
-import { getGrantedPermissions, hasRequiredPermissions, subscribePageToWebhook, upsertMessengerConnection } from "@/lib/meta/social";
+import { hasRequiredPermissions, inspectMetaAccessToken, subscribePageToWebhook, upsertMessengerConnection } from "@/lib/meta/social";
 import { MESSENGER_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
 import { logger } from "@/lib/utils/logger";
@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       return jsonValidationError(parsed.error);
     }
 
-    const permissions = await getGrantedPermissions(parsed.data.pageAccessToken);
+    const tokenInspection = await inspectMetaAccessToken(parsed.data.pageAccessToken);
+    const permissions = tokenInspection.permissions;
     const hasAllPermissions = hasRequiredPermissions(permissions, REQUIRED_MESSENGER_PERMISSIONS);
     const webhookSubscribed = hasAllPermissions
       ? await subscribePageToWebhook(parsed.data.pageId, parsed.data.pageAccessToken)
@@ -55,6 +56,8 @@ export async function POST(request: Request) {
       permissions,
       missingPermissions: missingPermissionLabels(permissions, MESSENGER_PERMISSION_REQUIREMENTS),
       webhookSubscribed,
+      tokenExpiresAt: tokenInspection.expiresAt,
+      permissionSources: tokenInspection.sources,
     });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

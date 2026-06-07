@@ -7,12 +7,13 @@
 import { requireAppUser, UnauthorizedError } from "@/lib/api/auth";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/api/response";
 import { prisma } from "@/lib/prisma/client";
+import { writeAuditLog } from "@/lib/security/audit-log";
 import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const user = await requireAppUser();
     try {
@@ -25,6 +26,17 @@ export async function POST() {
         throw error;
       }
     }
+
+    await writeAuditLog({
+      userId: user.id,
+      action: "onboarding.completed",
+      entityType: "user",
+      entityId: user.id,
+      after: {
+        onboardingCompleted: true,
+      },
+      request,
+    });
 
     return jsonSuccess({ onboardingCompleted: true });
   } catch (error) {

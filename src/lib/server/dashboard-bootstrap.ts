@@ -188,7 +188,7 @@ export async function getDashboardBootstrap() {
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
-  const [connections, messages, knowledgeCount, monthlyLeadsCount] = await Promise.all([
+  const [connections, messages, knowledgeCount, productCount, monthlyLeadsCount] = await Promise.all([
     prisma.whatsAppConnection.findMany({
       where: { userId: auth.appUser.id },
       orderBy: { createdAt: "desc" },
@@ -202,6 +202,9 @@ export async function getDashboardBootstrap() {
     prisma.knowledgeBaseEntry.count({
       where: { userId: auth.appUser.id },
     }),
+    prisma.product.count({
+      where: { userId: auth.appUser.id },
+    }),
     prisma.lead.count({
       where: {
         userId: auth.appUser.id,
@@ -212,6 +215,9 @@ export async function getDashboardBootstrap() {
   ]);
 
   const hasConnection = connections.some((connection) => connection.isActive && connection.isVerified);
+  const hasBusinessInfo = Boolean(settings.businessName?.trim()) && Boolean(settings.businessContext?.trim());
+  const hasAiActivity = messages.some((message) => message.direction === "OUTBOUND" && Boolean(message.aiModelUsed));
+  const hasLaunchBasics = hasConnection && hasBusinessInfo && productCount > 0 && knowledgeCount >= 3;
   const handoffPairs = messages.map((message) => ({
     connectionId: message.connectionId,
     customerPhone: message.direction === "OUTBOUND" ? message.toNumber : message.fromNumber,
@@ -274,7 +280,12 @@ export async function getDashboardBootstrap() {
     onboarding: {
       completed: auth.appUser.onboardingCompleted,
       hasConnection,
+      hasBusinessInfo,
+      hasProduct: productCount > 0,
       hasKnowledge: knowledgeCount > 0,
+      knowledgeCount,
+      hasAiActivity,
+      hasLaunchBasics,
     },
   };
 }

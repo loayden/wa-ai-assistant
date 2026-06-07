@@ -32,7 +32,7 @@ import { DEFAULT_NOTIFICATION_PREFS } from "@/lib/notifications/preferences";
 import { translateError } from "@/lib/errors/translateError";
 import { DEFAULT_SYSTEM_PROMPT } from "@/lib/utils/constants";
 import { strictZodResolver } from "@/lib/validators/resolver";
-import { updateSettingsSchema, type UpdateSettingsInput } from "@/lib/validators/settings";
+import { BUSINESS_CONTEXT_MAX_LENGTH, updateSettingsSchema, type UpdateSettingsInput } from "@/lib/validators/settings";
 
 function normalizeText(value: string | null | undefined) {
   return value ?? "";
@@ -149,6 +149,7 @@ export function GeneralSettings() {
 
   const canEditCustomPrompt = settingsResult.user.planTier !== "FREE";
   const businessName = String(form.watch("businessName") ?? "");
+  const businessContext = String(form.watch("businessContext") ?? "");
   const language = String(form.watch("language") ?? "ar");
   const maxReplyLength = Number(form.watch("maxReplyLength") ?? 300);
   const systemPrompt = String(form.watch("systemPrompt") ?? DEFAULT_SYSTEM_PROMPT);
@@ -212,8 +213,23 @@ export function GeneralSettings() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="businessContext">معلومات النشاط</Label>
-            <Textarea id="businessContext" rows={4} {...form.register("businessContext")} />
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="businessContext">معلومات النشاط</Label>
+              <span className="text-xs font-semibold text-wa-gray-500">
+                {businessContext.length.toLocaleString("ar-EG")}/{BUSINESS_CONTEXT_MAX_LENGTH.toLocaleString("ar-EG")}
+              </span>
+            </div>
+            <Textarea
+              id="businessContext"
+              rows={5}
+              maxLength={BUSINESS_CONTEXT_MAX_LENGTH}
+              aria-invalid={Boolean(form.formState.errors.businessContext)}
+              placeholder="اكتب أهم ما يجب أن يعرفه المساعد: نوع النشاط، المنتجات أو الخدمات الأساسية، الأسعار المهمة، مناطق التوصيل، سياسة الحجز أو الاسترجاع، وطريقة التواصل."
+              {...form.register("businessContext")}
+            />
+            <p className="text-body-sm leading-6 text-wa-gray-500">
+              هذه الفقرة تدخل مباشرة في سياق الردود. اجعلها واضحة ومفيدة للعميل، ولا تضع فيها أسرار أو مفاتيح API.
+            </p>
             {form.formState.errors.businessContext ? <p className="text-sm text-destructive">{form.formState.errors.businessContext.message}</p> : null}
           </div>
           <div className="space-y-2">

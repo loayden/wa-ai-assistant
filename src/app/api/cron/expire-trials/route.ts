@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getExpiredTrialDowngradeData, buildExpiredTrialWhere } from "@/lib/admin/trials";
 import { prisma } from "@/lib/prisma/client";
+import { isAuthorizedCronRequest } from "@/lib/security/cron";
 import { sendSupportEmail } from "@/lib/support/email";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
@@ -9,18 +10,8 @@ import { logger } from "@/lib/utils/logger";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function isAuthorized(request: Request) {
-  const secret = appEnv.CRON_SECRET;
-
-  if (!secret) {
-    return process.env.NODE_ENV !== "production";
-  }
-
-  return request.headers.get("authorization") === `Bearer ${secret}`;
-}
-
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isAuthorizedCronRequest(request)) {
     return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
   }
 

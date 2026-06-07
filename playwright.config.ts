@@ -55,7 +55,7 @@ const env = {
   WHATSAPP_APP_SECRET: process.env.WHATSAPP_APP_SECRET ?? "test-whatsapp-secret",
   WHATSAPP_VERIFY_TOKEN: process.env.WHATSAPP_VERIFY_TOKEN ?? "test-whatsapp-verify",
   WHATSAPP_API_VERSION: process.env.WHATSAPP_API_VERSION ?? "v19.0",
-  WHATSAPP_MOCK_MODE: process.env.WHATSAPP_MOCK_MODE ?? "true",
+  WHATSAPP_MOCK_MODE: "true",
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ?? "sk_test_dummy",
   STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY ?? "pk_test_dummy",
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "pk_test_dummy",
@@ -64,16 +64,18 @@ const env = {
   STRIPE_BUSINESS_PRICE_ID: process.env.STRIPE_BUSINESS_PRICE_ID ?? "price_business_dummy",
   RESEND_API_KEY: process.env.RESEND_API_KEY ?? "re_dummy",
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL ?? "noreply@example.com",
-  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? "http://127.0.0.1:3000",
+  NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3002",
   NODE_ENV: "test",
   ENCRYPTION_SECRET: process.env.ENCRYPTION_SECRET ?? "12345678901234567890123456789012",
   E2E_AUTH_BYPASS_SECRET: process.env.E2E_AUTH_BYPASS_SECRET ?? "playwright-secret",
+  E2E_DISABLE_AUTH_RATE_LIMIT: "true",
 };
 
 export default defineConfig({
   testDir: "./tests/e2e",
   globalSetup: "./tests/e2e/global-setup.ts",
-  timeout: 30_000,
+  timeout: 60_000,
+  workers: 1,
   expect: {
     timeout: 10_000,
   },

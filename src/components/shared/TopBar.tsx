@@ -30,6 +30,7 @@ import {
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { ProfileSheet } from "@/components/shared/ProfileSheet";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { useLaunchReadiness } from "@/hooks/useReadiness";
 import { useAuthStore } from "@/store/authStore";
 import type { PlanTier } from "@/types/subscription";
 import { BRAND_NAME } from "@/lib/utils/brand";
@@ -51,6 +52,7 @@ function initialsFor(name?: string | null, email?: string | null) {
 
 const appNavItems = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
+  { href: "/readiness", label: "جاهزية الإطلاق", icon: ShieldCheck },
   { href: "/connect", label: "القنوات", icon: RadioTower },
   { href: "/knowledge", label: "المعرفة", icon: BookOpen },
   { href: "/products", label: "المنتجات", icon: Package },
@@ -66,7 +68,33 @@ const appNavItems = [
 ];
 
 const mobilePrimaryHrefs = new Set(["/dashboard", "/connect", "/messages", "/billing"]);
-const desktopPrimaryHrefs = new Set(["/dashboard", "/connect", "/knowledge", "/products", "/orders", "/messages", "/billing"]);
+const desktopPrimaryHrefs = new Set(["/dashboard", "/readiness", "/connect", "/knowledge", "/products", "/orders", "/messages", "/billing"]);
+
+function readinessDotClass(score?: number) {
+  if (score === undefined) {
+    return "bg-wa-gray-400";
+  }
+
+  if (score >= 90) {
+    return "bg-wa-success";
+  }
+
+  if (score >= 60) {
+    return "bg-wa-warning";
+  }
+
+  return "bg-wa-error";
+}
+
+function ReadinessDot({ score }: { score?: number }) {
+  return (
+    <span
+      className={cn("size-2 rounded-full", readinessDotClass(score))}
+      aria-label={score === undefined ? "لم يتم فحص جاهزية الإطلاق بعد" : `درجة جاهزية الإطلاق ${score}%`}
+      title={score === undefined ? "جاهزية الإطلاق" : `جاهزية الإطلاق ${score}%`}
+    />
+  );
+}
 
 export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE", userEmail, userName }: TopBarProps) {
   const [profileOpen, setProfileOpen] = useState(false);
@@ -74,6 +102,8 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const pathname = usePathname();
   const router = useRouter();
   const clearAuth = useAuthStore((state) => state.clearAuth);
+  const readinessQuery = useLaunchReadiness("light", Boolean(userEmail));
+  const readinessScore = readinessQuery.data?.score;
   const displayName = userName;
   const displayEmail = userEmail;
   const displayPlan = planTier;
@@ -131,9 +161,10 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
                     "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
                     active ? "bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.06)]" : "text-wa-gray-600 hover:bg-white hover:text-wa-gray-900",
                   )}
-                >
+                  >
                   <Icon className="size-4" aria-hidden="true" />
                   {item.label}
+                  {item.href === "/readiness" ? <ReadinessDot score={readinessScore} /> : null}
                 </Link>
               );
             })}
@@ -181,6 +212,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
             >
               <Icon className="size-4" aria-hidden="true" />
               {item.label}
+              {item.href === "/readiness" ? <ReadinessDot score={readinessScore} /> : null}
             </Link>
           );
         })}
@@ -213,7 +245,10 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
                 <span className="flex size-10 items-center justify-center rounded-xl bg-wa-gray-50 text-wa-blue-600">
                   <Icon className="size-5" aria-hidden="true" />
                 </span>
-                <span>{item.label}</span>
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate">{item.label}</span>
+                  {item.href === "/readiness" ? <ReadinessDot score={readinessScore} /> : null}
+                </span>
               </Link>
             );
           })}

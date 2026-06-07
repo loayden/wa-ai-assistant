@@ -7,16 +7,18 @@ import Link from "next/link";
 import { CheckCircle2, CreditCard } from "lucide-react";
 
 import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
+import { publicMarketingRoutes } from "@/lib/marketing/public-positioning";
 import { cn } from "@/lib/utils";
 
 const footerSections = [
   {
     title: "المنتج",
     links: [
+      { label: "مساعد واتساب AI", href: publicMarketingRoutes.whatsapp },
+      { label: "إنستجرام وماسنجر AI", href: publicMarketingRoutes.social },
       { label: "لوحة التحكم", href: "/dashboard" },
       { label: "إعداد القنوات", href: "/connect" },
       { label: "الرسائل", href: "/messages" },
-      { label: "الفوترة", href: "/billing" },
     ],
   },
   {
@@ -24,15 +26,16 @@ const footerSections = [
     links: [
       { label: "إنشاء حساب", href: "/signup" },
       { label: "تسجيل الدخول", href: "/login" },
-      { label: "الأسعار", href: "/#pricing" },
-      { label: "طريقة الإعداد", href: "/#setup" },
+      { label: "الأسعار", href: publicMarketingRoutes.pricing },
+      { label: "الفوترة", href: "/billing" },
     ],
   },
   {
     title: "الثقة",
     links: [
-      { label: "اتصال Meta موثّق", href: "/connect" },
-      { label: "تخزين مشفر", href: "/#setup" },
+      { label: "الأمان والثقة", href: publicMarketingRoutes.security },
+      { label: "مقارنة respond.io", href: publicMarketingRoutes.compareRespondio },
+      { label: "مقارنة WhatChimp", href: publicMarketingRoutes.compareWhatchimp },
       { label: "سياسة الخصوصية", href: "/privacy" },
       { label: "شروط الاستخدام", href: "/terms" },
       { label: "حذف البيانات", href: "/data-deletion" },
@@ -45,6 +48,8 @@ const trustNotes = [
   "صاحب النشاط يقدر يوقف ردود الذكاء الاصطناعي في أي وقت.",
   "الخطط تعرض حدود الردود الشهرية بدون غموض.",
 ];
+
+const protectedFooterHrefs = new Set(["/dashboard", "/connect", "/messages", "/billing"]);
 
 export function AppFooter({ className, compact = false }: { className?: string; compact?: boolean }) {
   return (
@@ -64,12 +69,14 @@ export function AppFooter({ className, compact = false }: { className?: string; 
             <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-3">
               <Link
                 href="/connect"
+                prefetch={false}
                 className="inline-flex min-h-10 items-center justify-center rounded-full bg-wa-blue-600 px-4 text-body-sm font-semibold text-white shadow-[0_16px_42px_rgba(26,86,255,0.16)] transition hover:bg-[#1447E6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 sm:min-h-11 sm:px-5"
               >
                 افتح القنوات
               </Link>
               <Link
                 href="/billing"
+                prefetch={false}
                 className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-wa-gray-200 bg-white px-4 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 sm:min-h-11 sm:px-5"
               >
                 <CreditCard className="size-4" aria-hidden="true" />
@@ -87,6 +94,7 @@ export function AppFooter({ className, compact = false }: { className?: string; 
                     <li key={link.label}>
                       <Link
                         href={link.href}
+                        prefetch={protectedFooterHrefs.has(link.href) ? false : undefined}
                         className="text-body-sm leading-6 text-wa-gray-600 transition hover:text-wa-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
                       >
                         {link.label}

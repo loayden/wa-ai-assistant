@@ -15,8 +15,9 @@ describe("security middleware", () => {
     expect(csp).toContain("worker-src 'self' blob:");
     expect(csp).toContain("https://accounts.google.com");
     expect(csp?.match(/script-src[^;]*/)?.[0]).toContain("https://vercel.live");
-    expect(csp).not.toContain("https://www.googletagmanager.com");
-    expect(csp).not.toContain("https://www.google-analytics.com");
+    expect(csp?.match(/script-src[^;]*/)?.[0]).toContain("https://www.googletagmanager.com");
+    expect(csp?.match(/connect-src[^;]*/)?.[0]).toContain("https://www.google-analytics.com");
+    expect(csp?.match(/connect-src[^;]*/)?.[0]).toContain("https://www.googletagmanager.com");
     expect(csp).not.toContain("script-src-elem");
     expect(csp).not.toContain("style-src-elem");
     expect(csp).not.toContain("'unsafe-eval'");
@@ -24,4 +25,14 @@ describe("security middleware", () => {
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   });
+
+  it.each(["/dashboard", "/readiness", "/inbox", "/connect", "/admin"])(
+    "redirects unauthenticated protected page %s to login with next path",
+    async (pathname) => {
+      const response = await middleware(new NextRequest(`https://kallem.vercel.app${pathname}`));
+
+      expect(response.status).toBe(307);
+      expect(response.headers.get("location")).toBe(`https://kallem.vercel.app/login?next=${encodeURIComponent(pathname)}`);
+    },
+  );
 });

@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, AlertTriangle, Loader2, Lock } from "lucide-react";
+import { AlertCircle, AlertTriangle, Copy, Loader2, Lock } from "lucide-react";
 
 import { ChannelIcon, InstagramIcon, MessengerIcon, WhatsAppIcon } from "@/components/icons/ChannelIcons";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiData, ApiClientError } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
+import { getInstagramPageLinkIssue } from "@/lib/meta/instagram";
 import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, MESSENGER_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
+import { buildMetaRedirectUriMismatchMessage, getMetaRedirectUriStatus, type MetaRedirectUriStatus } from "@/lib/meta/redirect";
 import { cn } from "@/lib/utils";
 
 type SocialConnection = {
@@ -90,6 +92,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
   const [connecting, setConnecting] = useState<"messenger" | "instagram" | null>(null);
   const [oauthIntent, setOauthIntent] = useState<MetaOAuthIntent>("messenger");
   const [error, setError] = useState<string | null>(null);
+  const [redirectUriStatus, setRedirectUriStatus] = useState<MetaRedirectUriStatus | null>(null);
 
   const messengerConnection = useMemo(() => connections.find((connection) => connection.channel === "messenger") ?? null, [connections]);
   const instagramConnection = useMemo(() => connections.find((connection) => connection.channel === "instagram") ?? null, [connections]);
@@ -119,6 +122,15 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     return () => {
       active = false;
     };
+  }, []);
+
+  useEffect(() => {
+    setRedirectUriStatus(
+      getMetaRedirectUriStatus({
+        currentOrigin: window.location.origin,
+        configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
+      }),
+    );
   }, []);
 
   const refreshConnections = useCallback(async () => {
@@ -151,8 +163,11 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
 
   const connectInstagram = useCallback(
     async (page: MetaPage) => {
-      if (!page.instagram_business_account?.id) {
-        setError("هذه الصفحة لا تحتوي على حساب Instagram Business مرتبط.");
+      const instagramLinkIssue = getInstagramPageLinkIssue(page);
+      const instagramAccount = page.instagram_business_account;
+
+      if (instagramLinkIssue || !instagramAccount?.id) {
+        setError(instagramLinkIssue);
         return;
       }
 
@@ -162,9 +177,9 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           method: "POST",
           body: JSON.stringify({
             pageId: page.id,
-            instagramAccountId: page.instagram_business_account.id,
-            instagramUsername: page.instagram_business_account.username,
-            instagramProfilePicture: page.instagram_business_account.profile_picture_url,
+            instagramAccountId: instagramAccount.id,
+            instagramUsername: instagramAccount.username,
+            instagramProfilePicture: instagramAccount.profile_picture_url,
           }),
         });
         await refreshConnections();
@@ -199,7 +214,10 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           method: "POST",
           body: JSON.stringify({
             code,
-            redirectUri: `${window.location.origin}/connect`,
+            redirectUri: getMetaRedirectUriStatus({
+              currentOrigin: window.location.origin,
+              configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
+            }).currentRedirectUri,
           }),
         });
 
@@ -267,6 +285,17 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
       return;
     }
 
+    const nextRedirectUriStatus = getMetaRedirectUriStatus({
+      currentOrigin: window.location.origin,
+      configuredAppUrl: process.env.NEXT_PUBLIC_APP_URL,
+    });
+    setRedirectUriStatus(nextRedirectUriStatus);
+
+    if (!nextRedirectUriStatus.isValid) {
+      setError(buildMetaRedirectUriMismatchMessage(nextRedirectUriStatus));
+      return;
+    }
+
     const state = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     window.sessionStorage.setItem(META_OAUTH_STATE_STORAGE_KEY, state);
     window.sessionStorage.setItem(META_OAUTH_INTENT_STORAGE_KEY, intent);
@@ -277,7 +306,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
     authUrl.search = new URLSearchParams({
       auth_type: "rerequest",
       client_id: appId,
-      redirect_uri: `${window.location.origin}/connect`,
+      redirect_uri: nextRedirectUriStatus.currentRedirectUri,
       response_type: "code",
       scope: scopes.join(","),
       state,
@@ -310,6 +339,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
   const messengerMissing = missingPermissionLabels(messengerConnection?.permissions ?? [], MESSENGER_PERMISSION_REQUIREMENTS);
   const instagramMissing = missingPermissionLabels(instagramConnection?.permissions ?? [], INSTAGRAM_DM_PERMISSION_REQUIREMENTS);
   const canConnectInstagram = Boolean(messengerConnection);
+  const redirectUriBlocked = redirectUriStatus?.isValid === false;
   const instagramStatus = instagramConnection ? statusLabel(instagramConnection) : messengerConnection ? "جاهز للربط" : "غير متصل";
   const instagramStatusClass = instagramConnection
     ? statusClass(instagramConnection)
@@ -338,6 +368,32 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
         </Alert>
       ) : null}
 
+      {redirectUriStatus && !redirectUriStatus.isValid ? (
+        <Alert className="mt-4 border-wa-warning-bg bg-wa-warning-bg text-wa-warning">
+          <AlertTriangle className="size-4" aria-hidden="true" />
+          <AlertTitle>رابط رجوع Meta يحتاج ضبط</AlertTitle>
+          <AlertDescription>
+            <span className="block">
+              أضيفي هذا الرابط في Meta Developer Console ضمن Valid OAuth Redirect URIs قبل ربط Instagram أو Messenger.
+            </span>
+            <code className="mt-2 block overflow-x-auto rounded-xl bg-white px-3 py-2 text-left text-xs text-wa-gray-800" dir="ltr">
+              {redirectUriStatus.currentRedirectUri}
+            </code>
+            <span className="mt-2 block text-xs text-wa-gray-700">
+              رابط الإنتاج المتوقع: <span dir="ltr">{redirectUriStatus.expectedRedirectUri}</span>
+            </span>
+            <Button
+              className="mt-3 rounded-full bg-white text-wa-warning hover:bg-wa-gray-50"
+              type="button"
+              onClick={() => void navigator.clipboard.writeText(redirectUriStatus.currentRedirectUri)}
+            >
+              <Copy className="size-4" aria-hidden="true" />
+              نسخ الرابط
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <ChannelCard
           icon={<WhatsAppIcon className="size-6" />}
@@ -354,7 +410,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           description="استقبال رسائل صفحة Facebook والرد عليها."
           status={statusLabel(messengerConnection)}
           statusClassName={statusClass(messengerConnection)}
-          actionDisabled={connecting === "messenger" || !appId}
+          actionDisabled={connecting === "messenger" || !appId || redirectUriBlocked}
           actionLabel={messengerConnection ? "تحديث الصلاحيات" : "ربط حساب Meta"}
           onAction={connectMessenger}
         >
@@ -366,7 +422,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           description="استقبال رسائل إنستجرام والرد عليها من نفس الصندوق."
           status={instagramStatus}
           statusClassName={instagramStatusClass}
-          actionDisabled={connecting === "instagram" || connecting === "messenger" || !canConnectInstagram}
+          actionDisabled={connecting === "instagram" || connecting === "messenger" || !canConnectInstagram || redirectUriBlocked}
           actionLabel={instagramConnection ? "تحديث إنستجرام" : "ربط إنستجرام"}
           onAction={connectInstagramFromCard}
         >
@@ -403,7 +459,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
               >
                 <span className="block text-body-sm font-semibold text-wa-gray-900">{page.name}</span>
                 <span className="mt-1 block text-label text-wa-gray-500">
-                  {page.instagram_business_account?.username ? `إنستجرام @${page.instagram_business_account.username}` : "لا يظهر حساب إنستجرام تجاري"}
+                  {page.instagram_business_account?.username ? `إنستجرام @${page.instagram_business_account.username}` : "لا يوجد Instagram Business مربوط"}
                 </span>
               </button>
             ))}

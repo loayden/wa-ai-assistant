@@ -15,6 +15,7 @@ import { ChannelIcon } from "@/components/icons/ChannelIcons";
 import { IconButton } from "@/components/ui/IconButton";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
+import type { OutboundFailureClassification } from "@/lib/reliability/outbound";
 import { cn } from "@/lib/utils";
 
 export interface ConversationThreadMessage {
@@ -55,6 +56,22 @@ function channelLabel(channel?: string) {
   return "واتساب";
 }
 
+function metadataObject(metadata: unknown): Record<string, unknown> {
+  return metadata && typeof metadata === "object" && !Array.isArray(metadata) ? (metadata as Record<string, unknown>) : {};
+}
+
+function extractOutboundFailure(message?: ConversationThreadMessage | null): OutboundFailureClassification | null {
+  const metadata = metadataObject(message?.metadata);
+  const outboundAttempt = metadataObject(metadata.outboundAttempt);
+  const failure = metadataObject(outboundAttempt.failure);
+
+  if (typeof failure.code === "string" && typeof failure.userMessage === "string") {
+    return failure as unknown as OutboundFailureClassification;
+  }
+
+  return null;
+}
+
 export function ConversationThread({
   connectionId,
   contactName,
@@ -75,6 +92,7 @@ export function ConversationThread({
   const [correctedReply, setCorrectedReply] = useState("");
   const [correctingMessageId, setCorrectingMessageId] = useState<string | null>(null);
   const failedMessage = messages.find((message) => message.status === "FAILED");
+  const outboundFailure = extractOutboundFailure(failedMessage);
   const handoffMutation = useMutation({
     mutationFn: async () => apiData(`/api/conversations/${threadId}/handoff`, { method: "POST" }),
     onSuccess: async () => {
@@ -221,19 +239,29 @@ export function ConversationThread({
                   <AlertCircle className="size-4" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="font-semibold text-wa-error">لم يتم إرسال الرد التلقائي</p>
+                  <p className="font-semibold text-wa-error">لم يتم إرسال الرد</p>
                   <p className="mt-1">
-                    وصلت رسالة العميل إلى kallem، لكن الرد توقف قبل إرساله عبر القناة.
+                    {outboundFailure?.title ?? "وصلت رسالة العميل إلى kallem، لكن الرد توقف قبل إرساله عبر القناة."}
                   </p>
                   <p className="mt-3 rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
-                    {failedMessage.aiReplyText ??
+                    {outboundFailure?.userMessage ??
+                      failedMessage.aiReplyText ??
                       "راجعي صلاحيات القناة، وهل الاتصال جاهز لجمهور حقيقي وليس وضع اختبار فقط."}
                   </p>
+                  {outboundFailure ? (
+                    <div className="mt-3 rounded-xl bg-wa-gray-50 px-3 py-2 text-wa-gray-700">
+                      <p className="font-semibold text-wa-gray-900">الخطوة التالية</p>
+                      <p className="mt-1">{outboundFailure.fixHint}</p>
+                      <p className="mt-1 text-label font-semibold uppercase tracking-widest text-wa-gray-500">
+                        {outboundFailure.retry.canRetry ? "يمكن إعادة المحاولة لاحقاً" : "لا تعيدي المحاولة قبل إصلاح السبب"}
+                      </p>
+                    </div>
+                  ) : null}
                   <Link
-                    href="/connect"
+                    href={outboundFailure?.actionHref ?? "/connect"}
                     className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
                   >
-                    فتح إعداد القنوات
+                    {outboundFailure?.actionLabel ?? "فتح إعداد القنوات"}
                   </Link>
                 </div>
               </div>
@@ -247,11 +275,9 @@ export function ConversationThread({
           ) : (
             messages.map((message) => {
               const outbound = message.direction === "OUTBOUND";
-              const metadata =
-                message.metadata && typeof message.metadata === "object" && !Array.isArray(message.metadata)
-                  ? (message.metadata as Record<string, unknown>)
-                  : {};
+              const metadata = metadataObject(message.metadata);
               const metadataType = typeof metadata.type === "string" ? metadata.type : null;
+              const messageFailure = extractOutboundFailure(message);
               const voiceTranscribed = !outbound && metadataType === "voice_transcribed";
               const humanSent =
                 outbound &&
@@ -295,6 +321,12 @@ export function ConversationThread({
                       {formatTime(message.createdAt)}
                     </time>
                   </div>
+                  {messageFailure ? (
+                    <div className="mt-1.5 max-w-[88%] rounded-2xl border border-wa-error-bg bg-white px-3 py-2 text-body-sm text-wa-error shadow-[0_10px_24px_rgba(13,20,33,0.04)] sm:max-w-[82%]">
+                      <p className="font-semibold">{messageFailure.title}</p>
+                      <p className="mt-1 text-wa-gray-700">{messageFailure.fixHint}</p>
+                    </div>
+                  ) : null}
                   {canCorrect ? (
                     <button
                       type="button"

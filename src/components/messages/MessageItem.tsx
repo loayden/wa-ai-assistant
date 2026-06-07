@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
 import type { MessageRecord } from "@/hooks/useMessages";
+import type { OutboundFailureClassification } from "@/lib/reliability/outbound";
 import { cn } from "@/lib/utils";
 
 export type MessageListItem = MessageRecord;
@@ -57,8 +58,25 @@ function getStatusLabel(status: MessageListItem["status"]) {
   return "وصلت";
 }
 
+function metadataObject(metadata: unknown): Record<string, unknown> {
+  return metadata && typeof metadata === "object" && !Array.isArray(metadata) ? (metadata as Record<string, unknown>) : {};
+}
+
+function extractOutboundFailure(message: MessageListItem): OutboundFailureClassification | null {
+  const metadata = metadataObject(message.metadata);
+  const outboundAttempt = metadataObject(metadata.outboundAttempt);
+  const failure = metadataObject(outboundAttempt.failure);
+
+  if (typeof failure.code === "string" && typeof failure.userMessage === "string") {
+    return failure as unknown as OutboundFailureClassification;
+  }
+
+  return null;
+}
+
 export function MessageItem({ message }: MessageItemProps) {
   const [expanded, setExpanded] = useState(false);
+  const outboundFailure = extractOutboundFailure(message);
   const timestamp = new Intl.DateTimeFormat("ar-EG", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -102,6 +120,14 @@ export function MessageItem({ message }: MessageItemProps) {
                 <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">رد الذكاء</p>
                 <p className="whitespace-pre-wrap text-sm leading-6">{message.aiReplyText ?? "لا يوجد رد مسجل لهذه الرسالة."}</p>
               </div>
+              {outboundFailure ? (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4 md:col-span-2">
+                  <p className="text-xs font-medium uppercase text-destructive">سبب فشل الإرسال</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">{outboundFailure.title}</p>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">{outboundFailure.userMessage}</p>
+                  <p className="mt-2 rounded-md bg-background px-3 py-2 text-sm leading-6 text-muted-foreground">{outboundFailure.fixHint}</p>
+                </div>
+              ) : null}
             </div>
           </TableCell>
         </TableRow>

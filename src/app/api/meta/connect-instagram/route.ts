@@ -5,7 +5,7 @@ import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { sanitizeConnection } from "@/lib/api/whatsapp";
 import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, missingPermissionLabels } from "@/lib/meta/permissions";
-import { getGrantedPermissions, hasRequiredPermissionGroups, upsertInstagramConnection } from "@/lib/meta/social";
+import { hasRequiredPermissionGroups, inspectMetaAccessToken, upsertInstagramConnection } from "@/lib/meta/social";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { logger } from "@/lib/utils/logger";
@@ -45,7 +45,8 @@ export async function POST(request: Request) {
     }
 
     const pageAccessToken = decrypt(pageConnection.pageAccessTokenEncrypted);
-    const permissions = await getGrantedPermissions(pageAccessToken);
+    const tokenInspection = await inspectMetaAccessToken(pageAccessToken);
+    const permissions = tokenInspection.permissions;
     const hasAllPermissions = hasRequiredPermissionGroups(permissions, INSTAGRAM_DM_PERMISSION_REQUIREMENTS);
     const permissionStatus = hasAllPermissions ? "granted" : "partial";
     const connection = await upsertInstagramConnection({
@@ -63,6 +64,8 @@ export async function POST(request: Request) {
       permissionStatus,
       permissions,
       missingPermissions: missingPermissionLabels(permissions, INSTAGRAM_DM_PERMISSION_REQUIREMENTS),
+      tokenExpiresAt: tokenInspection.expiresAt,
+      permissionSources: tokenInspection.sources,
     });
   } catch (error) {
     if (error instanceof UnauthorizedError) {

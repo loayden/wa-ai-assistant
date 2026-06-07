@@ -6,23 +6,15 @@
  */
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/api/response";
 import { processBroadcastQueue } from "@/lib/broadcasts/processor";
-import { appEnv } from "@/lib/utils/env";
+import { isAuthorizedCronRequest } from "@/lib/security/cron";
 import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
-function isAuthorized(request: Request) {
-  if (!appEnv.CRON_SECRET) {
-    return process.env.NODE_ENV !== "production";
-  }
-
-  return request.headers.get("authorization") === `Bearer ${appEnv.CRON_SECRET}`;
-}
-
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isAuthorizedCronRequest(request)) {
     return jsonError("Unauthorized cron request.", 403);
   }
 
@@ -41,4 +33,3 @@ export async function GET(request: Request) {
     return jsonError("Broadcast queue processing failed.", 500);
   }
 }
-

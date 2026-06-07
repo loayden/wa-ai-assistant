@@ -1,0 +1,32 @@
+# Kallem Regression Checklist
+
+This checklist turns the historical issues from this chat and thread `019df5f7-17e7-7ba2-95f6-56897575c025` into executable product requirements.
+
+Status values:
+
+- `fixed`: code and at least one test or deterministic check exists.
+- `partial`: code exists, but coverage or product behavior is still incomplete.
+- `not fixed`: no reliable implementation yet.
+
+| Historical issue | Status | Current fix location | Verification |
+|---|---:|---|---|
+| Meta permissions appeared missing even when the Page token had the scopes. | fixed | `src/lib/meta/social.ts` -> `getGrantedPermissions()` merges `/me/permissions` with `debug_token`. | `tests/unit/meta-social-channels.test.ts` -> "merges user permission data with page token scopes from debug_token". |
+| Messenger appeared partial after successful OAuth because webhook subscription/state was not verified before connected UI. | fixed | `src/app/api/meta/connect-page/route.ts` verifies permissions, subscribes webhook, and sets `permissionStatus`; `src/lib/meta/social.ts` persists `webhookSubscribed`, `isActive`, `isVerified`. | Existing behavior is covered by Meta permission tests; add a dedicated mocked webhook-subscription regression in Phase 2. |
+| Instagram OAuth failed with `Invalid redirect_uri`. | partial | `src/components/social/SocialChannelCards.tsx` sends `redirect_uri`; `src/app/api/meta/oauth/exchange/route.ts` validates a URL shape. | Missing: preflight validation against configured Meta redirect URI and correction UI with copy button. Phase 2 item. |
+| Instagram was not linked to the selected Facebook Page. | fixed | `src/components/social/SocialChannelCards.tsx` checks `instagram_business_account` before connecting Instagram. | UI shows Arabic failure copy when a selected Page has no linked Instagram account. Add dedicated unit/UI regression in Phase 2. |
+| Testing-only vs production-ready channel state was unclear. | partial | `src/lib/readiness/checks.ts` separates some manual production blockers such as production WhatsApp number, OpenAI, Paymob, webhook. | Missing: per-channel `productionReady` model and Meta App Review state for Messenger/Instagram. Phase 2/5 item. |
+| Auto-reply failed with generic fallback text. | fixed | `src/lib/reliability/outbound.ts` classifies provider failures; WhatsApp and social auto-reply paths attach `metadata.outboundAttempt` and `outboxId`; `src/lib/reliability/outbox.ts` retries transient failures only. | `tests/unit/outbox-processor.test.ts`, `tests/unit/social-processing.test.ts`, and `tests/unit/outbound-reliability.test.ts` cover classification and retry behavior. |
+| Manual reply failed with generic request errors. | fixed | `src/app/api/conversations/[id]/reply/route.ts` creates a failed outbound message with classified `metadata.outboundAttempt` and an `outbound_messages` audit row; `ConversationThread` and `MessageItem` show Arabic reason/fix CTA. | `tests/api/conversation-handoff.test.ts` covers failed manual reply persistence. |
+| AI did not always answer from business data. | fixed | `src/lib/ai/context-builder.ts` builds the shared context bundle; `src/lib/openai/client.ts` enforces structured replies, confidence/sources, missing-data fallback, anti-hallucination guards, and writes durable `ai_reply_traces`; automatic replies also store `metadata.aiReplyTrace`. | `tests/unit/aiReply.test.ts` covers no-context safe failure, structured output, and unknown-product price guard. `tests/api/assistant-test.test.ts` verifies simulator confidence/source output. `tests/unit/observability.test.ts` verifies AI trace persistence. |
+| Business description limit was too small. | fixed | `src/lib/validators/settings.ts` sets `BUSINESS_CONTEXT_MAX_LENGTH = 1000`; `src/lib/knowledge/constants.ts` allows knowledge content up to 8000 chars. | Settings and knowledge validators enforce shared limits. |
+| Adding a knowledge question failed with unclear UX or lost text. | fixed | `src/components/knowledge/KnowledgePageClient.tsx` performs field-level Arabic validation, preserves input, and only clears after success. | `tests/api/knowledge.test.ts` covers API create/update scoping. Add UI interaction test later if needed. |
+| CSP blocked Vercel Live or analytics calls. | fixed | `src/lib/security/csp.ts` explicitly allowlists Vercel Live, Google Tag Manager, and Google Analytics collect endpoints. | `tests/unit/middleware-security.test.ts` asserts the CSP allowlist and forbids unsafe inline scripts. |
+| React hydration errors occurred in production. | partial | `src/app/layout.tsx` uses `suppressHydrationWarning` at the root for known global browser mutation risk. | Missing: full cleanup of dynamic date/time formatting in client-rendered surfaces. See `docs/phase-1-foundation-audit.md`. |
+| Protected dashboard routes could show blank shell instead of redirecting. | fixed | `src/middleware.ts` now includes `/readiness` and `/inbox`; `src/app/(dashboard)/layout.tsx` redirects unauthenticated users as a second guard. | `tests/unit/middleware-security.test.ts` checks five protected routes redirect to `/login?next=<path>`. |
+| Normal users saw provider jargon. | partial | `src/lib/errors/translateError.ts`, readiness copy, and several API handlers translate common failures. | Missing: complete provider-code-to-Arabic mapping across Meta/OpenAI/Paymob/Supabase. Phase 4/8 item. |
+| Production readiness mixed code issues and manual external setup. | fixed | `src/lib/readiness/checks.ts` marks external blockers; `src/components/readiness/ReadinessPageClient.tsx` separates code/config issues from manual/external work; `readiness_snapshots` stores every full readiness score with `codeIssues` and `manualActions`. | `tests/unit/readiness.test.ts` checks scoring. `tests/unit/observability.test.ts` verifies split and snapshot persistence. Manual owner-only launch tasks are tracked in `MANUAL_ACTIONS.md`. |
+| Knowledge question creation failed without clear field feedback. | fixed | `src/components/knowledge/KnowledgePageClient.tsx` now shows field-level Arabic errors, preserves input, maps API validation issues to the right field, and keeps product-aware test prompts visible. | `tests/unit/validators.test.ts` covers Arabic validation messages; API ownership tests remain in `tests/api/knowledge.test.ts`. |
+
+## Phase 1 Guardrail
+
+Do not mark launch complete until the remaining `partial` items above either become `fixed` or are explicitly accepted as post-launch enhancements with user-facing guardrails.

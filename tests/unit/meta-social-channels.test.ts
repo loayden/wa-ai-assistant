@@ -3,9 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { instagramAdapter } from "@/lib/channels/adapters/instagram";
 import { messengerAdapter } from "@/lib/channels/adapters/messenger";
+import { getInstagramPageLinkIssue, INSTAGRAM_PAGE_LINK_REQUIRED_MESSAGE } from "@/lib/meta/instagram";
 import { INSTAGRAM_DM_PERMISSION_REQUIREMENTS, hasPermissionRequirements, missingPermissionLabels } from "@/lib/meta/permissions";
+import { buildMetaRedirectUriMismatchMessage, getMetaRedirectUriStatus } from "@/lib/meta/redirect";
 import { verifyMetaSignature } from "@/lib/meta/signature";
-import { getGrantedPermissions } from "@/lib/meta/social";
+import { getGrantedPermissions, inspectMetaAccessToken, subscribePageToWebhook } from "@/lib/meta/social";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -91,7 +93,7 @@ describe("Meta social channel adapters", () => {
       },
     }));
 
-    const fetchMock = vi.fn(async () => Response.json({ message_id: "ig-out-1" }));
+    const fetchMock = vi.fn<typeof fetch>(async () => Response.json({ message_id: "ig-out-1" }));
     vi.stubGlobal("fetch", fetchMock);
 
     const { instagramAdapter: realInstagramAdapter } = await import("@/lib/channels/adapters/instagram");
@@ -240,5 +242,124 @@ describe("Meta permission discovery", () => {
       "pages_show_list",
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns token diagnostics without exposing the token", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request) => {
+      const requestUrl = String(url);
+
+      if (requestUrl.includes("/me/permissions")) {
+        return Response.json({
+          data: [{ permission: "pages_show_list", status: "granted" }],
+        });
+      }
+
+      if (requestUrl.includes("/debug_token")) {
+        return Response.json({
+          data: {
+            is_valid: true,
+            type: "PAGE",
+            expires_at: 1_800_000_000,
+            scopes: ["pages_messaging", "pages_manage_metadata"],
+          },
+        });
+      }
+
+      return Response.json({}, { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(inspectMetaAccessToken("page-token")).resolves.toEqual({
+      permissions: ["pages_manage_metadata", "pages_messaging", "pages_show_list"],
+      expiresAt: "2027-01-15T08:00:00.000Z",
+      isValid: true,
+      tokenType: "PAGE",
+      sources: {
+        mePermissions: true,
+        debugToken: true,
+      },
+    });
+  });
+
+  it("verifies the current app subscription before marking a webhook as subscribed", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const requestUrl = String(url);
+
+      if (requestUrl.includes("/page-1/subscribed_apps") && init?.method === "POST") {
+        return Response.json({ success: true });
+      }
+
+      if (requestUrl.includes("/page-1/subscribed_apps")) {
+        return Response.json({
+          data: [
+            {
+              id: "test-whatsapp-app",
+              subscribed_fields: ["messages", "messaging_postbacks", "message_deliveries"],
+            },
+          ],
+        });
+      }
+
+      return Response.json({}, { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(subscribePageToWebhook("page-1", "page-token")).resolves.toBe(true);
+  });
+
+  it("does not mark webhook as subscribed when Meta does not list the current app", async () => {
+    const fetchMock = vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      const requestUrl = String(url);
+
+      if (requestUrl.includes("/page-1/subscribed_apps") && init?.method === "POST") {
+        return Response.json({ success: true });
+      }
+
+      if (requestUrl.includes("/page-1/subscribed_apps")) {
+        return Response.json({
+          data: [{ id: "another-app", subscribed_fields: ["messages"] }],
+        });
+      }
+
+      return Response.json({}, { status: 404 });
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(subscribePageToWebhook("page-1", "page-token")).resolves.toBe(false);
+  });
+});
+
+describe("Meta redirect URI guard", () => {
+  it("accepts the canonical app origin", () => {
+    expect(
+      getMetaRedirectUriStatus({
+        currentOrigin: "https://kallem.vercel.app",
+        configuredAppUrl: "https://kallem.vercel.app",
+      }),
+    ).toEqual({
+      currentRedirectUri: "https://kallem.vercel.app/connect",
+      expectedRedirectUri: "https://kallem.vercel.app/connect",
+      isValid: true,
+    });
+  });
+
+  it("returns an actionable mismatch message before OAuth starts", () => {
+    const status = getMetaRedirectUriStatus({
+      currentOrigin: "https://preview-kallem.vercel.app",
+      configuredAppUrl: "https://kallem.vercel.app",
+    });
+
+    expect(status.isValid).toBe(false);
+    expect(buildMetaRedirectUriMismatchMessage(status)).toContain("https://preview-kallem.vercel.app/connect");
+  });
+});
+
+describe("Instagram page link guidance", () => {
+  it("blocks Instagram setup when the selected Page has no linked Instagram Business account", () => {
+    expect(getInstagramPageLinkIssue({ instagram_business_account: null })).toBe(INSTAGRAM_PAGE_LINK_REQUIRED_MESSAGE);
+    expect(getInstagramPageLinkIssue({ instagram_business_account: { id: "ig-1" } })).toBeNull();
   });
 });

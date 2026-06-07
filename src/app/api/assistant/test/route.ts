@@ -96,6 +96,12 @@ export async function POST(request: Request) {
         replyText: getAIErrorMessage(error),
         modelUsed: "system-notice",
         tokensUsed: 0,
+        confidence: 0,
+        sources: [],
+        missingData: ["ai_provider"],
+        needsHuman: true,
+        suggestedAction: "handoff",
+        outsideWorkingHours: false,
         onboardingCompleted: false,
         systemNotice: true,
       });

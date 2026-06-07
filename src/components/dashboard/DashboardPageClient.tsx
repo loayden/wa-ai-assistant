@@ -33,6 +33,7 @@ import { ConversationCard } from "@/components/conversations/ConversationCard";
 import { ConversationThread } from "@/components/conversations/ConversationThread";
 import { CustomizeDrawer, type CustomizeDrawerValues } from "@/components/customize/CustomizeDrawer";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
+import { ReadinessWidget } from "@/components/readiness/ReadinessWidget";
 import { useUpdateSettings, type SettingsRecord } from "@/hooks/useSettings";
 import type { MessageRecord } from "@/hooks/useMessages";
 import type { UpdateSettingsInput } from "@/lib/validators/settings";
@@ -51,7 +52,12 @@ type DashboardPageClientProps = {
   initialOnboarding: {
     completed: boolean;
     hasConnection: boolean;
+    hasBusinessInfo: boolean;
+    hasProduct: boolean;
     hasKnowledge: boolean;
+    knowledgeCount: number;
+    hasAiActivity: boolean;
+    hasLaunchBasics: boolean;
   };
   initialSettings: SettingsResponse["settings"];
   initialUser: SettingsResponse["user"];
@@ -259,10 +265,16 @@ export function DashboardPageClient({
           </div>
         </section>
       ) : null}
+      <ReadinessWidget />
       {!onboarding.completed ? (
         <OnboardingBanner
           hasConnection={onboarding.hasConnection || connected}
+          hasBusinessInfo={onboarding.hasBusinessInfo}
+          hasProduct={onboarding.hasProduct}
           hasKnowledge={onboarding.hasKnowledge}
+          knowledgeCount={onboarding.knowledgeCount}
+          hasAiActivity={onboarding.hasAiActivity}
+          hasLaunchBasics={onboarding.hasLaunchBasics}
           onSkip={skipOnboarding}
         />
       ) : null}
@@ -527,11 +539,21 @@ export function DashboardPageClient({
 
 function OnboardingBanner({
   hasConnection,
+  hasBusinessInfo,
+  hasProduct,
   hasKnowledge,
+  knowledgeCount,
+  hasAiActivity,
+  hasLaunchBasics,
   onSkip,
 }: {
   hasConnection: boolean;
+  hasBusinessInfo: boolean;
+  hasProduct: boolean;
   hasKnowledge: boolean;
+  knowledgeCount: number;
+  hasAiActivity: boolean;
+  hasLaunchBasics: boolean;
   onSkip: () => void;
 }) {
   const steps = [
@@ -539,25 +561,57 @@ function OnboardingBanner({
       done: hasConnection,
       href: "/connect",
       icon: RadioTower,
-      title: "① ربط القنوات",
+      title: "١. اربط أول قناة",
       body: "وصّل واتساب أو إنستجرام أو ماسنجر حتى تصل رسائل العملاء إلى kallem.",
       action: "ربط القنوات",
     },
     {
-      done: hasKnowledge,
-      href: "/knowledge",
-      icon: BookOpen,
-      title: "② أضف معلومات نشاطك",
-      body: "أدخل الخدمات والأسعار والمواعيد حتى يرد المساعد بدقة.",
-      action: "أضف معلوماتك",
+      done: hasBusinessInfo,
+      href: "/settings",
+      icon: Bot,
+      title: "٢. أضف معلومات النشاط",
+      body: "اكتب اسم النشاط، ما تبيعه، مناطق الخدمة، وسياساتك الأساسية.",
+      action: "إضافة المعلومات",
     },
     {
-      done: false,
+      done: hasProduct,
+      href: "/products",
+      icon: CreditCard,
+      title: "٣. أضف أول منتج",
+      body: "أضف منتجاً أو خدمة بسعر واضح حتى لا يخمن المساعد الأسعار.",
+      action: "إضافة منتج",
+    },
+    {
+      done: knowledgeCount >= 3,
+      href: "/knowledge",
+      icon: BookOpen,
+      title: "٤. أضف ٣ أسئلة",
+      body: hasKnowledge ? `تم حفظ ${formatStableNumber(knowledgeCount)} سؤال. أضف حتى تصل إلى ٣ أسئلة أساسية.` : "أضف أسئلة السعر، التوصيل، المواعيد، أو الحجز.",
+      action: "إضافة أسئلة",
+    },
+    {
+      done: hasAiActivity,
       href: "/knowledge#test",
       icon: Send,
-      title: "③ جرّب المساعد",
+      title: "٥. اختبر AI",
       body: "اسأل سؤالًا تجريبيًا وشاهد الرد قبل استقبال العملاء.",
       action: "جرّب الآن",
+    },
+    {
+      done: hasLaunchBasics,
+      href: "/readiness",
+      icon: BadgeCheck,
+      title: "٦. راجع الجاهزية",
+      body: "افتح درجة الجاهزية لمعرفة ما يعمل وما يحتاج إعداد خارجي قبل العملاء الحقيقيين.",
+      action: "فحص الجاهزية",
+    },
+    {
+      done: hasLaunchBasics && hasAiActivity,
+      href: "/connect",
+      icon: Zap,
+      title: "٧. شغّل الردود",
+      body: "بعد اكتمال الأساسيات، فعّل الردود التلقائية فقط عندما تكون القنوات جاهزة فعلاً.",
+      action: "تشغيل الردود",
     },
   ];
 
@@ -567,15 +621,15 @@ function OnboardingBanner({
         <div>
           <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">دليل الإعداد</p>
           <h2 className="mt-1 text-h3 font-semibold text-wa-gray-900 sm:text-h2">خلّي المساعد يرد بإجابات من نشاطك، مش ردود عامة.</h2>
-          <p className="mt-1 max-w-[720px] text-body-sm leading-6 text-wa-gray-600">
-            ثلاث خطوات قصيرة: وصّل قناة سوشيال، علّم المساعد معلومات البيزنس، ثم جرّب الرد قبل ما تدعو العملاء.
+          <p className="mt-1 max-w-[760px] text-body-sm leading-6 text-wa-gray-600">
+            مسار مختصر من ٧ خطوات: قناة، معلومات، منتج، معرفة، اختبار، جاهزية، ثم تشغيل آمن للعملاء الحقيقيين.
           </p>
         </div>
         <button type="button" onClick={onSkip} className="self-start text-body-sm font-semibold text-wa-gray-500 underline-offset-4 hover:text-wa-gray-900 hover:underline">
           تخطي
         </button>
       </div>
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {steps.map((step) => {
           const Icon = step.icon;
 
@@ -584,7 +638,7 @@ function OnboardingBanner({
               key={step.title}
               href={step.href}
               className={cn(
-                "group flex min-h-[142px] flex-col rounded-[20px] border p-4 text-right transition hover:-translate-y-0.5 hover:bg-white sm:min-h-[150px]",
+                "group flex min-h-[156px] flex-col rounded-[20px] border p-4 text-right transition hover:-translate-y-0.5 hover:bg-white",
                 step.done ? "border-wa-success-bg bg-wa-success-bg/45" : "border-wa-gray-100 bg-wa-gray-50",
               )}
               dir="rtl"

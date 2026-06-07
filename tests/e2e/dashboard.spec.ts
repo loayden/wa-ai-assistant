@@ -95,8 +95,8 @@ test("authenticated user can reach dashboard and see the command center", async 
   await mockDashboardApis(page);
   await login(page);
 
-  await expect(page.getByText("Your AI assistant")).toBeVisible();
-  await expect(page.getByRole("button", { name: /AI replies/ })).toBeVisible();
-  await expect(page.getByText("Recent WhatsApp conversations")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Customize assistant" })).toBeVisible();
+  await expect(page.getByText("مركز التحكم")).toBeVisible();
+  await expect(page.getByText("الردود التلقائية").first()).toBeVisible();
+  await expect(page.getByText("آخر محادثات السوشيال")).toBeVisible();
+  await expect(page.getByRole("button", { name: "تخصيص المساعد" })).toBeVisible();
 });

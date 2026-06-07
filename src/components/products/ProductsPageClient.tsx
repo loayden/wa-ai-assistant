@@ -6,8 +6,9 @@
  * menu/catalog manager that is faster than a spreadsheet on a phone.
  */
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Package, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Bot, CheckCircle2, Package, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -214,6 +215,15 @@ export function ProductsPageClient() {
             <p className="mt-3 max-w-[720px] text-body-sm leading-7 text-wa-gray-600 sm:text-body-lg">
               أضيفي المنتجات، الأسعار، والفئات مرة واحدة حتى تظهر في الردود والطلبات بدون شرح متكرر.
             </p>
+            {products.length > 0 ? (
+              <Link
+                href="/knowledge#test"
+                className="mt-4 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-wa-blue-100 bg-white px-4 text-body-sm font-semibold text-wa-blue-700 transition hover:border-wa-blue-200 hover:bg-wa-blue-50"
+              >
+                <Bot className="size-4" aria-hidden="true" />
+                اختبار رد المساعد على المنتجات
+              </Link>
+            ) : null}
           </div>
           <div className="rounded-2xl border border-wa-gray-100 bg-white p-4">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">المنتجات المتاحة</p>

@@ -21,6 +21,7 @@ const PUBLIC_API_PATHS = new Set([
 ]);
 const DASHBOARD_PAGE_PREFIXES = [
   "/dashboard",
+  "/inbox",
   "/messages",
   "/settings",
   "/billing",
@@ -33,6 +34,7 @@ const DASHBOARD_PAGE_PREFIXES = [
   "/corrections",
   "/leads",
   "/analytics",
+  "/readiness",
   "/connect",
   "/support",
   "/admin",

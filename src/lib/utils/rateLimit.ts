@@ -39,6 +39,14 @@ export function clearRateLimitBuckets(): void {
   buckets.clear();
 }
 
+export function getRequestRateLimitKey(request: Request, scope: string): string {
+  const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  const identity = forwardedFor || realIp || "unknown";
+
+  return `${scope}:${identity}`;
+}
+
 export function checkRateLimit(options: RateLimitOptions): RateLimitResult {
   const now = Date.now();
   pruneExpiredBuckets(now);

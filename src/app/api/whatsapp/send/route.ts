@@ -15,6 +15,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
@@ -31,6 +32,19 @@ const sendWhatsAppSchema = z
 export async function POST(request: Request) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `whatsapp-send:${user.id}`,
+      limit: 60,
+      windowMs: 60_000,
+      context: "api.whatsapp.send",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة لإرسال رسائل واتساب. انتظر قليلاً ثم حاول مرة أخرى.", 429, {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const body = await readJsonRequestBody(request);
     const parsed = sendWhatsAppSchema.safeParse(body);
 

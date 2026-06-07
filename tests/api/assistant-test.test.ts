@@ -105,6 +105,19 @@ describe("assistant test API", () => {
       replyText: "Yes, we can help.",
       modelUsed: "gpt-4o",
       tokensUsed: 18,
+      confidence: 0.84,
+      sources: [
+        {
+          id: "business_profile",
+          type: "business_profile",
+          title: "Kallem",
+          excerpt: "Business context",
+        },
+      ],
+      missingData: [],
+      needsHuman: false,
+      suggestedAction: "reply",
+      outsideWorkingHours: false,
     });
     apiMocks.prisma.whatsAppConnection.count.mockResolvedValue(1);
     apiMocks.prisma.knowledgeBaseEntry.count.mockResolvedValue(1);
@@ -116,6 +129,12 @@ describe("assistant test API", () => {
 
     expect(response.status).toBe(200);
     expect(body.data.replyText).toBe("Yes, we can help.");
+    expect(body.data.confidence).toBe(0.84);
+    expect(body.data.sources).toEqual([
+      expect.objectContaining({
+        id: "business_profile",
+      }),
+    ]);
     expect(body.data.onboardingCompleted).toBe(true);
     expect(apiMocks.generateAIReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -152,6 +171,9 @@ describe("assistant test API", () => {
     expect(body.data.replyText).not.toContain("OpenAI");
     expect(body.data.modelUsed).toBe("system-notice");
     expect(body.data.tokensUsed).toBe(0);
+    expect(body.data.confidence).toBe(0);
+    expect(body.data.needsHuman).toBe(true);
+    expect(body.data.missingData).toEqual(["ai_provider"]);
     expect(body.data.systemNotice).toBe(true);
     expect(apiMocks.prisma.whatsAppConnection.count).not.toHaveBeenCalled();
   });

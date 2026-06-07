@@ -11,6 +11,7 @@ import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { getOrCreateUserSettings, updateUserSettings } from "@/lib/api/settings";
 import { normalizeNotificationPrefs } from "@/lib/notifications/preferences";
+import { writeAuditLog } from "@/lib/security/audit-log";
 import { logger } from "@/lib/utils/logger";
 import { updateSettingsSchema } from "@/lib/validators/settings";
 import type { SettingsResponse } from "@/types/api";
@@ -109,6 +110,16 @@ export async function PUT(request: Request) {
     };
 
     const settings = await updateUserSettings(user.id, persistedData);
+    await writeAuditLog({
+      userId: user.id,
+      action: "settings.updated",
+      entityType: "user_settings",
+      entityId: user.id,
+      metadata: {
+        changedFields: Object.keys(persistedData),
+      },
+      request,
+    });
 
     return jsonSuccess({
       settings: {

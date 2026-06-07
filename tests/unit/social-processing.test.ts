@@ -20,6 +20,7 @@ const socialMocks = vi.hoisted(() => {
     sendText: vi.fn(),
     getOrCreateUserSettings: vi.fn(),
     generateAIReply: vi.fn(),
+    buildAIReplyTraceMetadata: vi.fn(() => ({ traceId: "trace-1", confidence: 0.8 })),
     detectSocialIntent: vi.fn(),
     getOrUpsertCustomerProfile: vi.fn(),
     checkSubscriptionLimit: vi.fn(),
@@ -27,6 +28,7 @@ const socialMocks = vi.hoisted(() => {
     prisma: {
       whatsAppConnection: { findFirst: vi.fn() },
       message: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
+      outboundMessage: { create: vi.fn(), update: vi.fn() },
       conversationHandoff: { findUnique: vi.fn(), upsert: vi.fn() },
       routingRule: { findMany: vi.fn() },
       lead: { findFirst: vi.fn(), create: vi.fn() },
@@ -72,6 +74,7 @@ vi.mock("@/lib/customers/profiles", () => ({
 
 vi.mock("@/lib/openai/client", () => ({
   AIReplyError: socialMocks.AIReplyError,
+  buildAIReplyTraceMetadata: socialMocks.buildAIReplyTraceMetadata,
   generateAIReply: socialMocks.generateAIReply,
 }));
 
@@ -179,6 +182,22 @@ describe("processSocialMessage", () => {
     );
     socialMocks.prisma.message.findUnique.mockResolvedValue({ metadata: {} });
     socialMocks.prisma.message.update.mockResolvedValue({});
+    socialMocks.prisma.outboundMessage.create.mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: "00000000-0000-0000-0000-000000000088",
+        attemptCount: data.attemptCount ?? 1,
+        maxAttempts: data.maxAttempts ?? 3,
+        channel: data.channel,
+        direction: data.direction,
+        ...data,
+      }),
+    );
+    socialMocks.prisma.outboundMessage.update.mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: "00000000-0000-0000-0000-000000000088",
+        ...data,
+      }),
+    );
     socialMocks.prisma.conversationHandoff.findUnique.mockResolvedValue(null);
     socialMocks.prisma.routingRule.findMany.mockResolvedValue([]);
     socialMocks.prisma.lead.findFirst.mockResolvedValue(null);
@@ -209,6 +228,9 @@ describe("processSocialMessage", () => {
         status: MessageStatus.REPLIED,
         aiReplyText: FALLBACK_TEXT,
         aiModelUsed: "fallback-ai-unavailable",
+        metadata: expect.objectContaining({
+          outboxId: "00000000-0000-0000-0000-000000000088",
+        }),
       }),
     });
     expect(socialMocks.prisma.message.create).toHaveBeenCalledWith({
@@ -232,7 +254,7 @@ describe("processSocialMessage", () => {
       where: { id: INBOUND_ID },
       data: expect.objectContaining({
         status: MessageStatus.FAILED,
-        aiReplyText: "لم يتم إرسال الرد لأن المساعد غير متاح مؤقتاً.",
+        aiReplyText: expect.stringContaining("لم يتم إرسال الرد عبر Instagram"),
         aiModelUsed: "fallback-send-failed",
         metadata: expect.objectContaining({
           autoReplyFailure: expect.objectContaining({
@@ -240,6 +262,16 @@ describe("processSocialMessage", () => {
             channel: "instagram",
             metaError: "Meta send failed",
             aiFailure: "OPENAI_RATE_LIMIT",
+          }),
+          outboxId: "00000000-0000-0000-0000-000000000088",
+          outboundAttempt: expect.objectContaining({
+            channel: "instagram",
+            direction: "auto",
+            stage: "blocked",
+            failure: expect.objectContaining({
+              code: "unknown",
+              retry: { canRetry: false, reason: "unknown" },
+            }),
           }),
         }),
       }),

@@ -16,10 +16,36 @@ export default async function KnowledgePage() {
     return null;
   }
 
-  const entries = await prisma.knowledgeBaseEntry.findMany({
-    where: { userId: auth.appUser.id },
-    orderBy: [{ type: "asc" }, { updatedAt: "desc" }],
-  });
+  const [entries, products] = await Promise.all([
+    prisma.knowledgeBaseEntry.findMany({
+      where: { userId: auth.appUser.id },
+      orderBy: [{ type: "asc" }, { updatedAt: "desc" }],
+    }),
+    prisma.product.findMany({
+      where: {
+        userId: auth.appUser.id,
+        isAvailable: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        category: true,
+      },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
+      take: 6,
+    }),
+  ]);
 
-  return <KnowledgePageClient initialEntries={entries.map(serializeKnowledgeEntry)} />;
+  return (
+    <KnowledgePageClient
+      initialEntries={entries.map(serializeKnowledgeEntry)}
+      initialProducts={products.map((product) => ({
+        id: product.id,
+        name: product.name,
+        priceEGP: product.price / 100,
+        category: product.category,
+      }))}
+    />
+  );
 }

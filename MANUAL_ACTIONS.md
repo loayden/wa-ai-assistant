@@ -1,36 +1,125 @@
-# Manual Production Actions
+# Kallem Manual Launch Actions
 
-These items cannot be completed safely from code alone. Finish them before opening kallem to public customers.
+هذه القائمة هي الأشياء التي لا يمكن اعتبارها مكتملة من الكود وحده. لا تنشر التطبيق للعملاء الحقيقيين قبل إنهائها.
 
-## Critical
+## 1. قاعدة البيانات الإنتاجية
 
-1. Replace Paymob test keys with live production keys in Vercel.
-   - Current code disables checkout when keys look like test keys.
-   - Update `PAYMOB_PUBLIC_KEY`, `PAYMOB_SECRET_KEY`, `PAYMOB_HMAC_SECRET`, and `PAYMOB_CARD_INTEGRATION_ID`.
+- خذ نسخة احتياطية من Supabase قبل أي migration.
+- طبّق migrations الجديدة على Production Supabase:
+  - `20260606033000_add_outbound_messages`
+  - `20260606152000_add_audit_logs`
+  - `20260606165000_add_launch_observability_tables`
+- الطريقة الآمنة: شغل `npx prisma migrate deploy` من بيئة موثوقة فيها `DATABASE_URL` و`DIRECT_URL` للإنتاج، أو طبّق SQL من مجلد `prisma/migrations` داخل Supabase SQL Editor.
+- بعد التطبيق، تأكد أن RLS مفعل على:
+  - `audit_logs`
+  - `ai_reply_traces`
+  - `readiness_snapshots`
+  - `webhook_events`
 
-2. Fix OpenAI billing/quota.
-   - The app now hides provider details from users, but production replies still need an active funded OpenAI account.
-   - Verify `OPENAI_API_KEY` and `OPENAI_MODEL` in Vercel.
+## 2. Vercel Production Environment
 
-3. Complete Meta App Review.
-   - Messenger needs approved page messaging permissions for public users.
-   - Instagram DMs need Meta approval before the Instagram card should be enabled for customers.
+- افتح إعدادات مشروع Vercel وتأكد أن كل القيم مضبوطة في Environment = Production، وليس Development فقط.
+- تأكد من وجود:
+  - `DATABASE_URL`
+  - `DIRECT_URL`
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `OPENAI_API_KEY`
+  - `OPENAI_MODEL`
+  - `META_APP_ID`
+  - `META_APP_SECRET`
+  - `META_VERIFY_TOKEN`
+  - `WHATSAPP_VERIFY_TOKEN`
+  - `PAYMOB_PUBLIC_KEY`
+  - `PAYMOB_SECRET_KEY`
+  - `PAYMOB_HMAC_SECRET`
+  - `PAYMOB_CARD_INTEGRATION_ID`
+  - `PAYMOB_CURRENCY`
+- بعد أي تغيير في env vars، اعمل redeploy من Vercel.
 
-4. Use a production WhatsApp Business number.
-   - A Meta test number can only message approved test recipients.
-   - Real customers need a verified production WhatsApp Business phone number.
+## 3. OpenAI Billing And Quota
 
-## Branding and Auth
+- افتح OpenAI Platform billing وتأكد أن الحساب عليه رصيد أو billing method فعال.
+- اختبر صفحة الجاهزية في kallem بعد الشحن. إذا ظهر OpenAI كـ fail أو warn، لا تفتح التطبيق للعملاء.
+- ابدأ برصيد صغير مضبوط للحد من المخاطر، ثم راقب الاستهلاك أول أسبوع.
 
-5. Update Google OAuth branding.
-   - Configure the OAuth consent screen and authorized domains so customers see kallem branding, not the Supabase project domain.
-   - Confirm redirect URLs include the production app URL.
+## 4. Meta App Review
 
-6. Review Supabase auth email templates.
-   - Ensure signup, magic link, and reset-password emails use the kallem name and production URLs.
+- Messenger لا يكون جاهزًا للعملاء الحقيقيين حتى تتم موافقة Meta على صلاحيات الرسائل المطلوبة.
+- Instagram DMs لا تكون جاهزة للعملاء الحقيقيين حتى تتم موافقة Meta على صلاحيات Instagram messaging المطلوبة.
+- بعد الموافقة، افتح صفحة الربط داخل kallem وأعد فحص القنوات حتى تظهر حالة webhook والpermissions كجاهزة.
+- إذا كان التطبيق في Development Mode أو القنوات تعمل مع test users فقط، فهذه ليست جاهزية إنتاج.
+- الحالة الحالية من فحص 2026-06-07:
+  - التطبيق Published.
+  - App Review submission موجود كمسودة `Not submitted`.
+  - `Kallem Business` مربوط لكنه `Unverified`.
+  - زر `Submit for review` معطل حتى يتم Business verification وإكمال allowed-usage forms.
+  - راجع الخطوات والنصوص الجاهزة في `docs/meta-app-review-action-plan.md`.
 
-## Final Checks
+## 5. WhatsApp Production Number
 
-7. Run a full payment test with live Paymob in a controlled account.
-8. Confirm Meta webhooks are subscribed after connecting a production page/phone.
-9. Test first-time signup, wrong password, WhatsApp connect, Messenger connect, and support ticket creation in a clean browser.
+- لا تعتمد على Meta test phone number للعملاء الحقيقيين.
+- اربط رقم WhatsApp Business production موثق ومملوك للنشاط.
+- أرسل رسالة اختبار من رقم عميل غير مضاف كـ test recipient وتأكد أن:
+  - الرسالة تظهر في kallem.
+  - الرد التلقائي يرسل فعليًا عبر WhatsApp.
+  - outbox يسجل `sent`.
+
+## 6. Paymob Live Payment Test
+
+- تأكد أن مفاتيح Paymob live موجودة في Vercel Production.
+- نفّذ اختبار دفع حي بمبلغ صغير من حساب مراقب.
+- تأكد أن webhook يحدث اشتراك المستخدم أو الطلب داخل قاعدة البيانات.
+- لا تفتح الاشتراكات العامة قبل نجاح اختبار دفع حي كامل.
+
+## 7. Google OAuth Branding
+
+- افتح Google Cloud Console.
+- اضبط OAuth consent screen باسم kallem وشعار kallem.
+- أضف الدومين الإنتاجي `kallem.vercel.app` أو الدومين المخصص إذا تم استخدامه.
+- تأكد أن redirect URLs في Supabase وGoogle تشير إلى رابط الإنتاج الصحيح.
+
+## 8. Supabase Auth Email Templates
+
+- راجع قوالب:
+  - Signup confirmation
+  - Magic link
+  - Reset password
+- يجب أن يظهر اسم kallem وروابط الإنتاج، وليس اسم مشروع Supabase الداخلي.
+- لا تفعّل Supabase SMTP قبل شراء دومين حقيقي وتوثيقه في Resend.
+- عند شراء الدومين:
+  - أضفه في Resend Domains.
+  - انسخ DNS records إلى مزود الدومين وانتظر حالة `Verified`.
+  - استخدم بريد إرسال حقيقي مثل `no-reply@yourdomain.com`.
+  - حدّث `RESEND_FROM_EMAIL` في Vercel إلى البريد الحقيقي.
+  - فعّل Supabase SMTP بالقيم: `smtp.resend.com`, port `587`, username `resend`, password = Resend API key.
+  - اختبر signup وreset password قبل الإطلاق العام.
+
+## 9. Clean Browser Launch Test
+
+نفّذ هذه الرحلة في نافذة incognito أو متصفح جديد:
+
+- Sign up جديد.
+- Login بكلمة مرور خاطئة ثم صحيحة.
+- ربط WhatsApp.
+- ربط Messenger بعد موافقات Meta.
+- ربط Instagram بعد موافقات Meta وربطه بصفحة Facebook.
+- إضافة منتج.
+- إضافة معرفة.
+- اختبار المساعد.
+- استقبال رسالة حقيقية من WhatsApp/Instagram/Messenger.
+- التأكد من وصول الرد التلقائي.
+- فتح readiness والتأكد أن Manual/External لا يحتوي عناصر حرجة.
+- إنشاء support ticket.
+- تجربة checkout live controlled.
+
+## 10. Launch Rule
+
+يمكن اعتبار التطبيق جاهزًا للعملاء فقط عندما:
+
+- `npm run build` ينجح.
+- الاختبارات تمر.
+- لا توجد secrets في bundle.
+- صفحة الجاهزية لا تعرض blockers حرجة.
+- كل manual action أعلاه تم تنفيذه أو تم قبول مخاطره كتابة.

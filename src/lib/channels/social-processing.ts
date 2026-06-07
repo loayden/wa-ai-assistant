@@ -6,14 +6,15 @@ import { detectLeadIntent } from "@/lib/ai/leads";
 import { detectAngryTone } from "@/lib/ai/mood";
 import { detectSocialIntent, type SocialIntent } from "@/lib/ai/social-intent";
 import { detectTopicFromText, findRoutingRuleForTopic } from "@/lib/ai/topic-routing";
-import { getAdapter } from "@/lib/channels";
 import { instagramAdapter } from "@/lib/channels/adapters/instagram";
 import { messengerAdapter } from "@/lib/channels/adapters/messenger";
 import { processInstagramComment } from "@/lib/channels/instagram-comments";
 import type { MessagingChannel, NormalizedInboundMessage } from "@/lib/channels/types";
 import { getOrUpsertCustomerProfile } from "@/lib/customers/profiles";
-import { AIReplyError, generateAIReply } from "@/lib/openai/client";
+import { AIReplyError, buildAIReplyTraceMetadata, generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
+import { buildOutboundAttemptMetadata, classifyOutboundFailure } from "@/lib/reliability/outbound";
+import { sendTrackedChannelText } from "@/lib/reliability/outbox";
 import { sendEmail } from "@/lib/resend/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
@@ -175,17 +176,27 @@ function getJsonObject(value: Prisma.JsonValue | null | undefined): Record<strin
   return value as Record<string, unknown>;
 }
 
-function withAutoReplyFailureMetadata(
-  metadata: Prisma.JsonValue | null | undefined,
-  failure: Record<string, unknown>,
-): Prisma.InputJsonValue {
-  return {
-    ...getJsonObject(metadata),
-    autoReplyFailure: {
-      ...failure,
-      at: new Date().toISOString(),
-    },
-  } as Prisma.InputJsonValue;
+async function sendTrackedSocialReply(params: {
+  connection: NonNullable<Awaited<ReturnType<typeof findConnectionForMessage>>>;
+  inboundMessageId: string;
+  msg: NormalizedInboundMessage;
+  text: string;
+  accessToken: string;
+}) {
+  return sendTrackedChannelText({
+    userId: params.connection.userId,
+    connectionId: params.connection.id,
+    relatedMessageId: params.inboundMessageId,
+    channel: params.msg.channel,
+    direction: "auto",
+    senderId: params.msg.pageId ?? params.msg.instagramAccountId ?? params.connection.phoneNumberId,
+    recipientId: params.msg.externalThreadId,
+    bodyText: params.text,
+    externalThreadId: params.msg.externalThreadId,
+    accessToken: params.accessToken,
+    pageId: params.msg.pageId,
+    phoneNumberId: getSocialSenderId(params.msg, params.connection),
+  });
 }
 
 async function sendSocialFallbackReply(params: {
@@ -197,17 +208,16 @@ async function sendSocialFallbackReply(params: {
   reason: unknown;
 }) {
   const fallbackText = buildFallbackMessage(params.settings);
-  const adapter = getAdapter(params.msg.channel);
-  const sendResult = await adapter.sendText({
-    connectionId: params.connection.id,
-    recipientId: params.msg.externalThreadId,
+  const sendResult = await sendTrackedSocialReply({
+    connection: params.connection,
+    inboundMessageId: params.inboundMessageId,
+    msg: params.msg,
     text: fallbackText,
     accessToken: params.accessToken,
-    pageId: params.msg.pageId,
-    phoneNumberId: getSocialSenderId(params.msg, params.connection),
   });
 
   if (!sendResult.success) {
+    const failure = sendResult.failure;
     const inboundMessage = await prisma.message.findUnique({
       where: { id: params.inboundMessageId },
       select: { metadata: true },
@@ -217,14 +227,25 @@ async function sendSocialFallbackReply(params: {
       where: { id: params.inboundMessageId },
       data: {
         status: MessageStatus.FAILED,
-        aiReplyText: describeSocialAiFailure(params.reason),
+        aiReplyText: failure.userMessage || describeSocialAiFailure(params.reason),
         aiModelUsed: "fallback-send-failed",
-        metadata: withAutoReplyFailureMetadata(inboundMessage?.metadata, {
-          stage: "fallback_send",
-          channel: params.msg.channel,
-          metaError: sendResult.error ?? "Meta send failed",
-          aiFailure: params.reason instanceof AIReplyError ? params.reason.code : "unknown",
-        }),
+        metadata: {
+          ...getJsonObject(inboundMessage?.metadata),
+          autoReplyFailure: {
+            stage: "fallback_send",
+            channel: params.msg.channel,
+            metaError: failure.providerMessage ?? failure.userMessage,
+            aiFailure: params.reason instanceof AIReplyError ? params.reason.code : "unknown",
+            at: new Date().toISOString(),
+          },
+          outboxId: sendResult.outbox.id,
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel: params.msg.channel,
+            direction: "auto",
+            stage: failure.retry.canRetry ? "failed" : "blocked",
+            failure,
+          }),
+        },
         processedAt: new Date(),
       },
     });
@@ -238,6 +259,15 @@ async function sendSocialFallbackReply(params: {
         status: MessageStatus.REPLIED,
         aiReplyText: fallbackText,
         aiModelUsed: "fallback-ai-unavailable",
+        metadata: {
+          outboxId: sendResult.outbox.id,
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel: params.msg.channel,
+            direction: "auto",
+            stage: "sent",
+            providerMessageId: sendResult.externalMessageId,
+          }),
+        },
         processedAt: new Date(),
       },
     }),
@@ -255,6 +285,15 @@ async function sendSocialFallbackReply(params: {
         channel: params.msg.channel,
         externalMessageId: sendResult.externalMessageId,
         externalThreadId: params.msg.externalThreadId,
+        metadata: {
+          outboxId: sendResult.outbox.id,
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel: params.msg.channel,
+            direction: "auto",
+            stage: "sent",
+            providerMessageId: sendResult.externalMessageId,
+          }),
+        },
         processedAt: new Date(),
       },
     }),
@@ -403,7 +442,6 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
   }
 
   const accessToken = decrypt(connection.pageAccessTokenEncrypted ?? connection.accessToken);
-  const adapter = getAdapter(msg.channel);
 
   const socialIntent = await detectSocialIntent(msg.text);
   const tag = intentTag(socialIntent);
@@ -442,14 +480,14 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
 
   if (socialIntent === "complaint") {
     const handoffReply = "شكراً لتواصلك. سيتواصل معك أحد فريقنا قريباً لحل المشكلة. 🙏";
-    const sendResult = await adapter.sendText({
-      connectionId: connection.id,
-      recipientId: msg.externalThreadId,
+    const sendResult = await sendTrackedSocialReply({
+      connection,
+      inboundMessageId: inboundMessage.id,
+      msg,
       text: handoffReply,
       accessToken,
-      pageId: msg.pageId,
-      phoneNumberId: getSocialSenderId(msg, connection),
     });
+    const failure = sendResult.success ? null : sendResult.failure;
 
     await upsertThreadState({
       userId: connection.userId,
@@ -465,8 +503,19 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       where: { id: inboundMessage.id },
       data: {
         status: sendResult.success ? MessageStatus.REPLIED : MessageStatus.FAILED,
-        aiReplyText: handoffReply,
+        aiReplyText: failure?.userMessage ?? handoffReply,
         aiModelUsed: "social-intent-handoff",
+        metadata: {
+          ...getJsonObject(inboundMessage.metadata),
+          outboxId: sendResult.outbox.id,
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel: msg.channel,
+            direction: "auto",
+            stage: sendResult.success ? "sent" : failure?.retry.canRetry ? "failed" : "blocked",
+            providerMessageId: sendResult.success ? sendResult.externalMessageId : undefined,
+            ...(failure ? { failure } : {}),
+          }),
+        },
         processedAt: new Date(),
       },
     });
@@ -482,22 +531,33 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
   }
 
   if (!isWithinWorkingHours(settings)) {
-    const sendResult = await adapter.sendText({
-      connectionId: connection.id,
-      recipientId: msg.externalThreadId,
+    const sendResult = await sendTrackedSocialReply({
+      connection,
+      inboundMessageId: inboundMessage.id,
+      msg,
       text: settings.offHoursMessage,
       accessToken,
-      pageId: msg.pageId,
-      phoneNumberId: getSocialSenderId(msg, connection),
     });
+    const failure = sendResult.success ? null : sendResult.failure;
 
     await prisma.$transaction([
       prisma.message.update({
         where: { id: inboundMessage.id },
         data: {
           status: sendResult.success ? MessageStatus.REPLIED : MessageStatus.FAILED,
-          aiReplyText: settings.offHoursMessage,
+          aiReplyText: failure?.userMessage ?? settings.offHoursMessage,
           aiModelUsed: "off-hours",
+          metadata: {
+            ...getJsonObject(inboundMessage.metadata),
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: msg.channel,
+              direction: "auto",
+              stage: sendResult.success ? "sent" : failure?.retry.canRetry ? "failed" : "blocked",
+              providerMessageId: sendResult.success ? sendResult.externalMessageId : undefined,
+              ...(failure ? { failure } : {}),
+            }),
+          },
           processedAt: new Date(),
         },
       }),
@@ -517,6 +577,15 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
                 channel: msg.channel,
                 externalMessageId: sendResult.externalMessageId,
                 externalThreadId: msg.externalThreadId,
+                metadata: {
+                  outboxId: sendResult.outbox.id,
+                  outboundAttempt: buildOutboundAttemptMetadata({
+                    channel: msg.channel,
+                    direction: "auto",
+                    stage: "sent",
+                    providerMessageId: sendResult.externalMessageId,
+                  }),
+                },
                 processedAt: new Date(),
               },
             }),
@@ -569,14 +638,14 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
 
     if (routingRule?.action === "handoff") {
       const handoffReply = "سيتواصل معك أحد المختصين قريباً.";
-      const sendResult = await adapter.sendText({
-        connectionId: connection.id,
-        recipientId: msg.externalThreadId,
+      const sendResult = await sendTrackedSocialReply({
+        connection,
+        inboundMessageId: inboundMessage.id,
+        msg,
         text: handoffReply,
         accessToken,
-        pageId: msg.pageId,
-        phoneNumberId: getSocialSenderId(msg, connection),
       });
+      const failure = sendResult.success ? null : sendResult.failure;
 
       await prisma.conversationHandoff.upsert({
         where: {
@@ -600,8 +669,19 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
         where: { id: inboundMessage.id },
         data: {
           status: sendResult.success ? MessageStatus.REPLIED : MessageStatus.FAILED,
-          aiReplyText: handoffReply,
+          aiReplyText: failure?.userMessage ?? handoffReply,
           aiModelUsed: "topic-routing-handoff",
+          metadata: {
+            ...getJsonObject(inboundMessage.metadata),
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: msg.channel,
+              direction: "auto",
+              stage: sendResult.success ? "sent" : failure?.retry.canRetry ? "failed" : "blocked",
+              providerMessageId: sendResult.success ? sendResult.externalMessageId : undefined,
+              ...(failure ? { failure } : {}),
+            }),
+          },
           processedAt: new Date(),
         },
       });
@@ -626,6 +706,8 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       settings,
       extraInstructions,
       channel: msg.channel,
+      connectionId: connection.id,
+      customerId: msg.externalThreadId,
     });
     const replyText = aiReply.replyText || buildFallbackMessage(settings);
     const leadResult = detectLeadIntent(msg.text);
@@ -657,17 +739,38 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       }
     }
 
-    const sendResult = await adapter.sendText({
-      connectionId: connection.id,
-      recipientId: msg.externalThreadId,
+    const sendResult = await sendTrackedSocialReply({
+      connection,
+      inboundMessageId: inboundMessage.id,
+      msg,
       text: replyText,
       accessToken,
-      pageId: msg.pageId,
-      phoneNumberId: getSocialSenderId(msg, connection),
     });
 
     if (!sendResult.success) {
-      throw new Error(sendResult.error ?? "Meta send failed");
+      const failure = sendResult.failure;
+      await prisma.message.update({
+        where: { id: inboundMessage.id },
+        data: {
+          status: MessageStatus.FAILED,
+          aiReplyText: failure.userMessage,
+          aiModelUsed: aiReply.modelUsed,
+          aiTokensUsed: aiReply.tokensUsed,
+          metadata: {
+            ...getJsonObject(inboundMessage.metadata),
+            aiReplyTrace: buildAIReplyTraceMetadata(aiReply),
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: msg.channel,
+              direction: "auto",
+              stage: failure.retry.canRetry ? "failed" : "blocked",
+              failure,
+            }),
+          },
+          processedAt: new Date(),
+        },
+      });
+      return;
     }
 
     await prisma.$transaction([
@@ -678,6 +781,17 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
           aiReplyText: replyText,
           aiModelUsed: aiReply.modelUsed,
           aiTokensUsed: aiReply.tokensUsed,
+          metadata: {
+            ...getJsonObject(inboundMessage.metadata),
+            aiReplyTrace: buildAIReplyTraceMetadata(aiReply),
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: msg.channel,
+              direction: "auto",
+              stage: "sent",
+              providerMessageId: sendResult.externalMessageId,
+            }),
+          },
           processedAt: new Date(),
         },
       }),
@@ -696,6 +810,15 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
           channel: msg.channel,
           externalMessageId: sendResult.externalMessageId,
           externalThreadId: msg.externalThreadId,
+          metadata: {
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: msg.channel,
+              direction: "auto",
+              stage: "sent",
+              providerMessageId: sendResult.externalMessageId,
+            }),
+          },
           processedAt: new Date(),
         },
       }),
@@ -717,16 +840,28 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       return;
     }
 
+    const failure = classifyOutboundFailure({ channel: msg.channel, error });
+
     await prisma.message.update({
       where: { id: inboundMessage.id },
       data: {
         status: MessageStatus.FAILED,
-        aiReplyText: describeSocialAiFailure(error),
-        metadata: withAutoReplyFailureMetadata(inboundMessage.metadata, {
-          stage: "primary_reply",
-          channel: msg.channel,
-          error: error instanceof Error ? error.message : String(error),
-        }),
+        aiReplyText: failure.userMessage || describeSocialAiFailure(error),
+        metadata: {
+          ...getJsonObject(inboundMessage.metadata),
+          autoReplyFailure: {
+            stage: "primary_reply",
+            channel: msg.channel,
+            error: error instanceof Error ? error.message : String(error),
+            at: new Date().toISOString(),
+          },
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel: msg.channel,
+            direction: "auto",
+            stage: failure.retry.canRetry ? "failed" : "blocked",
+            failure,
+          }),
+        },
         processedAt: new Date(),
       },
     });

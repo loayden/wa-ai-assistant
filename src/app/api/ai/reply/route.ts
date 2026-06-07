@@ -15,6 +15,7 @@ import { generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
 import { checkSubscriptionLimit, incrementReplyCount } from "@/lib/utils/subscription";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,6 +30,19 @@ const aiReplySchema = z
 export async function POST(request: Request) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `ai-reply:${user.id}`,
+      limit: 30,
+      windowMs: 60_000,
+      context: "api.ai.reply",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("Too many AI reply requests. Please wait a moment and try again.", 429, {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const body = await readJsonRequestBody(request);
     const parsed = aiReplySchema.safeParse(body);
 
@@ -58,6 +72,8 @@ export async function POST(request: Request) {
       systemPrompt: settings.systemPrompt,
       userMessage: parsed.data.message,
       settings,
+      channel: (connection.channel === "instagram" || connection.channel === "messenger" ? connection.channel : "whatsapp"),
+      connectionId: connection.id,
     });
 
     await incrementReplyCount(user.id);

@@ -21,12 +21,21 @@ import { parseOrderTag, stripOrderTag } from "@/lib/ai/order-extraction";
 import { detectTopicFromText, findRoutingRuleForTopic } from "@/lib/ai/topic-routing";
 import { shouldSendNotification } from "@/lib/notifications/preferences";
 import { sendConversationNotificationOnce } from "@/lib/notifications/events";
-import { AIReplyError, generateAIReply } from "@/lib/openai/client";
+import {
+  inferWebhookEventType,
+  inferWebhookProviderEventId,
+  markWebhookEventProcessed,
+  recordWebhookEvent,
+} from "@/lib/observability/webhook-events";
+import { AIReplyError, buildAIReplyTraceMetadata, generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
+import { buildOutboundAttemptMetadata, classifyOutboundFailure } from "@/lib/reliability/outbound";
+import { sendTrackedChannelText } from "@/lib/reliability/outbox";
 import { sendEmail } from "@/lib/resend/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit, getRequestRateLimitKey } from "@/lib/utils/rateLimit";
 import { handleOwnerCommand } from "@/lib/utils/ownerCommands";
 import { checkSubscriptionLimit, incrementReplyCount } from "@/lib/utils/subscription";
 import { inboundWebhookSchema, type InboundWhatsAppMessage } from "@/lib/validators/message";
@@ -108,6 +117,32 @@ async function sendReply(params: {
 }) {
   return whatsappClient.sendMessage(params.phoneNumberId, params.to, params.replyText, {
     accessToken: appEnv.WHATSAPP_MOCK_MODE ? undefined : decrypt(params.accessToken),
+  });
+}
+
+async function sendTrackedWhatsAppReply(params: {
+  connection: {
+    id: string;
+    userId: string;
+    phoneNumberId: string;
+    accessToken: string;
+  };
+  relatedMessageId: string;
+  displayPhoneNumber: string;
+  to: string;
+  replyText: string;
+}) {
+  return sendTrackedChannelText({
+    userId: params.connection.userId,
+    connectionId: params.connection.id,
+    relatedMessageId: params.relatedMessageId,
+    channel: "whatsapp",
+    direction: "auto",
+    senderId: params.displayPhoneNumber,
+    recipientId: params.to,
+    bodyText: params.replyText,
+    accessToken: appEnv.WHATSAPP_MOCK_MODE ? "" : decrypt(params.connection.accessToken),
+    phoneNumberId: params.connection.phoneNumberId,
   });
 }
 
@@ -766,6 +801,9 @@ async function processInboundMessage(params: {
       settings,
       extraInstructions,
       forceEgyptianArabic: preprocessed.wasFranco,
+      channel: "whatsapp",
+      connectionId: connection.id,
+      customerId: params.message.from,
     });
     const customerReplyText = stripOrderTag(aiReply.replyText) || buildFallbackMessage(settings);
 
@@ -813,13 +851,19 @@ async function processInboundMessage(params: {
       });
     }
 
-    const sendResponse = await sendReply({
-      phoneNumberId: params.phoneNumberId,
-      accessToken: connection.accessToken,
+    const sendResult = await sendTrackedWhatsAppReply({
+      connection,
+      relatedMessageId: inboundMessage.id,
+      displayPhoneNumber: params.displayPhoneNumber,
       to: params.message.from,
       replyText: customerReplyText,
     });
-    const outboundWaMessageId = sendResponse.messages[0]?.id;
+
+    if (!sendResult.success) {
+      throw new Error(sendResult.failure.userMessage);
+    }
+
+    const outboundWaMessageId = sendResult.externalMessageId;
 
     if (!outboundWaMessageId) {
       throw new Error("WhatsApp API did not return an outbound message id.");
@@ -833,6 +877,17 @@ async function processInboundMessage(params: {
           aiReplyText: customerReplyText,
           aiModelUsed: aiReply.modelUsed,
           aiTokensUsed: aiReply.tokensUsed,
+          metadata: {
+            ...messageMetadata,
+            aiReplyTrace: buildAIReplyTraceMetadata(aiReply),
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: "whatsapp",
+              direction: "auto",
+              stage: "sent",
+              providerMessageId: outboundWaMessageId,
+            }),
+          },
           processedAt: new Date(),
         },
       }),
@@ -848,6 +903,15 @@ async function processInboundMessage(params: {
           status: MessageStatus.REPLIED,
           aiModelUsed: aiReply.modelUsed,
           aiTokensUsed: aiReply.tokensUsed,
+          metadata: {
+            outboxId: sendResult.outbox.id,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: "whatsapp",
+              direction: "auto",
+              stage: "sent",
+              providerMessageId: outboundWaMessageId,
+            }),
+          },
           processedAt: new Date(),
         },
       }),
@@ -864,6 +928,8 @@ async function processInboundMessage(params: {
     const fallbackMessage = buildFallbackMessage(settings);
     let fallbackSent = false;
     let fallbackSendError: unknown = null;
+    let fallbackFailure: ReturnType<typeof classifyOutboundFailure> | null = null;
+    let fallbackOutboxId: string | null = null;
 
     logger.error("api.webhooks.whatsapp", "AI reply processing failed; sending fallback when possible.", {
       error,
@@ -888,13 +954,15 @@ async function processInboundMessage(params: {
     }
 
     try {
-      const sendResponse = await sendReply({
-        phoneNumberId: params.phoneNumberId,
-        accessToken: connection.accessToken,
+      const sendResult = await sendTrackedWhatsAppReply({
+        connection,
+        relatedMessageId: inboundMessage.id,
+        displayPhoneNumber: params.displayPhoneNumber,
         to: params.message.from,
         replyText: fallbackMessage,
       });
-      const outboundWaMessageId = sendResponse.messages[0]?.id;
+      const outboundWaMessageId = sendResult.success ? sendResult.externalMessageId : null;
+      fallbackOutboxId = sendResult.outbox.id;
 
       if (outboundWaMessageId) {
         fallbackSent = true;
@@ -908,9 +976,21 @@ async function processInboundMessage(params: {
             toNumber: params.message.from,
             bodyText: fallbackMessage,
             status: MessageStatus.REPLIED,
+            metadata: {
+              outboxId: sendResult.outbox.id,
+              outboundAttempt: buildOutboundAttemptMetadata({
+                channel: "whatsapp",
+                direction: "auto",
+                stage: "sent",
+                providerMessageId: outboundWaMessageId,
+              }),
+            },
             processedAt: new Date(),
           },
         });
+      } else if (!sendResult.success) {
+        fallbackFailure = sendResult.failure;
+        fallbackSendError = sendResult.failure;
       }
     } catch (fallbackError) {
       fallbackSendError = fallbackError;
@@ -919,12 +999,29 @@ async function processInboundMessage(params: {
         waMessageId: inboundMessage.waMessageId,
       });
     }
+    const finalFailure = fallbackSent ? null : fallbackFailure ?? classifyOutboundFailure({ channel: "whatsapp", error: fallbackSendError ?? error });
 
     await prisma.message.update({
       where: { id: inboundMessage.id },
       data: {
         status: fallbackSent ? MessageStatus.REPLIED : MessageStatus.FAILED,
         aiReplyText: fallbackSent ? fallbackMessage : describeAutomaticReplyFailure(error, fallbackSendError),
+        metadata: {
+          ...messageMetadata,
+          ...(fallbackOutboxId ? { outboxId: fallbackOutboxId } : {}),
+          outboundAttempt: fallbackSent
+            ? buildOutboundAttemptMetadata({
+                channel: "whatsapp",
+                direction: "auto",
+                stage: "sent",
+              })
+            : buildOutboundAttemptMetadata({
+                channel: "whatsapp",
+                direction: "auto",
+                stage: finalFailure?.retry.canRetry ? "failed" : "blocked",
+                failure: finalFailure ?? undefined,
+              }),
+        },
         processedAt: new Date(),
       },
     });
@@ -962,6 +1059,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const rateLimit = checkRateLimit({
+    key: getRequestRateLimitKey(request, "webhook:whatsapp"),
+    limit: 300,
+    windowMs: 60_000,
+    context: "api.webhooks.whatsapp",
+  });
+
+  if (!rateLimit.allowed) {
+    return jsonError("Too many webhook requests.", 429, {
+      retryAfterSeconds: rateLimit.retryAfterSeconds,
+    });
+  }
+
   const rawPayload = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
 
@@ -984,6 +1094,12 @@ export async function POST(request: Request) {
     return jsonValidationError(parsed.error);
   }
 
+  const webhookEventId = await recordWebhookEvent({
+    provider: "whatsapp",
+    eventType: inferWebhookEventType("whatsapp", parsed.data),
+    providerEventId: inferWebhookProviderEventId("whatsapp", parsed.data),
+    rawPayload: parsed.data,
+  });
   const results: WebhookProcessingResult[] = [];
 
   try {
@@ -1001,11 +1117,13 @@ export async function POST(request: Request) {
       }
     }
 
+    await markWebhookEventProcessed(webhookEventId);
     return jsonSuccess({ processed: results });
   } catch (error) {
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.webhooks.whatsapp", error);
 
     if (databaseErrorResponse) {
+      await markWebhookEventProcessed(webhookEventId, "WHATSAPP_WEBHOOK_DATABASE_UNAVAILABLE");
       return databaseErrorResponse;
     }
 
@@ -1013,6 +1131,7 @@ export async function POST(request: Request) {
       extra: { source: "whatsapp_webhook" },
       level: "error",
     });
+    await markWebhookEventProcessed(webhookEventId, "WHATSAPP_WEBHOOK_PROCESSING_FAILED");
     logger.error("api.webhooks.whatsapp", "WhatsApp webhook processing failed.", { error });
     return jsonError("WhatsApp webhook processing failed.", 500);
   }

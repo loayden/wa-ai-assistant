@@ -10,6 +10,17 @@ import { hasPermissionRequirements } from "@/lib/meta/permissions";
 
 export type MetaPermissionStatus = "unknown" | "granted" | "partial" | "pending_review" | "error";
 
+export type MetaTokenInspection = {
+  permissions: string[];
+  expiresAt: string | null;
+  isValid: boolean | null;
+  tokenType: string | null;
+  sources: {
+    mePermissions: boolean;
+    debugToken: boolean;
+  };
+};
+
 export type MetaPageConnectionInput = {
   userId: string;
   pageId: string;
@@ -43,20 +54,23 @@ function uniquePermissions(permissions: string[]): string[] {
   return Array.from(new Set(permissions.filter((permission) => typeof permission === "string" && permission.length > 0))).sort();
 }
 
-async function getPermissionsFromMePermissions(accessToken: string): Promise<string[]> {
+async function getPermissionsFromMePermissions(accessToken: string): Promise<{ permissions: string[]; ok: boolean }> {
   const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/me/permissions?access_token=${encodeURIComponent(accessToken)}`);
   const data = await res.json().catch(() => ({}));
 
   if (!res.ok || !Array.isArray(data.data)) {
-    return [];
+    return { permissions: [], ok: false };
   }
 
-  return data.data
-    .filter((permission: { status?: string; permission?: string }) => permission.status === "granted" && typeof permission.permission === "string")
-    .map((permission: { permission: string }) => permission.permission);
+  return {
+    ok: true,
+    permissions: data.data
+      .filter((permission: { status?: string; permission?: string }) => permission.status === "granted" && typeof permission.permission === "string")
+      .map((permission: { permission: string }) => permission.permission),
+  };
 }
 
-async function getPermissionsFromDebugToken(accessToken: string): Promise<string[]> {
+async function inspectDebugToken(accessToken: string): Promise<Omit<MetaTokenInspection, "sources" | "permissions"> & { permissions: string[]; ok: boolean }> {
   const appAccessToken = `${appEnv.WHATSAPP_APP_ID}|${appEnv.WHATSAPP_APP_SECRET}`;
   const params = new URLSearchParams({
     input_token: accessToken,
@@ -67,19 +81,82 @@ async function getPermissionsFromDebugToken(accessToken: string): Promise<string
   const scopes = data?.data?.scopes;
 
   if (!res.ok || !Array.isArray(scopes)) {
-    return [];
+    return {
+      ok: false,
+      permissions: [],
+      expiresAt: null,
+      isValid: typeof data?.data?.is_valid === "boolean" ? data.data.is_valid : null,
+      tokenType: typeof data?.data?.type === "string" ? data.data.type : null,
+    };
   }
 
-  return scopes.filter((scope: unknown): scope is string => typeof scope === "string");
+  const expiresAtSeconds = typeof data?.data?.expires_at === "number" ? data.data.expires_at : 0;
+
+  return {
+    ok: true,
+    permissions: scopes.filter((scope: unknown): scope is string => typeof scope === "string"),
+    expiresAt: expiresAtSeconds > 0 ? new Date(expiresAtSeconds * 1000).toISOString() : null,
+    isValid: typeof data?.data?.is_valid === "boolean" ? data.data.is_valid : null,
+    tokenType: typeof data?.data?.type === "string" ? data.data.type : null,
+  };
+}
+
+export async function inspectMetaAccessToken(accessToken: string): Promise<MetaTokenInspection> {
+  const [directPermissions, tokenInspection] = await Promise.all([
+    getPermissionsFromMePermissions(accessToken),
+    inspectDebugToken(accessToken),
+  ]);
+
+  return {
+    permissions: uniquePermissions([...directPermissions.permissions, ...tokenInspection.permissions]),
+    expiresAt: tokenInspection.expiresAt,
+    isValid: tokenInspection.isValid,
+    tokenType: tokenInspection.tokenType,
+    sources: {
+      mePermissions: directPermissions.ok,
+      debugToken: tokenInspection.ok,
+    },
+  };
 }
 
 export async function getGrantedPermissions(accessToken: string): Promise<string[]> {
-  const [directPermissions, tokenScopes] = await Promise.all([
-    getPermissionsFromMePermissions(accessToken),
-    getPermissionsFromDebugToken(accessToken),
-  ]);
+  const inspection = await inspectMetaAccessToken(accessToken);
 
-  return uniquePermissions([...directPermissions, ...tokenScopes]);
+  return inspection.permissions;
+}
+
+const REQUIRED_PAGE_WEBHOOK_FIELDS = ["messages", "messaging_postbacks", "message_deliveries"];
+
+function subscriptionMatchesCurrentApp(subscription: { id?: unknown; subscribed_fields?: unknown }) {
+  if (subscription.id !== appEnv.WHATSAPP_APP_ID) {
+    return false;
+  }
+
+  const subscribedFields = subscription.subscribed_fields;
+
+  if (!Array.isArray(subscribedFields)) {
+    return true;
+  }
+
+  return REQUIRED_PAGE_WEBHOOK_FIELDS.every((field) => subscribedFields.includes(field));
+}
+
+export async function verifyPageWebhookSubscription(pageId: string, pageAccessToken: string): Promise<boolean> {
+  const params = new URLSearchParams({
+    fields: "id,name,subscribed_fields",
+  });
+  const res = await fetch(`https://graph.facebook.com/${appEnv.WHATSAPP_API_VERSION}/${pageId}/subscribed_apps?${params.toString()}`, {
+    headers: {
+      Authorization: `Bearer ${pageAccessToken}`,
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok || !Array.isArray(data.data)) {
+    return false;
+  }
+
+  return data.data.some((subscription: { id?: unknown; subscribed_fields?: unknown }) => subscriptionMatchesCurrentApp(subscription));
 }
 
 export async function subscribePageToWebhook(pageId: string, pageAccessToken: string): Promise<boolean> {
@@ -94,7 +171,11 @@ export async function subscribePageToWebhook(pageId: string, pageAccessToken: st
     }),
   });
 
-  return res.ok;
+  if (!res.ok) {
+    return false;
+  }
+
+  return verifyPageWebhookSubscription(pageId, pageAccessToken);
 }
 
 export async function upsertMessengerConnection(input: MetaPageConnectionInput): Promise<WhatsAppConnection> {

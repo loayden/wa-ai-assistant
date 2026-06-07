@@ -16,7 +16,7 @@ function optionalTrimmedString(maxLength: number) {
   return z
     .string()
     .trim()
-    .max(maxLength)
+    .max(maxLength, `النص طويل جدًا. الحد الأقصى ${maxLength} حرف.`)
     .nullable()
     .optional();
 }
@@ -44,25 +44,25 @@ export const notificationPrefsSchema = z
 
 export const updateSettingsSchema = z
   .object({
-    systemPrompt: z.string().trim().max(2000).optional(),
+    systemPrompt: z.string().trim().max(2000, "النص طويل جدًا. الحد الأقصى 2000 حرف.").optional(),
     autoReplyEnabled: z.boolean().optional(),
     language: languageSchema.optional(),
     businessName: optionalTrimmedString(120),
     businessContext: optionalTrimmedString(BUSINESS_CONTEXT_MAX_LENGTH),
     fallbackMessage: optionalTrimmedString(500),
-    maxReplyLength: z.number().int().min(50).max(1000).optional(),
+    maxReplyLength: z.number().int().min(50, "أقل طول للرد 50 حرف.").max(1000, "أقصى طول للرد 1000 حرف.").optional(),
     workingHoursEnabled: z.boolean().optional(),
     workingHoursStart: timeStringSchema.optional(),
     workingHoursEnd: timeStringSchema.optional(),
     workingDays: z.array(z.enum(WORKING_DAY_KEYS)).min(1).optional(),
-    offHoursMessage: z.string().trim().min(1).max(200).optional(),
+    offHoursMessage: z.string().trim().min(1, "رسالة خارج ساعات العمل مطلوبة.").max(200, "رسالة خارج ساعات العمل طويلة جدًا.").optional(),
     timezone: z
       .enum(["Africa/Cairo", "Asia/Riyadh", "Asia/Dubai", "Asia/Kuwait", "Africa/Tripoli"])
       .optional(),
     csatEnabled: z.boolean().optional(),
     notificationPrefs: notificationPrefsSchema.optional(),
     commentToDmEnabled: z.boolean().optional(),
-    commentToDmMessage: z.string().trim().min(1).max(300).optional(),
+    commentToDmMessage: z.string().trim().min(1, "رسالة DM مطلوبة.").max(300, "رسالة DM طويلة جدًا.").optional(),
     instagramTone: z.enum(["friendly", "professional", "playful", "sales"]).optional(),
     messengerTone: z.enum(["friendly", "professional", "playful", "sales"]).optional(),
     instagramInstructions: optionalTrimmedString(1000),
@@ -70,7 +70,7 @@ export const updateSettingsSchema = z
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {
-    message: "At least one setting must be provided.",
+    message: "أرسل إعداداً واحداً على الأقل.",
   });
 
 export type UpdateSettingsInput = z.infer<typeof updateSettingsSchema>;

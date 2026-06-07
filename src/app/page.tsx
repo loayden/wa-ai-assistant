@@ -30,11 +30,11 @@ import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "كيف يعمل", href: "#workflow" },
-  { label: "الفيديو", href: "#demo" },
-  { label: "المميزات", href: "#features" },
-  { label: "القنوات", href: "#connect" },
-  { label: "الأسعار", href: "#pricing" },
+  { label: "واتساب", href: "/whatsapp-ai" },
+  { label: "إنستجرام وماسنجر", href: "/instagram-messenger-ai" },
+  { label: "الأسعار", href: "/pricing" },
+  { label: "الأمان", href: "/security" },
+  { label: "المقارنة", href: "/compare/respondio" },
 ];
 
 const heroStats = [
@@ -572,6 +572,7 @@ export default function Home() {
               </div>
               <Link
                 href="/dashboard"
+                prefetch={false}
                 className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-wa-blue-600 px-5 text-sm font-semibold text-white"
               >
                 افتح لوحة التحكم

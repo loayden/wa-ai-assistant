@@ -41,6 +41,12 @@ const prismaMock = vi.hoisted(() => ({
   aiCorrection: {
     findMany: vi.fn(),
   },
+  message: {
+    findMany: vi.fn(),
+  },
+  customerProfile: {
+    findUnique: vi.fn(),
+  },
 }));
 
 vi.mock("openai", () => ({
@@ -107,20 +113,46 @@ const settings: UserSettings = {
   updatedAt: new Date(),
 };
 
+function structuredReply(overrides: Record<string, unknown> = {}) {
+  return JSON.stringify({
+    replyText: "Hello.",
+    confidence: 0.8,
+    sources: ["business_profile"],
+    missingData: [],
+    needsHuman: false,
+    suggestedAction: "reply",
+    outsideWorkingHours: false,
+    ...overrides,
+  });
+}
+
 describe("generateAIReply", () => {
   beforeEach(() => {
     openAiMock.create.mockReset();
     prismaMock.knowledgeBaseEntry.findMany.mockReset();
     prismaMock.product.findMany.mockReset();
     prismaMock.aiCorrection.findMany.mockReset();
+    prismaMock.message.findMany.mockReset();
+    prismaMock.customerProfile.findUnique.mockReset();
     prismaMock.knowledgeBaseEntry.findMany.mockResolvedValue([]);
     prismaMock.product.findMany.mockResolvedValue([]);
     prismaMock.aiCorrection.findMany.mockResolvedValue([]);
+    prismaMock.message.findMany.mockResolvedValue([]);
+    prismaMock.customerProfile.findUnique.mockResolvedValue(null);
   });
 
-  it("generates a clamped reply and returns model usage", async () => {
+  it("generates a structured clamped reply and returns quality metadata", async () => {
     openAiMock.create.mockResolvedValueOnce({
-      choices: [{ message: { content: " Yes, we are open until 7 PM today. " } }],
+      choices: [
+        {
+          message: {
+            content: structuredReply({
+              replyText: "Yes, we are open until 7 PM today.",
+              confidence: 0.89,
+            }),
+          },
+        },
+      ],
       model: "gpt-4o",
       usage: { total_tokens: 42 },
     });
@@ -131,16 +163,26 @@ describe("generateAIReply", () => {
       settings,
     });
 
-    expect(result).toEqual({
+    expect(result).toEqual(expect.objectContaining({
       replyText: "Yes, we are open until 7 PM today.",
       modelUsed: "gpt-4o",
       tokensUsed: 42,
-    });
+      confidence: 0.89,
+      missingData: [],
+      needsHuman: false,
+      suggestedAction: "reply",
+    }));
+    expect(result.sources).toEqual([
+      expect.objectContaining({
+        id: "business_profile",
+        type: "business_profile",
+      }),
+    ]);
   });
 
   it("interpolates prompt settings and appends business context", async () => {
     openAiMock.create.mockResolvedValueOnce({
-      choices: [{ message: { content: "Hello." } }],
+      choices: [{ message: { content: structuredReply() } }],
       model: "gpt-4o",
       usage: { total_tokens: 5 },
     });
@@ -156,24 +198,39 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("Acme Bakery");
     expect(request.messages[0].content).toContain("Respond in en");
     expect(request.messages[0].content).toContain("Keep replies under\n80 characters");
-    expect(request.messages[0].content).toContain("Business context:\nWe sell fresh bread and close at 7 PM.");
+    expect(request.messages[0].content).toContain("Business context:\nSource id: business_profile\nWe sell fresh bread and close at 7 PM.");
+    expect(request.messages[0].content).toContain("AI quality contract");
+    expect(request.messages[0].content).toContain("Never invent prices");
+    expect(request.response_format).toEqual({ type: "json_object" });
   });
 
   it("adds saved knowledge entries to the system prompt", async () => {
     prismaMock.knowledgeBaseEntry.findMany.mockResolvedValueOnce([
       {
+        id: "00000000-0000-0000-0000-000000000101",
         type: "text",
         title: "Business Info",
         content: "We source clothes from boutiques and resell them to customers.",
       },
       {
+        id: "00000000-0000-0000-0000-000000000102",
         type: "faq",
         title: "Delivery",
         content: "Delivery is available across Cairo until midnight.",
       },
     ]);
     openAiMock.create.mockResolvedValueOnce({
-      choices: [{ message: { content: "Delivery is available across Cairo until midnight." } }],
+      choices: [
+        {
+          message: {
+            content: structuredReply({
+              replyText: "Delivery is available across Cairo until midnight.",
+              confidence: 0.92,
+              sources: ["knowledge:00000000-0000-0000-0000-000000000102"],
+            }),
+          },
+        },
+      ],
       model: "gpt-4o",
       usage: { total_tokens: 9 },
     });
@@ -196,11 +253,12 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("We source clothes from boutiques and resell them to customers.");
     expect(request.messages[0].content).toContain("[FAQ: Delivery]");
     expect(request.messages[0].content).toContain("Delivery is available across Cairo until midnight.");
+    expect(request.messages[0].content).toContain("Source id: knowledge:00000000-0000-0000-0000-000000000102");
   });
 
   it("uses channel-specific persona settings for Instagram", async () => {
     openAiMock.create.mockResolvedValueOnce({
-      choices: [{ message: { content: "تمام، بعتلك التفاصيل ❤️" } }],
+      choices: [{ message: { content: structuredReply({ replyText: "تمام، بعتلك التفاصيل ❤️" }) } }],
       model: "gpt-4o",
       usage: { total_tokens: 12 },
     });
@@ -221,6 +279,52 @@ describe("generateAIReply", () => {
     expect(request.messages[0].content).toContain("Instagram channel persona");
     expect(request.messages[0].content).toContain("playful");
     expect(request.messages[0].content).toContain("استخدم أسلوب قصير مناسب لتعليقات وإنستجرام.");
+  });
+
+  it("fails safely before OpenAI when no business context exists", async () => {
+    const result = await generateAIReply({
+      systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      userMessage: "Do you deliver?",
+      settings: {
+        ...settings,
+        businessContext: null,
+      },
+    });
+
+    expect(openAiMock.create).not.toHaveBeenCalled();
+    expect(result.modelUsed).toBe("context-guard");
+    expect(result.needsHuman).toBe(true);
+    expect(result.confidence).toBeLessThan(0.5);
+    expect(result.missingData).toEqual(expect.arrayContaining(["business_profile", "knowledge_base", "products"]));
+  });
+
+  it("does not invent prices for unknown products", async () => {
+    prismaMock.product.findMany.mockResolvedValueOnce([
+      {
+        id: "00000000-0000-0000-0000-000000000201",
+        name: "Sourdough loaf",
+        nameEn: null,
+        description: "Fresh bread",
+        price: 12000,
+        category: "Bakery",
+      },
+    ]);
+
+    const result = await generateAIReply({
+      systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      userMessage: "كم سعر الكرواسون؟",
+      settings,
+    });
+
+    expect(openAiMock.create).not.toHaveBeenCalled();
+    expect(result.replyText).not.toContain("120");
+    expect(result.suggestedAction).toBe("ask_clarifying_question");
+    expect(result.missingData).toEqual(["specific_product"]);
+    expect(result.sources).toEqual([
+      expect.objectContaining({
+        id: "product:00000000-0000-0000-0000-000000000201",
+      }),
+    ]);
   });
 
   it("maps OpenAI rate limits to AIReplyError", async () => {

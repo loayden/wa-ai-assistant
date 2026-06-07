@@ -10,7 +10,9 @@ import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess } from "@/lib/a
 import { createPaymobCheckoutSession, PaymobConfigurationError, PaymobRequestError } from "@/lib/paymob/client";
 import { detectPaymobMode } from "@/lib/paymob/mode";
 import { prisma } from "@/lib/prisma/client";
+import { writeAuditLog } from "@/lib/security/audit-log";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { createCheckoutSchema } from "@/lib/validators/billing";
 
 export const runtime = "nodejs";
@@ -19,6 +21,19 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `billing-checkout:${user.id}`,
+      limit: 10,
+      windowMs: 60_000,
+      context: "api.billing.createCheckout",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات الدفع كثيرة. انتظر قليلاً ثم حاول مرة أخرى.", 429, {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const body = await readJsonRequestBody(request);
     const parsed = createCheckoutSchema.safeParse(body);
 
@@ -57,6 +72,20 @@ export async function POST(request: Request) {
         amount: session.amountCents,
         currency: session.currency,
       },
+    });
+
+    await writeAuditLog({
+      userId: user.id,
+      action: "billing.checkout.created",
+      entityType: "subscription_event",
+      entityId: session.reference,
+      metadata: {
+        planTier: parsed.data.planTier,
+        amountCents: session.amountCents,
+        currency: session.currency,
+        provider: "paymob",
+      },
+      request,
     });
 
     return jsonSuccess({ url: session.url });

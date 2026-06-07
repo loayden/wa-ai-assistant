@@ -38,7 +38,11 @@ export async function POST(request: Request) {
     const tokenData = await tokenRes.json().catch(() => ({}));
 
     if (!tokenRes.ok || typeof tokenData.access_token !== "string") {
-      return jsonError("فشل تبادل رمز Meta. راجع إعدادات التطبيق والـ redirect URL.", 400);
+      return jsonError(
+        `فشل تبادل رمز Meta. أضيفي هذا الرابط في Valid OAuth Redirect URIs داخل Meta: ${parsed.data.redirectUri}`,
+        400,
+        { redirectUri: parsed.data.redirectUri },
+      );
     }
 
     const longRes = await fetch(

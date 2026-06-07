@@ -43,6 +43,15 @@ enum MessageStatus {
   IGNORED
 }
 
+enum OutboundMessageStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  RETRYING
+  BLOCKED
+}
+
 // [ROLE: BACKEND ENGINEER]
 // Decision: The application user row mirrors Supabase Auth identity data and is
 // the parent record for all tenant-scoped data.
@@ -87,6 +96,10 @@ model User {
   appointments          Appointment[]
   instagramCommentLeads InstagramCommentLead[]
   instagramPostStats    InstagramPostStats[]
+  outboundMessages      OutboundMessage[]
+  auditLogs             AuditLog[]
+  aiReplyTraces         AIReplyTrace[]
+  readinessSnapshots    ReadinessSnapshot[]
 
   @@index([createdAt])
   @@index([planTier])
@@ -154,6 +167,8 @@ model WhatsAppConnection {
   flowResponses            FlowResponse[]
   instagramCommentLeads    InstagramCommentLead[]
   instagramPostStats       InstagramPostStats[]
+  outboundMessages         OutboundMessage[]
+  aiReplyTraces            AIReplyTrace[]
 
   @@index([userId])
   @@index([userId, channel])
@@ -196,6 +211,8 @@ model Message {
   user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   connection          WhatsAppConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
   leads               Lead[]
+  outboundMessages    OutboundMessage[]
+  aiReplyTraces       AIReplyTrace[]
 
   @@index([userId, createdAt])
   @@index([userId, status])
@@ -208,6 +225,142 @@ model Message {
   @@index([status])
   @@index([waMessageId])
   @@map("messages")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Outbound delivery is tracked separately from visible messages so
+// retries, provider failures, and manual sends have an auditable queue without
+// changing the existing flat conversation model.
+model OutboundMessage {
+  id                String                @id @default(uuid()) @db.Uuid
+  userId            String                @map("user_id") @db.Uuid
+  connectionId      String                @map("connection_id") @db.Uuid
+  relatedMessageId  String?               @map("related_message_id") @db.Uuid
+  idempotencyKey    String                @unique @map("idempotency_key")
+  channel           String
+  direction         String
+  senderId          String                @map("sender_id")
+  recipientId       String                @map("recipient_id")
+  bodyText          String                @map("body_text")
+  externalThreadId  String?               @map("external_thread_id")
+  status            OutboundMessageStatus @default(PENDING)
+  attemptCount      Int                   @default(0) @map("attempt_count")
+  maxAttempts       Int                   @default(3) @map("max_attempts")
+  nextAttemptAt     DateTime?             @map("next_attempt_at")
+  lastAttemptAt     DateTime?             @default(now()) @map("last_attempt_at")
+  sentAt            DateTime?             @map("sent_at")
+  providerMessageId String?               @map("provider_message_id")
+  failureCode       String?               @map("failure_code")
+  failureReason     String?               @map("failure_reason")
+  failureActionHref String?               @map("failure_action_href")
+  metadata          Json                  @default("{}")
+  createdAt         DateTime              @default(now()) @map("created_at")
+  updatedAt         DateTime              @updatedAt @map("updated_at")
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection        WhatsAppConnection    @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  relatedMessage    Message?              @relation(fields: [relatedMessageId], references: [id], onDelete: SetNull)
+
+  @@index([status, nextAttemptAt])
+  @@index([userId, status])
+  @@index([connectionId, recipientId])
+  @@index([relatedMessageId])
+  @@index([createdAt])
+  @@map("outbound_messages")
+}
+
+// [ROLE: SECURITY ENGINEER]
+// Decision: Security-sensitive actions need an append-only tenant-scoped audit
+// trail that stores context without storing provider tokens or raw payloads.
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  before     Json?
+  after      Json?
+  metadata   Json     @default("{}")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: AI reply traces are stored separately from messages so every
+// generation attempt has durable evidence of context, confidence, and failure.
+model AIReplyTrace {
+  id                  String              @id @default(uuid()) @db.Uuid
+  userId              String              @map("user_id") @db.Uuid
+  connectionId        String?             @map("connection_id") @db.Uuid
+  messageId           String?             @map("message_id") @db.Uuid
+  traceId             String              @map("trace_id")
+  contextBundle       Json                @default("{}") @map("context_bundle")
+  replyText           String?             @map("reply_text")
+  confidence          Float?
+  sources             Json                @default("[]")
+  missingData         Json                @default("[]") @map("missing_data")
+  needsHuman          Boolean             @default(false) @map("needs_human")
+  suggestedAction     String?             @map("suggested_action")
+  outsideWorkingHours Boolean             @default(false) @map("outside_working_hours")
+  latencyMs           Int?                @map("latency_ms")
+  model               String?
+  tokensUsed          Int?                @map("tokens_used")
+  failureReason       String?             @map("failure_reason")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  connection          WhatsAppConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  message             Message?            @relation(fields: [messageId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([connectionId])
+  @@index([messageId])
+  @@index([traceId])
+  @@map("ai_reply_traces")
+}
+
+// [ROLE: SRE]
+// Decision: Webhook events are recorded before processing so provider retries,
+// duplicates, and failed async work can be diagnosed without relying on logs.
+model WebhookEvent {
+  id              String    @id @default(uuid()) @db.Uuid
+  provider        String
+  eventType       String    @map("event_type")
+  providerEventId String?   @map("provider_event_id")
+  rawPayload      Json      @default("{}") @map("raw_payload")
+  processed       Boolean   @default(false)
+  processedAt     DateTime? @map("processed_at")
+  failureReason   String?   @map("failure_reason")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  @@unique([provider, providerEventId])
+  @@index([provider, eventType, createdAt])
+  @@index([processed, createdAt])
+  @@map("webhook_events")
+}
+
+// [ROLE: PRODUCT ENGINEER]
+// Decision: Readiness snapshots make launch scoring auditable over time and
+// separate code/config gaps from owner-only external setup work.
+model ReadinessSnapshot {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  score         Int
+  checks        Json     @default("[]")
+  codeIssues    Json     @default("[]") @map("code_issues")
+  manualActions Json     @default("[]") @map("manual_actions")
+  createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([score])
+  @@map("readiness_snapshots")
 }
 
 // [ROLE: BACKEND ENGINEER]

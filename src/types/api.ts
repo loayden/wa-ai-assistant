@@ -166,10 +166,51 @@ export type SettingsResponse = {
   user: SettingsUserResponse;
 };
 
+export type ReadinessStatus = "pass" | "warn" | "fail";
+
+export type ReadinessMode = "full" | "light";
+
+export type ReadinessCategory = "channels" | "ai" | "business" | "commerce" | "payments" | "campaigns";
+
+export type ReadinessCheck = {
+  id: string;
+  label: string;
+  status: ReadinessStatus;
+  message: string;
+  action?: string;
+  actionHref?: string;
+  points: number;
+  category: ReadinessCategory;
+  technicalDetail?: string;
+  isManual?: boolean;
+};
+
+export type LaunchReadinessResponse = {
+  score: number;
+  passed: number;
+  warnings: number;
+  failed: number;
+  total: number;
+  mode: ReadinessMode;
+  generatedAt: string;
+  checks: ReadinessCheck[];
+};
+
 export type GenerateAiReplyResponse = {
   replyText: string;
   modelUsed: string;
   tokensUsed: number;
+  confidence: number;
+  sources: Array<{
+    id: string;
+    type: string;
+    title: string;
+    excerpt: string;
+  }>;
+  missingData: string[];
+  needsHuman: boolean;
+  suggestedAction: "reply" | "ask_clarifying_question" | "handoff" | "collect_missing_data";
+  outsideWorkingHours: boolean;
 };
 
 export type KnowledgeType = "text" | "faq" | "hours";

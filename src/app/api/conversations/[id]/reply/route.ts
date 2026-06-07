@@ -4,11 +4,14 @@ import { UnauthorizedError, requireAppUser } from "@/lib/api/auth";
 import { resolveConversationThread } from "@/lib/api/conversations";
 import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
-import { getAdapter, type MessagingChannel } from "@/lib/channels";
+import type { MessagingChannel } from "@/lib/channels";
 import { prisma } from "@/lib/prisma/client";
+import { buildOutboundAttemptMetadata, type OutboundFailureClassification } from "@/lib/reliability/outbound";
+import { markOutboundDeliveryFailed, markOutboundDeliverySent, sendTrackedChannelText } from "@/lib/reliability/outbox";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { conversationParamsSchema, manualConversationReplySchema } from "@/lib/validators/conversations";
 import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
@@ -35,6 +38,46 @@ function getOutboundSenderNumber(channel: MessagingChannel, connection: {
   return connection.facebookPageId ?? connection.phoneNumberId;
 }
 
+async function createManualReplyFailureMessage(params: {
+  userId: string;
+  connectionId: string;
+  channel: MessagingChannel;
+  senderNumber: string;
+  recipientId: string;
+  messageText: string;
+  externalThreadId: string | null;
+  failure: OutboundFailureClassification;
+  outboxId?: string;
+}) {
+  return prisma.message.create({
+    data: {
+      userId: params.userId,
+      connectionId: params.connectionId,
+      waMessageId: `${params.channel}:manual-failed:${crypto.randomUUID()}`,
+      direction: MessageDirection.OUTBOUND,
+      fromNumber: params.senderNumber,
+      toNumber: params.recipientId,
+      bodyText: params.messageText,
+      aiReplyText: params.failure.userMessage,
+      channel: params.channel,
+      externalMessageId: null,
+      externalThreadId: params.externalThreadId,
+      status: MessageStatus.FAILED,
+      aiModelUsed: "manual-reply",
+      metadata: {
+        ...(params.outboxId ? { outboxId: params.outboxId } : {}),
+        outboundAttempt: buildOutboundAttemptMetadata({
+          channel: params.channel,
+          direction: "manual",
+          stage: params.failure.retry.canRetry ? "failed" : "blocked",
+          failure: params.failure,
+        }),
+      },
+      processedAt: new Date(),
+    },
+  });
+}
+
 type RouteContext = {
   params: Promise<{
     id: string;
@@ -44,6 +87,19 @@ type RouteContext = {
 export async function POST(request: Request, context: RouteContext) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `manual-reply:${user.id}`,
+      limit: 60,
+      windowMs: 60_000,
+      context: "api.conversations.reply",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة لإرسال الردود. انتظر قليلاً ثم حاول مرة أخرى.", 429, {
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      });
+    }
+
     const params = conversationParamsSchema.safeParse(await context.params);
 
     if (!params.success) {
@@ -71,21 +127,59 @@ export async function POST(request: Request, context: RouteContext) {
           : decrypt(thread.connection.accessToken)
         : decrypt(thread.connection.pageAccessTokenEncrypted ?? thread.connection.accessToken);
     const recipientId = channel === "whatsapp" ? thread.customerPhone : thread.message.externalThreadId ?? thread.customerPhone;
-    const sendResult = await getAdapter(channel).sendText({
+    const senderNumber = getOutboundSenderNumber(channel, thread.connection);
+    const externalThreadId = channel === "whatsapp" ? null : recipientId;
+    const sendResult = await sendTrackedChannelText({
+      userId: user.id,
       connectionId: thread.connection.id,
+      relatedMessageId: thread.message.id,
+      channel,
+      direction: "manual",
+      senderId: senderNumber,
       recipientId,
-      text: parsed.data.message,
+      bodyText: parsed.data.message,
+      externalThreadId,
       accessToken,
-      pageId: thread.connection.facebookPageId ?? undefined,
-      phoneNumberId: thread.connection.phoneNumberId,
+      pageId: thread.connection.facebookPageId,
+      phoneNumberId: channel === "whatsapp" ? thread.connection.phoneNumberId : senderNumber,
     });
-    const waMessageId = sendResult.externalMessageId
-      ? `${channel}:${sendResult.externalMessageId}`
-      : `${channel}:manual:${crypto.randomUUID()}`;
 
     if (!sendResult.success) {
-      return jsonError(sendResult.error || "رفضت Meta إرسال الرد اليدوي.", 502);
+      const failedMessage = await createManualReplyFailureMessage({
+        userId: user.id,
+        connectionId: thread.connection.id,
+        channel,
+        senderNumber,
+        recipientId,
+        messageText: parsed.data.message,
+        externalThreadId,
+        failure: sendResult.failure,
+        outboxId: sendResult.outbox.id,
+      });
+
+      await markOutboundDeliveryFailed({
+        outbox: sendResult.outbox,
+        failure: sendResult.failure,
+        relatedMessageId: failedMessage.id,
+      });
+
+      logger.warn("api.conversations.reply", "Manual reply send failed and was recorded in the timeline.", {
+        messageId: failedMessage.id,
+        outboxId: sendResult.outbox.id,
+        failureCode: sendResult.failure.code,
+        retryable: sendResult.failure.retry.canRetry,
+      });
+
+      return jsonError(sendResult.failure.userMessage, sendResult.failure.retry.canRetry ? 503 : 400, {
+        failure: sendResult.failure,
+        messageId: failedMessage.id,
+        outboxId: sendResult.outbox.id,
+      });
     }
+    const providerMessageId = sendResult.externalMessageId;
+    const waMessageId = providerMessageId
+      ? `${channel}:${providerMessageId}`
+      : `${channel}:manual:${crypto.randomUUID()}`;
 
     const message = await prisma.message.create({
       data: {
@@ -93,16 +187,31 @@ export async function POST(request: Request, context: RouteContext) {
         connectionId: thread.connection.id,
         waMessageId,
         direction: MessageDirection.OUTBOUND,
-        fromNumber: getOutboundSenderNumber(channel, thread.connection),
+        fromNumber: senderNumber,
         toNumber: recipientId,
         bodyText: parsed.data.message,
         channel,
-        externalMessageId: sendResult.externalMessageId,
-        externalThreadId: channel === "whatsapp" ? null : recipientId,
+        externalMessageId: providerMessageId,
+        externalThreadId,
         status: MessageStatus.REPLIED,
         aiModelUsed: "manual-reply",
+        metadata: {
+          outboxId: sendResult.outbox.id,
+          outboundAttempt: buildOutboundAttemptMetadata({
+            channel,
+            direction: "manual",
+            stage: "sent",
+            providerMessageId,
+          }),
+        },
         processedAt: new Date(),
       },
+    });
+
+    await markOutboundDeliverySent({
+      outboxId: sendResult.outbox.id,
+      providerMessageId,
+      relatedMessageId: message.id,
     });
 
     return jsonSuccess({

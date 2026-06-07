@@ -13,9 +13,10 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { FieldError } from "@/components/ui/FieldError";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { apiData } from "@/lib/api/client";
+import { apiData, ApiClientError } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
 import { KNOWLEDGE_CONTENT_MAX_LENGTH, KNOWLEDGE_TITLE_MAX_LENGTH } from "@/lib/knowledge/constants";
 import { cn } from "@/lib/utils";
@@ -28,6 +29,28 @@ import type {
 
 type KnowledgePageClientProps = {
   initialEntries: KnowledgeEntryResponse[];
+  initialProducts: KnowledgeProductSummary[];
+};
+
+type KnowledgeProductSummary = {
+  id: string;
+  name: string;
+  priceEGP: number;
+  category: string | null;
+};
+
+type AssistantTestMetadata = Pick<
+  AssistantTestResponse,
+  "confidence" | "sources" | "missingData" | "needsHuman" | "suggestedAction" | "outsideWorkingHours"
+>;
+
+type KnowledgeFieldErrors = {
+  businessInfo?: string;
+  faqQuestion?: string;
+  faqAnswer?: string;
+  editingQuestion?: string;
+  editingAnswer?: string;
+  testMessage?: string;
 };
 
 const closedDayOptions = [
@@ -75,8 +98,35 @@ function formatStableNumber(value: number) {
   return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
-export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps) {
+function apiIssueMessage(error: unknown, path: string) {
+  if (!(error instanceof ApiClientError)) {
+    return null;
+  }
+
+  const issues = error.meta?.issues;
+
+  if (!Array.isArray(issues)) {
+    return null;
+  }
+
+  const issue = issues.find((item): item is { path: string; message: string } => {
+    return (
+      typeof item === "object" &&
+      item !== null &&
+      "path" in item &&
+      "message" in item &&
+      typeof item.path === "string" &&
+      typeof item.message === "string" &&
+      item.path === path
+    );
+  });
+
+  return issue?.message ?? null;
+}
+
+export function KnowledgePageClient({ initialEntries, initialProducts }: KnowledgePageClientProps) {
   const [entries, setEntries] = useState(() => sortEntries(initialEntries));
+  const [fieldErrors, setFieldErrors] = useState<KnowledgeFieldErrors>({});
   const [isSavingInfo, setIsSavingInfo] = useState(false);
   const [isSavingHours, setIsSavingHours] = useState(false);
   const [isAddingFaq, setIsAddingFaq] = useState(false);
@@ -84,11 +134,18 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   const [testMessage, setTestMessage] = useState("");
   const [testReply, setTestReply] = useState<string | null>(null);
   const [testReplyIsSystemNotice, setTestReplyIsSystemNotice] = useState(false);
+  const [testMetadata, setTestMetadata] = useState<AssistantTestMetadata | null>(null);
   const [isTesting, setIsTesting] = useState(false);
 
   const businessInfoEntry = useMemo(() => entries.find((entry) => entry.type === "text") ?? null, [entries]);
   const hoursEntry = useMemo(() => entries.find((entry) => entry.type === "hours") ?? null, [entries]);
   const faqEntries = useMemo(() => entries.filter((entry) => entry.type === "faq"), [entries]);
+  const productTestPrompts = useMemo(() => {
+    return initialProducts.slice(0, 3).flatMap((product) => [
+      `سعر ${product.name} كام؟`,
+      `هل ${product.name} متوفر؟`,
+    ]).slice(0, 4);
+  }, [initialProducts]);
 
   const [businessInfo, setBusinessInfo] = useState(businessInfoEntry?.content ?? "");
   const [faqQuestion, setFaqQuestion] = useState("");
@@ -103,11 +160,16 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
     setEntries((current) => sortEntries([entry, ...current.filter((item) => item.id !== entry.id)]));
   }
 
+  function clearFieldError(key: keyof KnowledgeFieldErrors) {
+    setFieldErrors((current) => ({ ...current, [key]: undefined }));
+  }
+
   async function saveBusinessInfo() {
     const trimmedBusinessInfo = businessInfo.trim();
     const validationError = validateKnowledgeText("معلومات النشاط", trimmedBusinessInfo, KNOWLEDGE_CONTENT_MAX_LENGTH);
 
     if (validationError) {
+      setFieldErrors((current) => ({ ...current, businessInfo: validationError }));
       toast.error("لم يتم حفظ معلومات النشاط", {
         description: validationError,
       });
@@ -131,8 +193,12 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         description: "سيستخدم المساعد هذه المعلومات عند الرد على العملاء.",
       });
     } catch (error) {
+      const apiContentError = apiIssueMessage(error, "content");
+      if (apiContentError) {
+        setFieldErrors((current) => ({ ...current, businessInfo: apiContentError }));
+      }
       toast.error("لم يتم حفظ معلومات النشاط", {
-        description: translateError(error, "حاولي مرة أخرى."),
+        description: apiContentError ?? translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setIsSavingInfo(false);
@@ -147,6 +213,11 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH);
 
     if (validationError) {
+      setFieldErrors((current) => ({
+        ...current,
+        faqQuestion: validateKnowledgeText("السؤال", trimmedQuestion, KNOWLEDGE_TITLE_MAX_LENGTH) ?? undefined,
+        faqAnswer: validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH) ?? undefined,
+      }));
       toast.error("لم تتم إضافة السؤال", {
         description: validationError,
       });
@@ -171,8 +242,13 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
         description: "أصبح هذا الرد متاحًا للمساعد.",
       });
     } catch (error) {
+      const questionError = apiIssueMessage(error, "title");
+      const answerError = apiIssueMessage(error, "content");
+      if (questionError || answerError) {
+        setFieldErrors((current) => ({ ...current, faqQuestion: questionError ?? undefined, faqAnswer: answerError ?? undefined }));
+      }
       toast.error("لم تتم إضافة السؤال", {
-        description: translateError(error, "حاولي مرة أخرى."),
+        description: questionError ?? answerError ?? translateError(error, "حاولي مرة أخرى."),
       });
     } finally {
       setIsAddingFaq(false);
@@ -187,6 +263,11 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH);
 
     if (validationError) {
+      setFieldErrors((current) => ({
+        ...current,
+        editingQuestion: validateKnowledgeText("السؤال", trimmedQuestion, KNOWLEDGE_TITLE_MAX_LENGTH) ?? undefined,
+        editingAnswer: validateKnowledgeText("الإجابة", trimmedAnswer, KNOWLEDGE_CONTENT_MAX_LENGTH) ?? undefined,
+      }));
       toast.error("لم يتم تحديث السؤال", {
         description: validationError,
       });
@@ -205,8 +286,13 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
       setEditingFaqId(null);
       toast.success("تم تحديث السؤال");
     } catch (error) {
+      const questionError = apiIssueMessage(error, "title");
+      const answerError = apiIssueMessage(error, "content");
+      if (questionError || answerError) {
+        setFieldErrors((current) => ({ ...current, editingQuestion: questionError ?? undefined, editingAnswer: answerError ?? undefined }));
+      }
       toast.error("لم يتم تحديث السؤال", {
-        description: translateError(error, "حاولي مرة أخرى."),
+        description: questionError ?? answerError ?? translateError(error, "حاولي مرة أخرى."),
       });
     }
   }
@@ -249,17 +335,33 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
   }
 
   async function testAssistant() {
+    const trimmedTestMessage = testMessage.trim();
+
+    if (!trimmedTestMessage) {
+      setFieldErrors((current) => ({ ...current, testMessage: "اكتب سؤالاً تجريبياً أولاً." }));
+      return;
+    }
+
     setIsTesting(true);
     setTestReply(null);
     setTestReplyIsSystemNotice(false);
+    setTestMetadata(null);
 
     try {
       const response = await apiData<AssistantTestResponse>("/api/assistant/test", {
         method: "POST",
-        body: JSON.stringify({ message: testMessage }),
+        body: JSON.stringify({ message: trimmedTestMessage }),
       });
       setTestReply(response.replyText);
       setTestReplyIsSystemNotice(Boolean(response.systemNotice));
+      setTestMetadata({
+        confidence: response.confidence,
+        sources: response.sources,
+        missingData: response.missingData,
+        needsHuman: response.needsHuman,
+        suggestedAction: response.suggestedAction,
+        outsideWorkingHours: response.outsideWorkingHours,
+      });
 
       if (response.onboardingCompleted && !response.systemNotice) {
         toast.success("تم اختبار المساعد", {
@@ -269,6 +371,14 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
     } catch (error) {
       setTestReply(translateError(error, "المساعد غير متاح الآن. جرّب مرة أخرى بعد قليل."));
       setTestReplyIsSystemNotice(true);
+      setTestMetadata({
+        confidence: 0,
+        sources: [],
+        missingData: ["request_failed"],
+        needsHuman: true,
+        suggestedAction: "handoff",
+        outsideWorkingHours: false,
+      });
     } finally {
       setIsTesting(false);
     }
@@ -307,9 +417,15 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
               minRows={7}
               maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
               value={businessInfo}
-              onChange={(event) => setBusinessInfo(event.target.value)}
+              aria-invalid={Boolean(fieldErrors.businessInfo)}
+              aria-describedby="business-info-error"
+              onChange={(event) => {
+                setBusinessInfo(event.target.value);
+                clearFieldError("businessInfo");
+              }}
               placeholder="مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهراً حتى 2 فجراً، نوصّل لكل القاهرة..."
             />
+            <FieldError id="business-info-error">{fieldErrors.businessInfo}</FieldError>
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-body-sm text-wa-gray-500">
                 مثال: نحن مطعم شاورما في المعادي، نفتح من 12 ظهرًا حتى 2 فجرًا، والتوصيل داخل القاهرة.
@@ -335,9 +451,16 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                 <Input
                   value={faqQuestion}
                   maxLength={KNOWLEDGE_TITLE_MAX_LENGTH}
-                  onChange={(event) => setFaqQuestion(event.target.value)}
+                  hasError={Boolean(fieldErrors.faqQuestion)}
+                  aria-invalid={Boolean(fieldErrors.faqQuestion)}
+                  aria-describedby="faq-question-error"
+                  onChange={(event) => {
+                    setFaqQuestion(event.target.value);
+                    clearFieldError("faqQuestion");
+                  }}
                   placeholder="ما هي أسعاركم؟"
                 />
+                <FieldError id="faq-question-error">{fieldErrors.faqQuestion}</FieldError>
                 <CharacterCounter value={faqQuestion} maxLength={KNOWLEDGE_TITLE_MAX_LENGTH} />
               </div>
               <div className="space-y-1.5">
@@ -345,12 +468,18 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                   minRows={3}
                   maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
                   value={faqAnswer}
-                  onChange={(event) => setFaqAnswer(event.target.value)}
+                  aria-invalid={Boolean(fieldErrors.faqAnswer)}
+                  aria-describedby="faq-answer-error"
+                  onChange={(event) => {
+                    setFaqAnswer(event.target.value);
+                    clearFieldError("faqAnswer");
+                  }}
                   placeholder="اكتب إجابة واضحة يمكن إرسالها للعميل..."
                 />
+                <FieldError id="faq-answer-error">{fieldErrors.faqAnswer}</FieldError>
                 <CharacterCounter value={faqAnswer} maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH} />
               </div>
-              <Button className="w-full rounded-full sm:w-fit" disabled={!faqQuestion.trim() || !faqAnswer.trim()} isLoading={isAddingFaq} onClick={addFaq}>
+              <Button className="w-full rounded-full sm:w-fit" isLoading={isAddingFaq} onClick={addFaq}>
                 <Plus className="size-4" aria-hidden="true" />
                 إضافة سؤال
               </Button>
@@ -369,8 +498,15 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                             <Input
                               value={editingQuestion}
                               maxLength={KNOWLEDGE_TITLE_MAX_LENGTH}
-                              onChange={(event) => setEditingQuestion(event.target.value)}
+                              hasError={Boolean(fieldErrors.editingQuestion)}
+                              aria-invalid={Boolean(fieldErrors.editingQuestion)}
+                              aria-describedby={`editing-question-error-${entry.id}`}
+                              onChange={(event) => {
+                                setEditingQuestion(event.target.value);
+                                clearFieldError("editingQuestion");
+                              }}
                             />
+                            <FieldError id={`editing-question-error-${entry.id}`}>{fieldErrors.editingQuestion}</FieldError>
                             <CharacterCounter value={editingQuestion} maxLength={KNOWLEDGE_TITLE_MAX_LENGTH} />
                           </div>
                           <div className="space-y-1.5">
@@ -378,8 +514,14 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                               minRows={3}
                               maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH}
                               value={editingAnswer}
-                              onChange={(event) => setEditingAnswer(event.target.value)}
+                              aria-invalid={Boolean(fieldErrors.editingAnswer)}
+                              aria-describedby={`editing-answer-error-${entry.id}`}
+                              onChange={(event) => {
+                                setEditingAnswer(event.target.value);
+                                clearFieldError("editingAnswer");
+                              }}
                             />
+                            <FieldError id={`editing-answer-error-${entry.id}`}>{fieldErrors.editingAnswer}</FieldError>
                             <CharacterCounter value={editingAnswer} maxLength={KNOWLEDGE_CONTENT_MAX_LENGTH} />
                           </div>
                           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
@@ -487,8 +629,36 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
             </div>
             <p className="mt-3 text-body-sm leading-6 text-wa-gray-600">هذا مثال على كيف سيرد المساعد على عملائك باستخدام المعلومات المحفوظة.</p>
             <div className="mt-4 space-y-3">
-              <Textarea minRows={3} value={testMessage} onChange={(event) => setTestMessage(event.target.value)} placeholder="اكتب سؤال تجريبي" />
-              <Button className="w-full rounded-full" disabled={!testMessage.trim()} isLoading={isTesting} onClick={testAssistant}>
+              {productTestPrompts.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {productTestPrompts.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      className="rounded-full border border-wa-blue-100 bg-wa-blue-50 px-3 py-1.5 text-label font-semibold text-wa-blue-700 transition hover:border-wa-blue-200 hover:bg-white"
+                      onClick={() => {
+                        setTestMessage(prompt);
+                        clearFieldError("testMessage");
+                      }}
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+              <Textarea
+                minRows={3}
+                value={testMessage}
+                aria-invalid={Boolean(fieldErrors.testMessage)}
+                aria-describedby="assistant-test-error"
+                onChange={(event) => {
+                  setTestMessage(event.target.value);
+                  clearFieldError("testMessage");
+                }}
+                placeholder="اكتب سؤال تجريبي"
+              />
+              <FieldError id="assistant-test-error">{fieldErrors.testMessage}</FieldError>
+              <Button className="w-full rounded-full" isLoading={isTesting} onClick={testAssistant}>
                 {isTesting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <ArrowRight className="size-4" aria-hidden="true" />}
                 إرسال تجربة
               </Button>
@@ -512,6 +682,7 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
                   {testReplyIsSystemNotice ? "رسالة نظام" : "رد المساعد"}
                 </p>
                 <p className="mt-2 whitespace-pre-wrap text-body-sm leading-6 text-wa-gray-800">{testReply}</p>
+                {testMetadata ? <AssistantTestDetails metadata={testMetadata} /> : null}
               </div>
             ) : null}
           </section>
@@ -526,6 +697,86 @@ export function KnowledgePageClient({ initialEntries }: KnowledgePageClientProps
           </section>
         </aside>
       </section>
+    </div>
+  );
+}
+
+function formatConfidence(value: number) {
+  return `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%`;
+}
+
+function suggestedActionLabel(value: AssistantTestMetadata["suggestedAction"]) {
+  const labels: Record<AssistantTestMetadata["suggestedAction"], string> = {
+    reply: "يرد مباشرة",
+    ask_clarifying_question: "يسأل للتوضيح",
+    handoff: "يحتاج تدخل بشري",
+    collect_missing_data: "أكملي البيانات",
+  };
+
+  return labels[value];
+}
+
+function sourceTypeLabel(type: string) {
+  const labels: Record<string, string> = {
+    business_profile: "معلومات النشاط",
+    working_hours: "ساعات العمل",
+    knowledge: "قاعدة المعرفة",
+    product: "منتج",
+    correction: "تصحيح سابق",
+    conversation_history: "المحادثة",
+    customer_profile: "العميل",
+  };
+
+  return labels[type] ?? type;
+}
+
+function AssistantTestDetails({ metadata }: { metadata: AssistantTestMetadata }) {
+  const confidenceIsLow = metadata.confidence < 0.5 || metadata.needsHuman;
+
+  return (
+    <div className="mt-4 space-y-3 border-t border-white/70 pt-3">
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className={cn("rounded-2xl px-3 py-2", confidenceIsLow ? "bg-wa-warning-bg text-wa-warning" : "bg-white text-wa-success")}>
+          <p className="text-label font-semibold uppercase tracking-widest">الثقة</p>
+          <p className="mt-1 text-body font-semibold">{formatConfidence(metadata.confidence)}</p>
+        </div>
+        <div className={cn("rounded-2xl px-3 py-2", metadata.needsHuman ? "bg-wa-warning-bg text-wa-warning" : "bg-white text-wa-gray-700")}>
+          <p className="text-label font-semibold uppercase tracking-widest">الإجراء</p>
+          <p className="mt-1 text-body-sm font-semibold">{suggestedActionLabel(metadata.suggestedAction)}</p>
+        </div>
+      </div>
+
+      {metadata.outsideWorkingHours ? (
+        <p className="rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm text-wa-gray-700">الاختبار الحالي خارج ساعات العمل المحددة.</p>
+      ) : null}
+
+      {metadata.sources.length > 0 ? (
+        <div>
+          <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-500">المصادر المستخدمة</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {metadata.sources.map((source) => (
+              <span key={source.id} className="rounded-full bg-white px-3 py-1 text-label font-semibold text-wa-gray-700">
+                {sourceTypeLabel(source.type)} · {source.title}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm text-wa-gray-600">لم يستخدم المساعد مصدراً محفوظاً لهذا الرد.</p>
+      )}
+
+      {metadata.missingData.length > 0 ? (
+        <div>
+          <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-500">بيانات ناقصة</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {metadata.missingData.map((item) => (
+              <span key={item} className="rounded-full bg-wa-warning-bg px-3 py-1 text-label font-semibold text-wa-warning">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

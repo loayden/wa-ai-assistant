@@ -5,19 +5,12 @@ import { jsonError, jsonSuccess } from "@/lib/api/response";
 import { normalizeNotificationPrefs } from "@/lib/notifications/preferences";
 import { prisma } from "@/lib/prisma/client";
 import { sendEmail } from "@/lib/resend/client";
+import { isAuthorizedCronRequest } from "@/lib/security/cron";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function isAuthorized(request: Request) {
-  if (!appEnv.CRON_SECRET) {
-    return appEnv.NODE_ENV !== "production";
-  }
-
-  return request.headers.get("authorization") === `Bearer ${appEnv.CRON_SECRET}`;
-}
 
 function getWeeklyRange() {
   const end = new Date();
@@ -150,7 +143,7 @@ function deriveTopQuestions(messages: Array<{ bodyText: string }>) {
 }
 
 export async function GET(request: Request) {
-  if (!isAuthorized(request)) {
+  if (!isAuthorizedCronRequest(request)) {
     return jsonError("Unauthorized cron request.", 403);
   }
 

@@ -12,6 +12,7 @@ import { InvalidJsonError, readJsonRequestBody } from "@/lib/api/request";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { sanitizeConnection, whatsappClient } from "@/lib/api/whatsapp";
 import { prisma } from "@/lib/prisma/client";
+import { writeAuditLog } from "@/lib/security/audit-log";
 import { encrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
@@ -170,6 +171,23 @@ export async function POST(request: Request) {
       await whatsappClient.sendMessage(connection.phoneNumberId, "15555550100", "تم التحقق من اتصال واتساب الاختباري.");
     }
 
+    await writeAuditLog({
+      userId: user.id,
+      action: "channel.whatsapp.connected",
+      entityType: "whatsapp_connection",
+      entityId: connection.id,
+      metadata: {
+        mode: existingConnection ? "updated" : "created",
+        channel: connection.channel,
+        provider: connection.provider,
+        phoneNumberId: connection.phoneNumberId,
+        businessAccountId: connection.businessAccountId,
+        webhookSubscribed: connection.webhookSubscribed,
+        isVerified: connection.isVerified,
+      },
+      request,
+    });
+
     return jsonSuccess(
       {
         connection: sanitizeConnection(connection),
@@ -225,6 +243,22 @@ export async function DELETE(request: Request) {
     if (!connection) {
       return jsonError("لم يتم العثور على اتصال واتساب.", 404);
     }
+
+    await writeAuditLog({
+      userId: user.id,
+      action: "channel.whatsapp.deleted",
+      entityType: "whatsapp_connection",
+      entityId: connection.id,
+      before: {
+        channel: connection.channel,
+        provider: connection.provider,
+        phoneNumberId: connection.phoneNumberId,
+        businessAccountId: connection.businessAccountId,
+        isActive: connection.isActive,
+        isVerified: connection.isVerified,
+      },
+      request,
+    });
 
     await prisma.whatsAppConnection.delete({
       where: { id: connection.id },

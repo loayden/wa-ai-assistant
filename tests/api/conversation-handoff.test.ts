@@ -30,6 +30,10 @@ const apiMocks = vi.hoisted(() => {
         create: vi.fn(),
         findFirst: vi.fn(),
       },
+      outboundMessage: {
+        create: vi.fn(),
+        update: vi.fn(),
+      },
       conversationHandoff: {
         upsert: vi.fn(),
         updateMany: vi.fn(),
@@ -156,6 +160,22 @@ describe("conversation handoff API", () => {
     apiMocks.prisma.message.create.mockResolvedValue({
       id: "00000000-0000-0000-0000-000000000051",
     });
+    apiMocks.prisma.outboundMessage.create.mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: "00000000-0000-0000-0000-000000000071",
+        attemptCount: data.attemptCount ?? 1,
+        maxAttempts: data.maxAttempts ?? 3,
+        channel: data.channel,
+        direction: data.direction,
+        ...data,
+      }),
+    );
+    apiMocks.prisma.outboundMessage.update.mockImplementation(({ data }) =>
+      Promise.resolve({
+        id: "00000000-0000-0000-0000-000000000071",
+        ...data,
+      }),
+    );
   });
 
   it("activates handoff for the selected thread", async () => {
@@ -217,6 +237,49 @@ describe("conversation handoff API", () => {
         data: expect.objectContaining({
           direction: "OUTBOUND",
           bodyText: "أهلاً، هنتابع مع حضرتك.",
+        }),
+      }),
+    );
+  });
+
+  it("records a failed manual reply with a classified failure reason", async () => {
+    apiMocks.whatsappClient.sendMessage.mockRejectedValueOnce({
+      status: 400,
+      response: {
+        error: {
+          code: 131030,
+          message: "Recipient not in test list.",
+        },
+      },
+    });
+
+    const response = await REPLY(jsonRequest({ message: "أهلاً، هنتابع مع حضرتك." }), { params: Promise.resolve({ id: MESSAGE_ID }) });
+    const body = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(body.success).toBe(false);
+    expect(body.error).toContain("رقم Meta الاختباري");
+    expect(body.meta.failure.code).toBe("meta_test_recipient_blocked");
+    expect(body.meta.messageId).toBe("00000000-0000-0000-0000-000000000051");
+    expect(body.meta.outboxId).toBe("00000000-0000-0000-0000-000000000071");
+    expect(apiMocks.prisma.message.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          direction: "OUTBOUND",
+          bodyText: "أهلاً، هنتابع مع حضرتك.",
+          status: "FAILED",
+          aiModelUsed: "manual-reply",
+          metadata: expect.objectContaining({
+            outboxId: "00000000-0000-0000-0000-000000000071",
+            outboundAttempt: expect.objectContaining({
+              direction: "manual",
+              stage: "blocked",
+              failure: expect.objectContaining({
+                code: "meta_test_recipient_blocked",
+                retry: { canRetry: false, reason: "requires_setup" },
+              }),
+            }),
+          }),
         }),
       }),
     );

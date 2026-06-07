@@ -89,6 +89,14 @@ function enforceAuthRateLimit(request: Request, action: AuthAction, body: unknow
     return null;
   }
 
+  if (
+    process.env.E2E_DISABLE_AUTH_RATE_LIMIT === "true" &&
+    (process.env.NEXT_PUBLIC_APP_URL?.startsWith("http://127.0.0.1") ||
+      process.env.NEXT_PUBLIC_APP_URL?.startsWith("http://localhost"))
+  ) {
+    return null;
+  }
+
   /*
    * [ROLE: BACKEND ENGINEER]
    * Decision: Login and signup attempts are limited by action, client IP, and

@@ -6,7 +6,7 @@
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { checkRateLimit, clearRateLimitBuckets } from "@/lib/utils/rateLimit";
+import { checkRateLimit, clearRateLimitBuckets, getRequestRateLimitKey } from "@/lib/utils/rateLimit";
 
 describe("rate limit utilities", () => {
   afterEach(() => {
@@ -47,5 +47,15 @@ describe("rate limit utilities", () => {
     expect(
       checkRateLimit({ key: "auth:login:reset", limit: 1, windowMs: 1_000, context: "tests.rateLimit" }).allowed,
     ).toBe(true);
+  });
+
+  it("builds request scoped keys from forwarded IP headers", () => {
+    const request = new Request("https://kallem.test/api/webhooks/meta", {
+      headers: {
+        "x-forwarded-for": "203.0.113.10, 10.0.0.1",
+      },
+    });
+
+    expect(getRequestRateLimitKey(request, "webhook:meta")).toBe("webhook:meta:203.0.113.10");
   });
 });

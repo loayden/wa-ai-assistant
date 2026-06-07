@@ -13,24 +13,42 @@ export const knowledgeTypeSchema = z.enum(["text", "faq", "hours"]);
 export const createKnowledgeEntrySchema = z
   .object({
     type: knowledgeTypeSchema,
-    title: z.string().trim().min(1).max(KNOWLEDGE_TITLE_MAX_LENGTH),
-    content: z.string().trim().min(1).max(KNOWLEDGE_CONTENT_MAX_LENGTH),
+    title: z
+      .string()
+      .trim()
+      .min(1, "السؤال أو العنوان مطلوب.")
+      .max(KNOWLEDGE_TITLE_MAX_LENGTH, `العنوان طويل جدًا. الحد الأقصى ${KNOWLEDGE_TITLE_MAX_LENGTH} حرف.`),
+    content: z
+      .string()
+      .trim()
+      .min(1, "الإجابة أو المحتوى مطلوب.")
+      .max(KNOWLEDGE_CONTENT_MAX_LENGTH, `المحتوى طويل جدًا. الحد الأقصى ${KNOWLEDGE_CONTENT_MAX_LENGTH} حرف.`),
   })
   .strict();
 
 export const updateKnowledgeEntrySchema = z
   .object({
-    title: z.string().trim().min(1).max(KNOWLEDGE_TITLE_MAX_LENGTH).optional(),
-    content: z.string().trim().min(1).max(KNOWLEDGE_CONTENT_MAX_LENGTH).optional(),
+    title: z
+      .string()
+      .trim()
+      .min(1, "السؤال أو العنوان مطلوب.")
+      .max(KNOWLEDGE_TITLE_MAX_LENGTH, `العنوان طويل جدًا. الحد الأقصى ${KNOWLEDGE_TITLE_MAX_LENGTH} حرف.`)
+      .optional(),
+    content: z
+      .string()
+      .trim()
+      .min(1, "الإجابة أو المحتوى مطلوب.")
+      .max(KNOWLEDGE_CONTENT_MAX_LENGTH, `المحتوى طويل جدًا. الحد الأقصى ${KNOWLEDGE_CONTENT_MAX_LENGTH} حرف.`)
+      .optional(),
   })
   .strict()
   .refine((value) => value.title !== undefined || value.content !== undefined, {
-    message: "At least one field is required.",
+    message: "أرسل حقلاً واحدًا على الأقل للتحديث.",
   });
 
 export const assistantTestSchema = z
   .object({
-    message: z.string().trim().min(1).max(1_000),
+    message: z.string().trim().min(1, "اكتب سؤالاً تجريبياً.").max(1_000, "السؤال طويل جدًا. الحد الأقصى 1000 حرف."),
   })
   .strict();
 

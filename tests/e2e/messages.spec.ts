@@ -92,10 +92,9 @@ async function mockSharedApis(page: Page, messages: MockMessage[]) {
 
 test("messages page loads and shows empty state", async ({ page }) => {
   await mockSharedApis(page, []);
-  await login(page);
-  await page.goto("/messages");
+  await login(page, "/messages");
 
-  await expect(page.getByText("No conversations match this view.")).toBeVisible();
+  await expect(page.getByText("لا توجد رسائل بعد")).toBeVisible();
 });
 
 test("mock mode test message appears in the message list", async ({ page }) => {
@@ -129,10 +128,9 @@ test("mock mode test message appears in the message list", async ({ page }) => {
     });
   });
 
-  await login(page);
-  await page.goto("/whatsapp");
-  await page.getByLabel("Message text").fill("Do you deliver today?");
-  await page.getByRole("button", { name: "Send" }).click();
+  await login(page, "/whatsapp");
+  await page.getByLabel("نص الرسالة").fill("Do you deliver today?");
+  await page.getByRole("button", { name: "إرسال" }).click();
   await expect(page.getByText("Mock reply generated")).toBeVisible();
 
   await page.goto("/messages");
@@ -153,10 +151,9 @@ test("pagination works", async ({ page }) => {
   }));
 
   await mockSharedApis(page, messages);
-  await login(page);
-  await page.goto("/messages");
-  await expect(page.getByText("Page 1 of 2")).toBeVisible();
-  await page.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByText("Page 2 of 2")).toBeVisible();
+  await login(page, "/messages");
+  await expect(page.getByText("صفحة 1 من 2")).toBeVisible();
+  await page.getByRole("button", { name: "التالي" }).click();
+  await expect(page.getByText("صفحة 2 من 2")).toBeVisible();
   await expect(page.getByText("Reply 21")).toBeVisible();
 });

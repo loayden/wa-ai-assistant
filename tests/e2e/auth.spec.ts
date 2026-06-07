@@ -23,38 +23,37 @@ test("signup flow shows email verification notice", async ({ page }) => {
   });
 
   await page.goto("/signup");
-  await page.getByLabel("Full name").fill("Owner Name");
-  await page.getByLabel("Email").fill("owner@example.com");
-  await page.getByLabel("Password", { exact: true }).fill("Password1");
-  await page.getByLabel("Confirm password").fill("Password1");
-  await page.getByLabel("I accept the terms and privacy policy").check();
-  await expect(page.getByRole("button", { name: "Create account" })).toBeEnabled();
-  await page.getByRole("button", { name: "Create account" }).click();
+  await page.locator("#fullName").fill("Owner Name");
+  await page.locator("#signupEmail").fill("owner@example.com");
+  await page.locator("#signupPassword").fill("Password1");
+  await page.locator("#confirmPassword").fill("Password1");
+  await page.locator("input[name='acceptTerms']").check();
+  await expect(page.getByRole("button", { name: "إنشاء الحساب" })).toBeEnabled();
+  await page.getByRole("button", { name: "إنشاء الحساب" }).click();
 
-  await expect(page.getByText("Check your email")).toBeVisible();
+  await expect(page.getByText("راجعي بريدك الإلكتروني")).toBeVisible();
 });
 
 test("login with valid credentials redirects to dashboard", async ({ page }) => {
   await login(page);
 
-  await expect(page.getByText("Your AI assistant")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Customize assistant" })).toBeVisible();
+  await expect(page.getByText("مركز التحكم")).toBeVisible();
 });
 
 test("login with invalid credentials shows an error", async ({ page }) => {
   await page.goto("/login");
   await page.locator("#email").fill(TEST_EMAIL);
   await page.locator("#password").fill("wrong-password");
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "تسجيل الدخول" }).click();
 
-  await expect(page.getByText("Invalid login credentials", { exact: false })).toBeVisible();
+  await expect(page.getByText("البريد الإلكتروني أو كلمة المرور غير صحيحة.", { exact: false })).toBeVisible();
 });
 
 test("logout returns the user to login", async ({ page }) => {
   await login(page);
-  await expect(page.getByText("Your AI assistant")).toBeVisible();
-  await page.getByRole("button", { name: "Open profile" }).click();
-  await page.getByRole("button", { name: "Sign out" }).click();
+  await expect(page.getByText("مركز التحكم")).toBeVisible();
+  await page.getByRole("button", { name: "فتح الحساب" }).click();
+  await page.getByRole("button", { name: "تسجيل الخروج" }).click();
 
   await expect(page).toHaveURL(/\/login/);
 });

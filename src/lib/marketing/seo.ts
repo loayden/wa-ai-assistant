@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
+
+import { BRAND_LOCKUP } from "@/lib/utils/brand";
+
 export const defaultSiteUrl = "https://kallem.vercel.app";
+export const defaultOpenGraphImage = "/videos/kallem-promo-poster.png";
 
 export const publicSeoRoutes = [
   "/",
@@ -41,6 +46,51 @@ export function getSiteUrl() {
 
 export function getAbsoluteUrl(path: string) {
   return new URL(path, getSiteUrl()).toString();
+}
+
+export function createPublicPageMetadata({
+  description,
+  path,
+  title,
+  image = defaultOpenGraphImage,
+}: {
+  title: string;
+  description: string;
+  path: PublicSeoRoute | `/${string}`;
+  image?: string;
+}): Metadata {
+  const url = getAbsoluteUrl(path);
+  const imageUrl = image.startsWith("http") ? image : getAbsoluteUrl(image);
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: BRAND_LOCKUP,
+      locale: "ar_EG",
+      type: "website",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${BRAND_LOCKUP} - AI messaging SaaS`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+  };
 }
 
 export const noIndexMetadata = {

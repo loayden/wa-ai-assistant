@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 
 import { AppFooter } from "@/components/shared/AppFooter";
+import { createPublicPageMetadata } from "@/lib/marketing/seo";
 import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
 
 const articles = {
@@ -86,10 +87,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
-  return {
+  return createPublicPageMetadata({
     title: article.title,
     description: article.description,
-  };
+    path: `/blog/${slug}`,
+    image: article.image,
+  });
 }
 
 export default async function BlogArticlePage({ params }: { params: Promise<{ slug: string }> }) {

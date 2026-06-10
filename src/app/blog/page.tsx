@@ -4,12 +4,14 @@ import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2 } from "lucide-react";
 
 import { AppFooter } from "@/components/shared/AppFooter";
+import { createPublicPageMetadata } from "@/lib/marketing/seo";
 import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPublicPageMetadata({
   title: "مدونة kallem",
   description: "دليل عملي للأعمال الصغيرة لإدارة رسائل واتساب وإنستجرام وماسنجر والردود الذكية بدون تعقيد.",
-};
+  path: "/blog",
+});
 
 const posts = [
   {

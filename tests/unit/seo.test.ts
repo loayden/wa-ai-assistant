@@ -5,7 +5,7 @@ import { GET as getLlmsTxt } from "@/app/llms.txt/route";
 import manifest from "@/app/manifest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
-import { noIndexMetadata, publicSeoRoutes } from "@/lib/marketing/seo";
+import { createPublicPageMetadata, noIndexMetadata, publicSeoRoutes } from "@/lib/marketing/seo";
 import { BRAND_TAGLINE } from "@/lib/utils/brand";
 
 describe("public SEO metadata", () => {
@@ -35,6 +35,20 @@ describe("public SEO metadata", () => {
     expect(noIndexMetadata.robots.follow).toBe(false);
     expect(noIndexMetadata.robots.googleBot.index).toBe(false);
     expect(noIndexMetadata.robots.googleBot.follow).toBe(false);
+  });
+
+  it("builds share-ready metadata for public conversion pages", () => {
+    const metadata = createPublicPageMetadata({
+      title: "أسعار kallem",
+      description: "خطط kallem الواضحة للأعمال الصغيرة.",
+      path: "/pricing",
+    });
+
+    expect(metadata.alternates?.canonical).toBe("http://localhost:3000/pricing");
+    expect(metadata.openGraph?.url).toBe("http://localhost:3000/pricing");
+    expect(metadata.openGraph?.siteName).toBe("kallem كَلّم");
+    expect(metadata.openGraph?.locale).toBe("ar_EG");
+    expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
   });
 
   it("exposes installable app manifest metadata", () => {

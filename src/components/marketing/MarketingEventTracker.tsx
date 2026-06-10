@@ -18,6 +18,21 @@ const publicPathPrefixes = [
   "/login",
 ];
 
+const attributionStorageKey = "kallem_marketing_attribution";
+
+type MarketingAttribution = Pick<
+  MarketingEventPayload,
+  | "landingPage"
+  | "firstReferrer"
+  | "utmSource"
+  | "utmMedium"
+  | "utmCampaign"
+  | "utmContent"
+  | "utmTerm"
+  | "gclid"
+  | "fbclid"
+>;
+
 function isPublicMarketingPath(pathname: string) {
   if (pathname === "/") return true;
   return publicPathPrefixes.some((prefix) => prefix !== "/" && (pathname === prefix || pathname.startsWith(`${prefix}/`)));
@@ -47,6 +62,51 @@ function getViewport() {
   return `${window.innerWidth}x${window.innerHeight}`;
 }
 
+function getStoredAttribution(): MarketingAttribution {
+  try {
+    const raw = window.localStorage.getItem(attributionStorageKey);
+
+    if (!raw) {
+      return {};
+    }
+
+    return JSON.parse(raw) as MarketingAttribution;
+  } catch {
+    return {};
+  }
+}
+
+function setStoredAttribution(attribution: MarketingAttribution) {
+  try {
+    window.localStorage.setItem(attributionStorageKey, JSON.stringify(attribution));
+  } catch {
+    // Attribution is useful, but must never block app usage.
+  }
+}
+
+function cleanParam(value: string | null) {
+  return value?.trim().slice(0, 160) || undefined;
+}
+
+function captureAttributionFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const existing = getStoredAttribution();
+  const next: MarketingAttribution = {
+    landingPage: existing.landingPage ?? `${window.location.pathname}${window.location.search}`,
+    firstReferrer: existing.firstReferrer ?? (document.referrer || undefined),
+    utmSource: existing.utmSource ?? cleanParam(params.get("utm_source")),
+    utmMedium: existing.utmMedium ?? cleanParam(params.get("utm_medium")),
+    utmCampaign: existing.utmCampaign ?? cleanParam(params.get("utm_campaign")),
+    utmContent: existing.utmContent ?? cleanParam(params.get("utm_content")),
+    utmTerm: existing.utmTerm ?? cleanParam(params.get("utm_term")),
+    gclid: existing.gclid ?? cleanParam(params.get("gclid")),
+    fbclid: existing.fbclid ?? cleanParam(params.get("fbclid")),
+  };
+
+  setStoredAttribution(next);
+  return next;
+}
+
 function sendMarketingEvent(eventName: MarketingEventName, data: Partial<MarketingEventPayload> = {}) {
   const payload: MarketingEventPayload = {
     eventName,
@@ -54,6 +114,7 @@ function sendMarketingEvent(eventName: MarketingEventName, data: Partial<Marketi
     path: window.location.pathname + window.location.search,
     referrer: document.referrer || undefined,
     viewport: getViewport(),
+    ...getStoredAttribution(),
     ...data,
   };
   const body = JSON.stringify(payload);
@@ -91,9 +152,12 @@ export function MarketingEventTracker() {
       return;
     }
 
+    const attribution = captureAttributionFromUrl();
+
     sendMarketingEvent("page_view", {
       path: `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`,
       source: "route_change",
+      ...attribution,
     });
   }, [pathname, searchParams]);
 

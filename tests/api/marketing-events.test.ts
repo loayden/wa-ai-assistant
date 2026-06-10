@@ -21,6 +21,14 @@ describe("marketing events endpoint", () => {
         target: "/signup?next=%2Fbilling",
         source: "link_click",
         viewport: "1440x900",
+        landingPage: "/?utm_source=facebook&utm_campaign=launch",
+        firstReferrer: "https://instagram.com/",
+        utmSource: "facebook",
+        utmMedium: "paidsocial",
+        utmCampaign: "launch",
+        utmContent: "arabic-ai",
+        utmTerm: "whatsapp ai",
+        fbclid: "test_fbclid",
       }),
     );
     const body = await response.json();

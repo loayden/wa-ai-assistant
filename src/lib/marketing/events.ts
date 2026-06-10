@@ -17,4 +17,13 @@ export type MarketingEventPayload = {
   source?: string;
   referrer?: string;
   viewport?: string;
+  landingPage?: string;
+  firstReferrer?: string;
+  utmSource?: string;
+  utmMedium?: string;
+  utmCampaign?: string;
+  utmContent?: string;
+  utmTerm?: string;
+  gclid?: string;
+  fbclid?: string;
 };

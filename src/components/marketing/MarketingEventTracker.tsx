@@ -19,9 +19,22 @@ const publicPathPrefixes = [
   "/login",
 ];
 
+const activationPathLabels: Record<string, string> = {
+  "/connect": "connect_channels",
+  "/readiness": "readiness_check",
+  "/knowledge": "knowledge_setup",
+  "/products": "product_setup",
+  "/billing": "billing_view",
+};
+
 function isPublicMarketingPath(pathname: string) {
   if (pathname === "/") return true;
   return publicPathPrefixes.some((prefix) => prefix !== "/" && (pathname === prefix || pathname.startsWith(`${prefix}/`)));
+}
+
+function getActivationStepLabel(pathname: string) {
+  const match = Object.entries(activationPathLabels).find(([prefix]) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return match?.[1] ?? null;
 }
 
 function getEventNameForLink(anchor: HTMLAnchorElement): MarketingEventName {
@@ -39,6 +52,17 @@ export function MarketingEventTracker() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const activationStep = getActivationStepLabel(pathname);
+
+    if (activationStep) {
+      sendMarketingEvent("activation_step_view", {
+        path: `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`,
+        label: activationStep,
+        source: "activation_route",
+      });
+      return;
+    }
+
     if (!isPublicMarketingPath(pathname)) {
       return;
     }

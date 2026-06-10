@@ -6,6 +6,7 @@ export const marketingEventNames = [
   "public_nav_click",
   "signup_success",
   "social_auth_start",
+  "activation_step_view",
 ] as const;
 
 export type MarketingEventName = (typeof marketingEventNames)[number];

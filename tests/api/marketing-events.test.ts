@@ -69,4 +69,22 @@ describe("marketing events endpoint", () => {
     expect(response.status).toBe(200);
     expect(body.success).toBe(true);
   });
+
+  it("accepts activation milestone events after signup", async () => {
+    const response = await POST(
+      createRequest({
+        eventName: "activation_step_view",
+        clientId: "test-client-123",
+        path: "/connect",
+        label: "connect_channels",
+        source: "activation_route",
+        landingPage: "/?utm_source=facebook",
+        utmSource: "facebook",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
 });

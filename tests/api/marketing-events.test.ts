@@ -51,4 +51,22 @@ describe("marketing events endpoint", () => {
     expect(response.status).toBe(422);
     expect(body.success).toBe(false);
   });
+
+  it("accepts signup conversion events without personal data", async () => {
+    const response = await POST(
+      createRequest({
+        eventName: "signup_success",
+        clientId: "test-client-123",
+        path: "/signup?utm_source=google",
+        label: "email_signup",
+        source: "signup_form",
+        landingPage: "/?utm_source=google",
+        utmSource: "google",
+      }),
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.success).toBe(true);
+  });
 });

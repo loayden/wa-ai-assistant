@@ -23,6 +23,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiData } from "@/lib/api/client";
+import { sendMarketingEvent } from "@/lib/marketing/client-events";
 import { signupSchema } from "@/lib/validators/auth";
 import { strictZodResolver } from "@/lib/validators/resolver";
 
@@ -96,6 +97,18 @@ export function SignupForm() {
 
     return () => subscription.unsubscribe();
   }, [form]);
+
+  useEffect(() => {
+    if (!mutation.isSuccess) {
+      return;
+    }
+
+    sendMarketingEvent("signup_success", {
+      label: "email_signup",
+      source: "signup_form",
+      target: "/auth/confirm",
+    });
+  }, [mutation.isSuccess]);
 
   if (mutation.isSuccess) {
     return (

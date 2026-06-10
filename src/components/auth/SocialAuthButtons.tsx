@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { buildOAuthRedirectUrl, normalizeAuthNextPath } from "@/lib/auth/redirect-url";
+import { sendMarketingEvent } from "@/lib/marketing/client-events";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -58,6 +59,13 @@ export function SocialAuthButtons({
       const supabase = createClient();
       const config = providerConfig[provider];
       const redirectTo = buildOAuthRedirectUrl(window.location.origin, normalizeAuthNextPath(nextPath));
+
+      sendMarketingEvent("social_auth_start", {
+        label: `${mode}_${provider}`,
+        source: "social_auth_buttons",
+        target: redirectTo,
+      });
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider as Provider,
         options: {

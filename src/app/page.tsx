@@ -1,7 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { HTMLAttributes, ReactNode } from "react";
 import {
   ArrowLeft,
+  BadgeCheck,
   BarChart3,
   BookOpen,
   Bot,
@@ -16,6 +18,10 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Sparkles,
+  Store,
+  Target,
+  TrendingUp,
+  Users,
   UserPlus,
   Zap,
 } from "lucide-react";
@@ -37,6 +43,7 @@ const navItems = [
   { label: "الأسعار", href: "/pricing" },
   { label: "الأمان", href: "/security" },
   { label: "المقارنة", href: "/compare/respondio" },
+  { label: "المدونة", href: "/blog" },
 ];
 
 const heroStats = [
@@ -166,6 +173,88 @@ const pricingPlans = [
   },
 ];
 
+const pexelsPhotos = {
+  supportAgent: {
+    src: "https://images.pexels.com/photos/7709195/pexels-photo-7709195.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    alt: "فريق دعم عملاء يستخدم سماعة ولابتوب لمتابعة المحادثات",
+  },
+  supportTeam: {
+    src: "https://images.pexels.com/photos/7709227/pexels-photo-7709227.jpeg?auto=compress&cs=tinysrgb&w=1400",
+    alt: "فريق خدمة عملاء يدير رسائل العملاء من أجهزة لابتوب",
+  },
+  cafePhone: {
+    src: "https://images.pexels.com/photos/27896990/pexels-photo-27896990.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "صاحب نشاط يتابع رسائل العملاء من الهاتف داخل كافيه",
+  },
+  businessOwner: {
+    src: "https://images.pexels.com/photos/10376233/pexels-photo-10376233.jpeg?auto=compress&cs=tinysrgb&w=1200",
+    alt: "صاحب نشاط ينظم الطلبات والفواتير على لابتوب",
+  },
+};
+
+const industryCards = [
+  {
+    title: "مطاعم وكافيهات",
+    body: "أسئلة المنيو، المواعيد، الحجز، والتوصيل تظهر في صندوق واحد بدل رسائل متفرقة.",
+    image: pexelsPhotos.cafePhone,
+    icon: Store,
+  },
+  {
+    title: "خدمات وتعليم",
+    body: "المساعد يرد من تفاصيل الخدمة والأسئلة الشائعة، ثم يسلم للبشر عند الحاجة.",
+    image: pexelsPhotos.supportAgent,
+    icon: Users,
+  },
+  {
+    title: "تجارة ومنتجات",
+    body: "أسئلة السعر، المقاس، التوفر، والدفع تتحول إلى Leads وطلبات قابلة للمتابعة.",
+    image: pexelsPhotos.businessOwner,
+    icon: ShoppingBag,
+  },
+];
+
+const comparisonRows = [
+  {
+    area: "التركيز",
+    competitors: "منصات واسعة تحتاج إعدادات كثيرة وفرق تشغيل أكبر.",
+    kallem: "تجربة عربية مركزة على واتساب وإنستجرام وماسنجر لصاحب نشاط صغير أو متوسط.",
+  },
+  {
+    area: "وضوح القنوات",
+    competitors: "قد يعرف المستخدم أن القناة لا تعمل بعد تجربة فاشلة.",
+    kallem: "يعرض الجاهزية والويب هوك والصلاحيات قبل تشغيل الردود على العملاء الحقيقيين.",
+  },
+  {
+    area: "جودة الرد",
+    competitors: "أتمتة عامة أو chatbot يحتاج بناء طويل.",
+    kallem: "يرد من معرفة النشاط والمنتجات والسياسات وسياق المحادثة، مع تسليم للبشر عند انخفاض الثقة.",
+  },
+  {
+    area: "التسعير",
+    competitors: "تسعير عالمي قد يكون أعلى أو غير واضح للسوق المحلي.",
+    kallem: "خطط واضحة بالجنيه المصري وحدود ردود وقنوات مفهومة قبل التسجيل.",
+  },
+];
+
+const faqItems = [
+  {
+    question: "هل kallem للواتساب فقط؟",
+    answer: "لا. kallem مصمم لإدارة واتساب وإنستجرام وماسنجر من صندوق واحد، مع توضيح حالة كل قناة قبل تشغيل الردود.",
+  },
+  {
+    question: "هل يرد الذكاء الاصطناعي من نفسه؟",
+    answer: "الردود تعتمد على معلومات النشاط والمنتجات والسياسات والأسئلة الشائعة. عند نقص البيانات أو انخفاض الثقة يمكن تسليم المحادثة للبشر.",
+  },
+  {
+    question: "هل العميل يحتاج تحميل تطبيق جديد؟",
+    answer: "لا. العميل يرسل من واتساب أو إنستجرام أو ماسنجر كالمعتاد، وصاحب النشاط يدير كل شيء من kallem.",
+  },
+  {
+    question: "متى يكون المنتج جاهزًا للعملاء الحقيقيين؟",
+    answer: "عندما تكون القنوات متصلة بصلاحيات Meta الصحيحة، والويب هوك فعال، والدفع والإيميلات ومزود الذكاء مهيأة للإنتاج.",
+  },
+];
+
 function BrandLockup({ className }: { className?: string }) {
   return (
     <Link
@@ -229,6 +318,24 @@ function ProductPreview() {
     <FormalCard className="relative overflow-hidden p-3 sm:p-4" data-cinema-reveal>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_0%,rgba(26,86,255,0.13),transparent_36%),linear-gradient(180deg,rgba(247,247,248,0.35),rgba(255,255,255,0))]" />
       <div className="relative rounded-[18px] border border-wa-gray-100 bg-white p-3 sm:rounded-[24px] sm:p-4">
+        <div className="relative mb-3 overflow-hidden rounded-[18px] border border-wa-gray-100 sm:rounded-[22px]">
+          <Image
+            src={pexelsPhotos.supportTeam.src}
+            alt={pexelsPhotos.supportTeam.alt}
+            width={960}
+            height={520}
+            priority
+            className="h-[210px] w-full object-cover sm:h-[260px]"
+            sizes="(max-width: 1024px) 100vw, 520px"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0.02),rgba(13,20,33,0.62))]" />
+          <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/90 p-3 shadow-[0_18px_48px_rgba(13,20,33,0.14)] backdrop-blur">
+            <p className="text-xs font-semibold text-wa-blue-600">ليس واتساب فقط</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-wa-gray-900">
+              صندوق واحد يجمع واتساب، إنستجرام، وماسنجر مع حالة الرد والتسليم للبشر.
+            </p>
+          </div>
+        </div>
         <div className="flex items-center justify-between gap-3 border-b border-wa-gray-100 pb-3">
           <div>
             <p className="text-xs font-semibold text-wa-gray-400">مثال للواجهة</p>
@@ -309,6 +416,178 @@ function ProductPreview() {
   );
 }
 
+function CustomerProofSection() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16">
+      <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+        <div className="relative overflow-hidden rounded-[30px] border border-wa-gray-100 bg-wa-gray-900 shadow-[0_24px_74px_rgba(13,20,33,0.16)]" data-cinema-reveal>
+          <Image
+            src={pexelsPhotos.supportAgent.src}
+            alt={pexelsPhotos.supportAgent.alt}
+            width={1100}
+            height={780}
+            className="h-[360px] w-full object-cover sm:h-[460px]"
+            sizes="(max-width: 1024px) 100vw, 520px"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0.04),rgba(13,20,33,0.72))]" />
+          <div className="absolute inset-x-4 bottom-4 rounded-[22px] border border-white/40 bg-white/90 p-4 shadow-[0_20px_56px_rgba(13,20,33,0.16)] backdrop-blur sm:inset-x-5 sm:bottom-5 sm:p-5">
+            <p className="text-sm font-semibold text-wa-blue-600">تجربة أصحاب الأنشطة</p>
+            <h2 className="mt-2 text-2xl font-semibold leading-tight text-wa-gray-900">
+              الردود تصبح منظّمة، لكن التحكم يبقى لصاحب النشاط.
+            </h2>
+          </div>
+        </div>
+
+        <div>
+          <SectionHeading
+            eyebrow="ثقة وتحويل"
+            title="العميل يسأل من القناة التي يعرفها، وkallem يحولها إلى متابعة واضحة."
+            body="بدل أن يتنقل صاحب النشاط بين واتساب وإنستجرام وماسنجر، تظهر الرسائل والطلبات والـLeads في مكان واحد، مع سبب واضح إذا لم يخرج الرد."
+          />
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            {[
+              { icon: BadgeCheck, title: "جاهزية صريحة", body: "لا نقول متصل إذا كانت القناة غير جاهزة للإنتاج." },
+              { icon: Target, title: "مسار أقصر", body: "تسجيل، ربط، تدريب، اختبار، تشغيل." },
+              { icon: TrendingUp, title: "بيع ودعم", body: "المحادثة تتحول إلى Lead أو طلب أو رد دعم." },
+            ].map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <FormalCard key={item.title} className="p-4" data-cinema-reveal>
+                  <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-wa-gray-900">{item.title}</h3>
+                  <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{item.body}</p>
+                </FormalCard>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function IndustryPhotoSection() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
+      <SectionHeading
+        eyebrow="استخدامات حقيقية"
+        title="مناسب لأي نشاط يعتمد على رسائل السوشيال يوميًا."
+        body="القيمة ليست في تشغيل bot فقط، بل في تنظيم أسئلة العملاء، معرفة من يريد الشراء، وتقليل الردود المتكررة عبر القنوات الثلاثة."
+      />
+      <div className="mt-8 grid gap-4 sm:mt-12 lg:grid-cols-3">
+        {industryCards.map((card) => {
+          const Icon = card.icon;
+
+          return (
+            <article key={card.title} className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.055)]" data-cinema-reveal>
+              <div className="relative h-52">
+                <Image src={card.image.src} alt={card.image.alt} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 370px" />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0),rgba(13,20,33,0.36))]" />
+              </div>
+              <div className="p-4 sm:p-5">
+                <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
+                  <Icon className="size-5" aria-hidden="true" />
+                </div>
+                <h3 className="mt-4 text-xl font-semibold text-wa-gray-900">{card.title}</h3>
+                <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{card.body}</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ComparisonSection() {
+  return (
+    <section id="comparison" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
+      <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+        <SectionHeading
+          eyebrow="مقارنة عملية"
+          title="الهدف ليس تقليد المنافسين، بل بناء تجربة أبسط للسوق العربي."
+          body="kallem يركز على أول قيمة يحتاجها المستخدم: ربط القنوات الثلاثة، فهم حالة كل قناة، والرد من بيانات النشاط بدون لوحة تشغيل معقدة."
+        />
+        <div className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.05)]" data-cinema-reveal>
+          <div className="grid grid-cols-[0.62fr_1fr_1fr] border-b border-wa-gray-100 bg-wa-gray-50 text-sm font-semibold text-wa-gray-700">
+            <div className="p-4">المعيار</div>
+            <div className="p-4 text-center">أدوات عامة</div>
+            <div className="bg-wa-blue-50 p-4 text-center text-wa-blue-700">kallem</div>
+          </div>
+          {comparisonRows.map((row) => (
+            <div key={row.area} className="grid grid-cols-[0.62fr_1fr_1fr] border-b border-wa-gray-100 last:border-b-0">
+              <div className="p-4 text-sm font-semibold text-wa-gray-900">{row.area}</div>
+              <div className="p-4 text-body-sm leading-6 text-wa-gray-600">{row.competitors}</div>
+              <div className="bg-wa-blue-50/50 p-4 text-body-sm font-medium leading-6 text-wa-gray-800">{row.kallem}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FaqSection() {
+  return (
+    <section className="relative z-10 border-y border-wa-gray-100 bg-wa-gray-50/80 py-14 sm:py-20">
+      <div className="mx-auto max-w-[1200px] px-3 sm:px-6">
+        <SectionHeading
+          eyebrow="أسئلة قبل التجربة"
+          title="إجابات قصيرة تقلل التردد قبل التسجيل."
+          body="هذه الأسئلة تظهر للمستخدمين الذين يقارنون بين أدوات الردود التلقائية ويريدون معرفة هل kallem مناسب لهم الآن."
+        />
+        <div className="mt-8 grid gap-3 md:grid-cols-2">
+          {faqItems.map((item) => (
+            <FormalCard key={item.question} className="p-4 sm:p-5">
+              <h3 className="text-lg font-semibold text-wa-gray-900">{item.question}</h3>
+              <p className="mt-3 text-body-sm leading-6 text-wa-gray-600">{item.answer}</p>
+            </FormalCard>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StructuredData() {
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
+  const softwareSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Kallem",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web",
+    description: "منصة عربية لإدارة رسائل واتساب وإنستجرام وماسنجر والردود الذكية للأعمال الصغيرة والمتوسطة.",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "EGP",
+      price: "999",
+    },
+  };
+
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }} />
+    </>
+  );
+}
+
 function FeatureCard({ feature }: { feature: (typeof featureGroups)[number] }) {
   const Icon = feature.icon;
 
@@ -377,6 +656,7 @@ export default function Home() {
     <main className="relative min-h-screen overflow-x-hidden bg-white text-wa-gray-900">
       <SmoothScroll />
       <CinematicScrollEffects />
+      <StructuredData />
 
       <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(180deg,#F7F9FF_0%,#FFFFFF_28%,#F7F7F8_68%,#FFFFFF_100%)]" />
       <div className="pointer-events-none fixed inset-0 z-0 opacity-70 [background-image:linear-gradient(rgba(26,86,255,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(26,86,255,.055)_1px,transparent_1px)] [background-size:72px_72px]" />
@@ -434,7 +714,7 @@ export default function Home() {
                 شاهد طريقة العمل
               </MagneticLink>
             </div>
-            <div className="mt-5 max-w-[420px] rounded-[22px] border border-wa-gray-100 bg-white/92 p-3 shadow-[0_16px_44px_rgba(13,20,33,0.06)] sm:mt-6 sm:p-4">
+            <div className="mt-5 max-w-[420px] rounded-[22px] border border-wa-gray-100 bg-white/90 p-3 shadow-[0_16px_44px_rgba(13,20,33,0.06)] sm:mt-6 sm:p-4">
               <p className="mb-3 text-center text-body-sm font-semibold text-wa-gray-700">أو ادخل مباشرة بحسابك</p>
               <SocialAuthButtons mode="signup" nextPath="/connect" />
             </div>
@@ -456,6 +736,7 @@ export default function Home() {
       </section>
 
       <PromoVideoSection />
+      <CustomerProofSection />
 
       <section className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16">
         <FormalCard className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
@@ -475,6 +756,8 @@ export default function Home() {
           </div>
         </FormalCard>
       </section>
+
+      <IndustryPhotoSection />
 
       <section id="workflow" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
         <SectionHeading
@@ -516,6 +799,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <ComparisonSection />
 
       <section id="connect" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
         <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
@@ -665,6 +950,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <FaqSection />
 
       <section className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20">
         <FormalCard className="overflow-hidden p-5 sm:p-10 lg:p-12">

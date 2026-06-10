@@ -18,6 +18,7 @@ describe("phase 6 public positioning", () => {
       "/features/inbox",
       "/pricing",
       "/security",
+      "/blog",
       "/compare/respond-io",
       "/compare/whatschimp",
     ]);

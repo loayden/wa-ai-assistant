@@ -15,6 +15,7 @@ export const publicMarketingRoutes = {
   inbox: "/features/inbox",
   pricing: "/pricing",
   security: "/security",
+  blog: "/blog",
   compareRespondio: "/compare/respond-io",
   compareWhatchimp: "/compare/whatschimp",
 } as const;
@@ -27,6 +28,7 @@ export const publicNavItems = [
   { label: "الأسعار", href: publicMarketingRoutes.pricing },
   { label: "الأمان والثقة", href: publicMarketingRoutes.security },
   { label: "المقارنة", href: publicMarketingRoutes.compareRespondio },
+  { label: "المدونة", href: publicMarketingRoutes.blog },
 ];
 
 export type PublicPlanCard = {

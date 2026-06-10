@@ -49,6 +49,9 @@ export default async function AdminOverviewPage() {
   const totalPlans = Math.max(1, overview.free_count + overview.pro_count + overview.business_count);
   const freePct = Math.round((overview.free_count / totalPlans) * 100);
   const proPct = Math.round((overview.pro_count / totalPlans) * 100);
+  const paidTotal = Math.max(1, overview.total_paid);
+  const churnRiskPct = Math.round((overview.churn_risk / paidTotal) * 100);
+  const activeWeekPct = Math.round((overview.active_this_week / Math.max(1, overview.total_businesses)) * 100);
 
   return (
     <div className="space-y-6">
@@ -74,6 +77,62 @@ export default async function AdminOverviewPage() {
         <KpiCard icon={<Sparkles className="size-5" />} label="تسجيلات اليوم" tone="green" value={formatNumber(overview.new_signups_today)} />
         <KpiCard icon={<MessageSquareText className="size-5" />} label="رسائل اليوم" value={formatNumber(overview.total_messages_today)} />
         <KpiCard href="/admin/businesses?filter=churn_risk" icon={<AlertTriangle className="size-5" />} label="خطر التوقف" tone="red" value={formatNumber(overview.churn_risk)} />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[0.58fr_0.42fr]">
+        <div className="rounded-[28px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.035)] sm:p-6">
+          <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">صحة النمو</p>
+          <h2 className="mt-2 text-[24px] font-semibold text-wa-gray-900">نشاط المستخدمين خلال الأسبوع</h2>
+          <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
+            هذه اللوحة تساعدك تعرف هل المستخدمون وصلوا لقيمة حقيقية أم سجلوا فقط ثم توقفوا.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+              <p className="text-body-sm text-wa-gray-500">نشط هذا الأسبوع</p>
+              <p className="mt-2 text-2xl font-semibold text-wa-gray-900">{formatNumber(overview.active_this_week)}</p>
+            </div>
+            <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+              <p className="text-body-sm text-wa-gray-500">رسائل الشهر</p>
+              <p className="mt-2 text-2xl font-semibold text-wa-gray-900">{formatNumber(overview.total_messages_this_month)}</p>
+            </div>
+            <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+              <p className="text-body-sm text-wa-gray-500">تسجيلات الأسبوع</p>
+              <p className="mt-2 text-2xl font-semibold text-wa-gray-900">{formatNumber(overview.new_signups_this_week)}</p>
+            </div>
+          </div>
+          <div className="mt-5">
+            <div className="flex justify-between gap-4 text-body-sm">
+              <span className="font-semibold text-wa-gray-900">نسبة النشاط من إجمالي الحسابات</span>
+              <span className="text-wa-gray-500">{formatNumber(activeWeekPct)}%</span>
+            </div>
+            <div className="mt-2 h-3 overflow-hidden rounded-full bg-wa-gray-100">
+              <div className="h-full rounded-full bg-wa-blue-600" style={{ width: `${Math.min(100, activeWeekPct)}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-red-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.035)] sm:p-6">
+          <p className="text-label font-semibold uppercase tracking-widest text-red-600">Churn Watch</p>
+          <h2 className="mt-2 text-[24px] font-semibold text-wa-gray-900">حسابات مدفوعة تحتاج متابعة</h2>
+          <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
+            أي حساب مدفوع بلا رسائل خلال ١٤ يومًا يظهر هنا كخطر توقف حتى يتواصل معه الفريق قبل خسارته.
+          </p>
+          <div className="mt-6 flex items-center justify-center">
+            <div
+              className="grid size-40 place-items-center rounded-full"
+              style={{ background: `conic-gradient(#DC2626 0% ${churnRiskPct}%, #FEE2E2 ${churnRiskPct}% 100%)` }}
+              aria-label="نسبة الحسابات المدفوعة المعرضة للتوقف"
+            >
+              <div className="grid size-28 place-items-center rounded-full bg-white text-center">
+                <strong className="text-3xl text-wa-gray-900">{formatNumber(churnRiskPct)}%</strong>
+                <span className="text-xs text-wa-gray-500">من المدفوع</span>
+              </div>
+            </div>
+          </div>
+          <Link href="/admin/businesses?filter=churn_risk" className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-2xl bg-red-600 px-5 text-body-sm font-semibold text-white hover:bg-red-700">
+            فتح الحسابات المعرضة للتوقف
+          </Link>
+        </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[0.68fr_0.32fr]">

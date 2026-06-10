@@ -39,6 +39,9 @@ type ChannelPageKey = keyof typeof channelPages;
 type ComparisonPageKey = keyof typeof comparisonPages;
 type FeaturePageKey = keyof typeof featurePages;
 
+const sharedPublicHeroPhoto =
+  "https://images.pexels.com/photos/7709227/pexels-photo-7709227.jpeg?auto=compress&cs=tinysrgb&w=1400";
+
 function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-wa-gray-100 bg-white/90 backdrop-blur-xl">
@@ -121,6 +124,19 @@ function HeroVisual({ asset, title }: { asset: string; title: string }) {
     <div className="relative overflow-hidden rounded-[28px] border border-wa-gray-100 bg-white p-4 shadow-[0_24px_72px_rgba(13,20,33,0.08)] sm:rounded-[34px] sm:p-5">
       <div className="absolute inset-x-0 top-0 h-36 bg-[linear-gradient(180deg,rgba(26,86,255,0.12),transparent)]" />
       <div className="relative rounded-[24px] border border-wa-gray-100 bg-wa-gray-50 p-4 sm:p-5">
+        <div className="relative mb-4 h-48 overflow-hidden rounded-[20px] border border-wa-gray-100 sm:h-56">
+          <Image
+            src={sharedPublicHeroPhoto}
+            alt="فريق دعم عملاء يتابع رسائل السوشيال من لوحة واحدة"
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 520px"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0.02),rgba(13,20,33,0.62))]" />
+          <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/90 p-3 text-sm font-semibold leading-6 text-wa-gray-900 shadow-[0_18px_48px_rgba(13,20,33,0.14)] backdrop-blur">
+            إدارة القنوات الثلاثة من نفس تجربة kallem.
+          </div>
+        </div>
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-wa-gray-400">صورة تشغيلية من قيمة المنتج</p>
@@ -259,6 +275,22 @@ function PaymentModeBanner({ mode }: { mode: PaymobMode }) {
   );
 }
 
+function LocalPriceAlert() {
+  return (
+    <div className="rounded-[24px] border border-wa-blue-100 bg-wa-blue-50 p-4 text-wa-blue-900 sm:p-5">
+      <div className="flex items-start gap-3">
+        <GitCompareArrows className="mt-0.5 size-5 shrink-0 text-wa-blue-700" aria-hidden="true" />
+        <div>
+          <h2 className="text-base font-semibold">قارن السعر حسب قيمة التشغيل، وليس عدد المميزات فقط.</h2>
+          <p className="mt-2 text-body-sm leading-6 text-wa-blue-900/80">
+            kallem يوضح عدد الردود والقنوات بالجنيه المصري قبل التسجيل. إذا قارنت مع أدوات عالمية، احسب تكلفة الفريق، التعريب، إعداد Meta، وتشخيص فشل الردود، وليس الاشتراك الشهري وحده.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ChannelMarketingPage({ pageKey }: { pageKey: ChannelPageKey }) {
   const page = channelPages[pageKey];
 
@@ -347,7 +379,13 @@ export function PublicPricingPage({ paymobMode }: { paymobMode: PaymobMode }) {
           <div className="space-y-3">
             <PaymentModeBanner mode={paymobMode} />
             <div className="flex items-center gap-4 rounded-[24px] border border-wa-gray-100 bg-wa-gray-50 p-4">
-              <Image src="/assets/3dicons/mobile-dynamic-premium.png" alt="" width={112} height={112} className="size-20 shrink-0 object-contain" />
+              <Image
+                src={sharedPublicHeroPhoto}
+                alt="فريق يتابع رسائل العملاء قبل اختيار خطة kallem"
+                width={112}
+                height={112}
+                className="size-20 shrink-0 rounded-2xl object-cover"
+              />
               <p className="text-body-sm leading-6 text-wa-gray-700">
                 السعر واضح قبل التسجيل، وبعدها ينتقل المستخدم إلى الفوترة أو ربط القنوات بدون مسار طويل.
               </p>
@@ -356,6 +394,9 @@ export function PublicPricingPage({ paymobMode }: { paymobMode: PaymobMode }) {
         </div>
         <div className="mt-8">
           <PlanCards />
+        </div>
+        <div className="mt-5">
+          <LocalPriceAlert />
         </div>
       </section>
 
@@ -411,7 +452,13 @@ export function SecurityTrustPage() {
           <div className="rounded-[28px] border border-wa-gray-100 bg-wa-gray-900 p-4 text-white shadow-[0_24px_72px_rgba(13,20,33,0.14)] sm:p-5">
             <div className="rounded-[24px] bg-white p-5 text-wa-gray-900">
               <div className="mb-2 flex items-center gap-4 rounded-2xl bg-wa-gray-50 p-3">
-                <Image src="/assets/3dicons/chat-text-dynamic-color.png" alt="" width={112} height={112} className="size-20 shrink-0 object-contain" />
+                <Image
+                  src={sharedPublicHeroPhoto}
+                  alt="فريق دعم يتابع حالة القنوات والردود"
+                  width={112}
+                  height={112}
+                  className="size-20 shrink-0 rounded-2xl object-cover"
+                />
                 <p className="text-body-sm font-semibold leading-6 text-wa-gray-800">
                   الثقة تبدأ من توضيح الحالة الحقيقية للردود والقنوات قبل البيع.
                 </p>

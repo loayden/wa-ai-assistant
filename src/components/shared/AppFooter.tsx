@@ -19,6 +19,7 @@ const footerSections = [
       { label: "لوحة التحكم", href: "/dashboard" },
       { label: "إعداد القنوات", href: "/connect" },
       { label: "الرسائل", href: "/messages" },
+      { label: "المدونة", href: publicMarketingRoutes.blog },
     ],
   },
   {
@@ -121,6 +122,12 @@ export function AppFooter({ className, compact = false }: { className?: string; 
         <div className={cn("flex flex-col gap-3 text-body-sm text-wa-gray-500 md:flex-row md:items-center md:justify-between", compact ? "mt-6" : "mt-6")}>
           <span>© 2026 {BRAND_NAME}. جميع الحقوق محفوظة.</span>
           <div className="flex flex-wrap gap-2">
+            <Link
+              href="https://www.pexels.com/"
+              className="rounded-full border border-wa-gray-100 bg-white px-3 py-1.5 text-xs font-semibold text-wa-gray-600 transition hover:text-wa-blue-600"
+            >
+              صور من Pexels
+            </Link>
             <span className="rounded-full border border-wa-gray-100 bg-white px-3 py-1.5 text-xs font-semibold text-wa-gray-600">50 رد مجاني</span>
             <span className="rounded-full border border-wa-gray-100 bg-white px-3 py-1.5 text-xs font-semibold text-wa-gray-600">Pro 999 جنيه/شهر</span>
             <span className="rounded-full border border-wa-gray-100 bg-white px-3 py-1.5 text-xs font-semibold text-wa-gray-600">Business 2,499 جنيه/شهر</span>

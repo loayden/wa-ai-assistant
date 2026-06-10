@@ -1,0 +1,20 @@
+export const marketingEventNames = [
+  "page_view",
+  "cta_click",
+  "pricing_plan_click",
+  "blog_article_click",
+  "public_nav_click",
+] as const;
+
+export type MarketingEventName = (typeof marketingEventNames)[number];
+
+export type MarketingEventPayload = {
+  eventName: MarketingEventName;
+  clientId: string;
+  path: string;
+  label?: string;
+  target?: string;
+  source?: string;
+  referrer?: string;
+  viewport?: string;
+};

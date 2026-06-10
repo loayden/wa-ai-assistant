@@ -7,9 +7,10 @@
  * can remain static while TanStack Query and auth subscriptions hydrate once.
  */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { Toaster } from "sonner";
 
+import { MarketingEventTracker } from "@/components/marketing/MarketingEventTracker";
 import { AuthProvider } from "@/components/shared/AuthProvider";
 
 export function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -28,6 +29,9 @@ export function Providers({ children }: Readonly<{ children: React.ReactNode }>)
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>{children}</AuthProvider>
+      <Suspense fallback={null}>
+        <MarketingEventTracker />
+      </Suspense>
       <Toaster
         closeButton
         position="top-center"

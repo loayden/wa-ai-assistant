@@ -18,6 +18,7 @@ const PUBLIC_API_PATHS = new Set([
   "/api/cron/daily-summary",
   "/api/cron/weekly-report",
   "/api/cron/expire-trials",
+  "/api/marketing/events",
 ]);
 const DASHBOARD_PAGE_PREFIXES = [
   "/dashboard",

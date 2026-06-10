@@ -55,6 +55,7 @@ describe("public SEO metadata", () => {
     const config = manifest();
 
     expect(config.short_name).toBe("Kallem");
+    expect(config.start_url).toBe("http://localhost:3000/dashboard");
     expect(config.display).toBe("standalone");
     expect(config.theme_color).toBe("#1A56FF");
     expect(config.icons?.some((icon) => icon.src === "/icon.png" && icon.sizes === "512x512")).toBe(true);

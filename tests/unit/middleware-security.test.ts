@@ -1,7 +1,21 @@
 import { NextRequest } from "next/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { middleware } from "@/middleware";
+import { createPublicMiddlewareResponse } from "@/lib/supabase/middleware";
+
+vi.mock("@/lib/supabase/middleware", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/supabase/middleware")>();
+
+  return {
+    ...actual,
+    updateSession: vi.fn(async (request: NextRequest, headers?: HeadersInit) => ({
+      response: actual.createPublicMiddlewareResponse(request, headers),
+      user: null,
+      error: null,
+    })),
+  };
+});
 
 describe("security middleware", () => {
   it("adds a CSP that permits required SDK styles and blob workers without unsafe script execution", async () => {
@@ -35,4 +49,44 @@ describe("security middleware", () => {
       expect(response.headers.get("location")).toBe(`https://kallem.vercel.app/login?next=${encodeURIComponent(pathname)}`);
     },
   );
+
+  it("redirects authenticated users away from login to the requested app page", async () => {
+    const { updateSession } = await import("@/lib/supabase/middleware");
+    vi.mocked(updateSession).mockResolvedValueOnce({
+      response: createPublicMiddlewareResponse(new NextRequest("https://kallem.vercel.app/login?next=%2Fmessages")),
+      user: {
+        id: "user-1",
+        app_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+        user_metadata: {},
+      },
+      error: null,
+    });
+
+    const response = await middleware(new NextRequest("https://kallem.vercel.app/login?next=%2Fmessages"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://kallem.vercel.app/messages");
+  });
+
+  it("keeps authenticated users away from signup loops", async () => {
+    const { updateSession } = await import("@/lib/supabase/middleware");
+    vi.mocked(updateSession).mockResolvedValueOnce({
+      response: createPublicMiddlewareResponse(new NextRequest("https://kallem.vercel.app/signup?next=%2Flogin")),
+      user: {
+        id: "user-1",
+        app_metadata: {},
+        aud: "authenticated",
+        created_at: new Date().toISOString(),
+        user_metadata: {},
+      },
+      error: null,
+    });
+
+    const response = await middleware(new NextRequest("https://kallem.vercel.app/signup?next=%2Flogin"));
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe("https://kallem.vercel.app/connect");
+  });
 });

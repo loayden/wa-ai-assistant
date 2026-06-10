@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
  */
 import { createPublicMiddlewareResponse, updateSession } from "@/lib/supabase/middleware";
 import { createNonce, getSecurityHeaders } from "@/lib/security/csp";
+import { normalizeAuthNextPath } from "@/lib/auth/redirect-url";
 
 const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/auth", "/api/health"];
 const PUBLIC_API_PATHS = new Set([
@@ -40,6 +41,7 @@ const DASHBOARD_PAGE_PREFIXES = [
   "/support",
   "/admin",
 ];
+const AUTH_PAGE_PATHS = new Set(["/login", "/signup"]);
 
 function isPublicApiPath(pathname: string): boolean {
   return PUBLIC_API_PATHS.has(pathname) || PUBLIC_API_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -51,6 +53,16 @@ function isApiPath(pathname: string): boolean {
 
 function isProtectedPagePath(pathname: string): boolean {
   return DASHBOARD_PAGE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function isAuthPagePath(pathname: string): boolean {
+  return AUTH_PAGE_PATHS.has(pathname);
+}
+
+function getAuthenticatedLandingPath(request: NextRequest): string {
+  const nextPath = normalizeAuthNextPath(request.nextUrl.searchParams.get("next"));
+
+  return isAuthPagePath(nextPath) ? "/connect" : nextPath;
 }
 
 function isE2EAuthBypassEnabled(request: NextRequest): boolean {
@@ -108,12 +120,33 @@ function createUnauthenticatedResponse(request: NextRequest, sessionResponse: Ne
   return applySecurityHeaders(response, nonce);
 }
 
+function createAuthenticatedAuthPageResponse(request: NextRequest, sessionResponse: NextResponse, nonce: string): NextResponse {
+  const redirectUrl = new URL(getAuthenticatedLandingPath(request), request.url);
+  const response = NextResponse.redirect(redirectUrl);
+
+  sessionResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  });
+
+  return applySecurityHeaders(response, nonce);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { nonce, requestHeaders } = createNonceHeaders(request);
 
   if (isPublicApiPath(pathname)) {
     return applySecurityHeaders(createPublicMiddlewareResponse(request, requestHeaders), nonce);
+  }
+
+  if (isAuthPagePath(pathname)) {
+    const { response, user } = await updateSession(request, requestHeaders);
+
+    if (user) {
+      return createAuthenticatedAuthPageResponse(request, response, nonce);
+    }
+
+    return applySecurityHeaders(response, nonce);
   }
 
   if (!isApiPath(pathname) && !isProtectedPagePath(pathname)) {

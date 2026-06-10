@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: BRAND_LOCKUP,
     short_name: "Kallem",
     description: "منصة عربية لإدارة رسائل واتساب وإنستجرام وماسنجر والردود الذكية للأعمال الصغيرة.",
-    start_url: getAbsoluteUrl("/"),
+    start_url: getAbsoluteUrl("/dashboard"),
     scope: getAbsoluteUrl("/"),
     display: "standalone",
     background_color: "#FFFFFF",

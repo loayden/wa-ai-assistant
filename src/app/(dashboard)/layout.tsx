@@ -4,11 +4,15 @@
  * Decision: Protected pages now share a compact command-center shell so the
  * assistant toggle and conversation surfaces stay visually primary.
  */
+import type { Metadata } from "next";
 import { TopBar } from "@/components/shared/TopBar";
 import { ensureAppUser } from "@/lib/api/auth";
+import { noIndexMetadata } from "@/lib/marketing/seo";
 import { getUser } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = noIndexMetadata;
 
 function getLoginRedirectPath(pathname: string | null): string {
   const nextPath = pathname?.startsWith("/") ? pathname : "/dashboard";

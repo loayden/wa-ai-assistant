@@ -4,10 +4,12 @@
  * signup inherit more product context and visual depth without changing the
  * form behavior itself.
  */
+import type { Metadata } from "next";
 import Image from "next/image";
 import { Bot, CheckCircle2, MailCheck, RadioTower, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 
 import { AppFooter } from "@/components/shared/AppFooter";
+import { noIndexMetadata } from "@/lib/marketing/seo";
 
 const authImage =
   "https://images.pexels.com/photos/3184298/pexels-photo-3184298.jpeg?auto=compress&cs=tinysrgb&w=1600";
@@ -40,6 +42,8 @@ const authPoints = [
   "الذكاء يرد على رسائل القنوات المتصلة مع بقاء المالك متحكماً بالكامل.",
   "مراجعة كل محادثات العملاء من صندوق رسائل هادئ بدلاً من لوحات متفرقة.",
 ];
+
+export const metadata: Metadata = noIndexMetadata;
 
 export default function AuthLayout({
   children,

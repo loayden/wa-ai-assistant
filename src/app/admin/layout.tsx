@@ -1,8 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { ForbiddenError, UnauthorizedError, requireAdminUser } from "@/lib/api/auth";
+import { noIndexMetadata } from "@/lib/marketing/seo";
 
 const adminLinks = [
   { href: "/admin", label: "نظرة عامة" },
@@ -11,6 +13,8 @@ const adminLinks = [
   { href: "/admin/questions", label: "أسئلة السوق" },
   { href: "/admin/tickets", label: "الدعم" },
 ];
+
+export const metadata: Metadata = noIndexMetadata;
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   try {

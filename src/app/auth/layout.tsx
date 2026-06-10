@@ -3,7 +3,12 @@
  * Decision: Supabase confirmation screens share the same footer and calm shell
  * as the primary auth pages, so users are never dropped into an unfinished route.
  */
+import type { Metadata } from "next";
+
 import { AppFooter } from "@/components/shared/AppFooter";
+import { noIndexMetadata } from "@/lib/marketing/seo";
+
+export const metadata: Metadata = noIndexMetadata;
 
 export default function AuthUtilityLayout({
   children,

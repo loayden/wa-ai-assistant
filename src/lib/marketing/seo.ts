@@ -42,3 +42,14 @@ export function getSiteUrl() {
 export function getAbsoluteUrl(path: string) {
   return new URL(path, getSiteUrl()).toString();
 }
+
+export const noIndexMetadata = {
+  robots: {
+    index: false,
+    follow: false,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
+} as const;

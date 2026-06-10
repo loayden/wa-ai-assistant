@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
-import { publicSeoRoutes } from "@/lib/marketing/seo";
+import { noIndexMetadata, publicSeoRoutes } from "@/lib/marketing/seo";
 
 describe("public SEO metadata", () => {
   it("keeps sitemap limited to public marketing and legal routes", () => {
@@ -24,5 +24,12 @@ describe("public SEO metadata", () => {
     expect(firstRule.disallow).toContain("/messages");
     expect(firstRule.allow).toContain("/blog");
     expect(config.sitemap).toContain("/sitemap.xml");
+  });
+
+  it("provides shared noindex metadata for auth and protected layouts", () => {
+    expect(noIndexMetadata.robots.index).toBe(false);
+    expect(noIndexMetadata.robots.follow).toBe(false);
+    expect(noIndexMetadata.robots.googleBot.index).toBe(false);
+    expect(noIndexMetadata.robots.googleBot.follow).toBe(false);
   });
 });

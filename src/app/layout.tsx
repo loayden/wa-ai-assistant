@@ -24,6 +24,8 @@ const cairo = Cairo({
 
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
+  applicationName: BRAND_LOCKUP,
+  manifest: "/manifest.webmanifest",
   title: {
     default: BRAND_LOCKUP,
     template: `%s | ${BRAND_LOCKUP}`,
@@ -58,6 +60,19 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  appleWebApp: {
+    capable: true,
+    title: BRAND_LOCKUP,
+    statusBarStyle: "default",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#1A56FF",
+  colorScheme: "light",
 };
 
 export default async function RootLayout({

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import manifest from "@/app/manifest";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { noIndexMetadata, publicSeoRoutes } from "@/lib/marketing/seo";
@@ -31,5 +32,14 @@ describe("public SEO metadata", () => {
     expect(noIndexMetadata.robots.follow).toBe(false);
     expect(noIndexMetadata.robots.googleBot.index).toBe(false);
     expect(noIndexMetadata.robots.googleBot.follow).toBe(false);
+  });
+
+  it("exposes installable app manifest metadata", () => {
+    const config = manifest();
+
+    expect(config.short_name).toBe("Kallem");
+    expect(config.display).toBe("standalone");
+    expect(config.theme_color).toBe("#1A56FF");
+    expect(config.icons?.some((icon) => icon.src === "/icon.png" && icon.sizes === "512x512")).toBe(true);
   });
 });

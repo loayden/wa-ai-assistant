@@ -46,9 +46,9 @@ export default async function DashboardLayout({
         userEmail={user.email ?? null}
         userName={fullName}
       />
-      <main className="relative mx-auto min-h-screen w-full max-w-[1480px] px-2 pb-24 pt-[4.5rem] sm:px-4 md:pb-8 md:pt-20 xl:px-6">
-        <div className="glass-surface min-h-[calc(100vh-6.5rem)] overflow-hidden rounded-[28px] p-2 sm:rounded-[34px] sm:p-3 md:min-h-[calc(100vh-7rem)] md:p-4">
-          <div className="min-h-[calc(100vh-7.5rem)] rounded-[24px] bg-white/48 md:min-h-[calc(100vh-8.5rem)]">
+      <main className="relative mx-auto min-h-screen w-full max-w-[1520px] px-2 pb-24 pt-[4.5rem] sm:px-4 md:pb-5 md:pl-[92px] md:pt-20 xl:px-5">
+        <div className="glass-surface min-h-[calc(100vh-6.5rem)] overflow-hidden rounded-[28px] p-2 sm:rounded-[34px] sm:p-3 md:min-h-[calc(100vh-6.25rem)]">
+          <div className="min-h-[calc(100vh-7.5rem)] rounded-[24px] bg-white/46 md:min-h-[calc(100vh-7.75rem)]">
             {children}
           </div>
         </div>

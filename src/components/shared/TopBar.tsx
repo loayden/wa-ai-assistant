@@ -111,7 +111,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const mobilePrimaryItems = navItems.filter((item) => mobilePrimaryHrefs.has(item.href));
   const desktopPrimaryItems = navItems.filter((item) => desktopPrimaryHrefs.has(item.href) || (isAdmin && item.href === "/admin"));
   const desktopMoreItems = navItems.filter((item) => !desktopPrimaryItems.some((primaryItem) => primaryItem.href === item.href));
-  const moreActive = desktopMoreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  const activeItem = navItems.find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) ?? navItems[0];
 
   useEffect(() => {
     setMenuOpen(false);
@@ -141,47 +141,80 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
 
   return (
     <>
-      <header className="fixed inset-x-0 top-2 z-30 px-2 sm:top-3 sm:px-4">
-        <div className="glass-surface mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-3 rounded-[22px] px-3 md:h-16 md:rounded-[26px] sm:px-5">
-          <BrandLogo wordmarkSize="sm" />
-          <nav
-            className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl md:flex"
-            aria-label="تنقل التطبيق"
-          >
-            {desktopPrimaryItems.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      <aside className="glass-surface fixed bottom-3 left-3 top-3 z-40 hidden w-[72px] flex-col items-center gap-3 rounded-[28px] p-2 md:flex">
+        <Link
+          href="/dashboard"
+          aria-label="الرئيسية"
+          className="flex size-12 items-center justify-center rounded-[18px] bg-white/88 text-xl font-semibold text-wa-blue-600 shadow-[0_12px_30px_rgba(4,44,83,0.10)]"
+        >
+          ك
+        </Link>
+        <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto py-1" aria-label="تنقل التطبيق">
+          {desktopPrimaryItems.map((item) => {
+            const Icon = item.icon;
+            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
-                    active ? "bg-white/92 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.12)]" : "text-wa-gray-600 hover:bg-white/80 hover:text-wa-gray-900",
-                  )}
-                  >
-                  <Icon className="size-4" aria-hidden="true" />
-                  {item.label}
-                  {item.href === "/readiness" ? <ReadinessDot score={readinessScore} /> : null}
-                </Link>
-              );
-            })}
-            {desktopMoreItems.length > 0 ? (
-              <button
-                type="button"
-                onClick={() => setMenuOpen(true)}
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                title={item.label}
+                aria-label={item.label}
+                aria-current={active ? "page" : undefined}
                 className={cn(
-                  "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
-                  moreActive ? "bg-white/92 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.12)]" : "text-wa-gray-600 hover:bg-white/80 hover:text-wa-gray-900",
+                  "relative flex size-11 items-center justify-center rounded-[17px] text-wa-gray-500 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
+                  active
+                    ? "bg-wa-blue-600 text-white shadow-[0_14px_34px_rgba(26,86,255,0.28)]"
+                    : "hover:bg-white/80 hover:text-wa-gray-900",
                 )}
               >
-                <Menu className="size-4" aria-hidden="true" />
-                المزيد
-              </button>
-            ) : null}
-          </nav>
+                <Icon className="size-5" aria-hidden="true" />
+                {item.href === "/readiness" ? (
+                  <span className="absolute -left-0.5 -top-0.5 rounded-full border-2 border-white">
+                    <ReadinessDot score={readinessScore} />
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </nav>
+        <button
+          type="button"
+          title="المزيد"
+          aria-label="المزيد"
+          onClick={() => setMenuOpen(true)}
+          className={cn(
+            "flex size-11 items-center justify-center rounded-[17px] text-wa-gray-500 transition hover:bg-white/80 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
+            desktopMoreItems.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) && "bg-white/90 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.10)]",
+          )}
+        >
+          <Menu className="size-5" aria-hidden="true" />
+        </button>
+      </aside>
+      <header className="fixed inset-x-2 top-2 z-30 sm:top-3 sm:px-2 md:left-[92px] md:right-4 md:px-0">
+        <div className="glass-surface mx-auto flex h-14 max-w-[1360px] items-center justify-between gap-3 rounded-[22px] px-3 md:h-16 md:rounded-[26px] sm:px-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <BrandLogo className="hidden sm:flex" wordmarkSize="sm" />
+            <span className="hidden h-6 w-px bg-white/70 sm:block" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="truncate text-body-sm font-semibold text-wa-gray-900">{activeItem?.label ?? "kallem"}</p>
+              <p className="hidden truncate text-label font-semibold uppercase tracking-widest text-wa-gray-500 sm:block">
+                صندوق موحد لواتساب وإنستجرام وماسنجر
+              </p>
+            </div>
+          </div>
+          <div className="hidden items-center gap-2 md:flex">
+            <span className="rounded-full border border-white/70 bg-white/60 px-3 py-1.5 text-label font-semibold uppercase tracking-widest text-wa-gray-600">
+              {displayPlan}
+            </span>
+            <Link
+              href="/readiness"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full border border-white/70 bg-white/60 px-3 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-white/90"
+            >
+              <ReadinessDot score={readinessScore} />
+              الجاهزية
+            </Link>
+          </div>
           <button
             type="button"
             aria-label="فتح الحساب"

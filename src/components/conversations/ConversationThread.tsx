@@ -30,6 +30,7 @@ export interface ConversationThreadMessage {
 }
 
 export interface ConversationThreadProps {
+  className?: string;
   connectionId: string | null;
   contactName: string;
   channel?: "whatsapp" | "instagram" | "messenger";
@@ -44,6 +45,7 @@ export interface ConversationThreadProps {
   onBack: () => void;
   onSent?: () => void;
   onThreadUpdated?: (updates: { handoffActive?: boolean; resolvedAt?: string | null; rating?: number | null; ratingRequestedAt?: string | null }) => void;
+  variant?: "overlay" | "inline";
 }
 
 function formatTime(value: string) {
@@ -73,6 +75,7 @@ function extractOutboundFailure(message?: ConversationThreadMessage | null): Out
 }
 
 export function ConversationThread({
+  className,
   connectionId,
   contactName,
   channel = "whatsapp",
@@ -87,6 +90,7 @@ export function ConversationThread({
   onThreadUpdated,
   phoneNumber,
   threadId,
+  variant = "overlay",
 }: ConversationThreadProps) {
   const [draft, setDraft] = useState("");
   const [correctedReply, setCorrectedReply] = useState("");
@@ -186,11 +190,29 @@ export function ConversationThread({
     correctMutation.mutate({ correctReply: trimmedReply, messageId });
   }
 
+  const inline = variant === "inline";
+
   return (
-    <section className="fixed inset-0 z-50 flex animate-fade-in items-end bg-wa-gray-900/25 p-0 backdrop-blur-[2px] sm:items-center sm:justify-center sm:p-6" role="dialog" aria-modal="true">
-      <div className="flex h-[100dvh] w-full max-w-[760px] flex-col overflow-hidden rounded-none border border-wa-gray-100 bg-white shadow-[0_30px_100px_rgba(13,20,33,0.22)] sm:h-[84vh] sm:rounded-[32px]">
+    <section
+      className={cn(
+        inline
+          ? "flex h-full min-h-0 flex-col bg-transparent"
+          : "fixed inset-0 z-50 flex animate-fade-in items-end bg-wa-gray-900/25 p-0 backdrop-blur-[2px] sm:items-center sm:justify-center sm:p-6",
+        className,
+      )}
+      role={inline ? undefined : "dialog"}
+      aria-modal={inline ? undefined : "true"}
+    >
+      <div
+        className={cn(
+          "flex min-h-0 w-full flex-col overflow-hidden",
+          inline
+            ? "h-full max-w-none rounded-none border-0 bg-transparent shadow-none"
+            : "h-[100dvh] max-w-[760px] rounded-none border border-wa-gray-100 bg-white shadow-[0_30px_100px_rgba(13,20,33,0.22)] sm:h-[84vh] sm:rounded-[32px]",
+        )}
+      >
         <header className="flex min-h-14 shrink-0 items-center gap-3 border-b border-wa-gray-100 px-3 sm:min-h-16 sm:px-5">
-          <IconButton label="الرجوع للرسائل" onClick={onBack}>
+          <IconButton className={inline ? "lg:hidden" : undefined} label="الرجوع للرسائل" onClick={onBack}>
             <ArrowLeft aria-hidden="true" />
           </IconButton>
           <div className="min-w-0 flex-1">

@@ -1,14 +1,24 @@
-// FILE: src/components/messages/MessageList.tsx
 "use client";
 
 /*
  * [ROLE: FRONTEND ENGINEER]
- * Decision: The full inbox keeps the existing paginated API but replaces
- * backend-flavored tables with scan-friendly conversation cards.
+ * Decision: The inbox is now an operational workspace, not a dashboard page.
+ * It mirrors modern shared-inbox products: conversation queue, live thread,
+ * and compact tools rail in one stable surface.
  */
 import { useDeferredValue, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, Bot, CheckCircle2, Clock3, Inbox, MessageSquareText, Search, ShieldCheck, UserRoundCheck } from "lucide-react";
+import {
+  Bot,
+  Clock3,
+  Inbox,
+  MessageSquareText,
+  MoreHorizontal,
+  Search,
+  Settings2,
+  ShieldCheck,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { ChannelIcon } from "@/components/icons/ChannelIcons";
@@ -27,6 +37,20 @@ type SimpleFilter = "ALL" | "UNANSWERED" | "HANDOFF" | "TODAY";
 type ConnectionFilter = "ALL" | string;
 type ChannelFilter = "all" | "whatsapp" | "instagram" | "messenger";
 
+const channelOptions: Array<{ value: ChannelFilter; label: string }> = [
+  { value: "all", label: "الكل" },
+  { value: "whatsapp", label: "واتساب" },
+  { value: "instagram", label: "إنستجرام" },
+  { value: "messenger", label: "ماسنجر" },
+];
+
+const queueFilters: Array<{ value: SimpleFilter; label: string }> = [
+  { value: "ALL", label: "الكل" },
+  { value: "UNANSWERED", label: "لم يتم الرد" },
+  { value: "HANDOFF", label: "تدخل بشري" },
+  { value: "TODAY", label: "اليوم" },
+];
+
 function formatTimestamp(value: string) {
   return new Intl.DateTimeFormat("ar-EG", { day: "numeric", hour: "2-digit", minute: "2-digit", month: "short" }).format(new Date(value));
 }
@@ -44,13 +68,6 @@ function getCustomerPhone(message: MessageRecord) {
 function getConversationKey(message: MessageRecord) {
   return `${message.connectionId}:${getCustomerPhone(message)}`;
 }
-
-const channelOptions: Array<{ value: ChannelFilter; label: string }> = [
-  { value: "all", label: "الكل" },
-  { value: "whatsapp", label: "واتساب" },
-  { value: "instagram", label: "إنستجرام" },
-  { value: "messenger", label: "ماسنجر" },
-];
 
 export function MessageList() {
   const [page, setPage] = useState(1);
@@ -94,7 +111,7 @@ export function MessageList() {
         (simpleFilter === "TODAY" && isToday(message.createdAt));
       const matchesSearch =
         !normalizedSearch ||
-        [message.bodyText, message.aiReplyText, message.fromNumber, message.toNumber]
+        [message.bodyText, message.aiReplyText, message.fromNumber, message.toNumber, message.senderName]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(normalizedSearch));
 
@@ -102,21 +119,25 @@ export function MessageList() {
     });
   }, [deferredSearch, messagesResult.messages, simpleFilter]);
 
-  const threadMessages = useMemo(() => {
+  const selectedConversation = useMemo(() => {
     if (!activeConversation) {
+      return filteredMessages[0] ?? null;
+    }
+
+    return filteredMessages.some((message) => getConversationKey(message) === getConversationKey(activeConversation))
+      ? activeConversation
+      : filteredMessages[0] ?? null;
+  }, [activeConversation, filteredMessages]);
+
+  const threadMessages = useMemo(() => {
+    if (!selectedConversation) {
       return [];
     }
 
-    const key = getConversationKey(activeConversation);
+    const key = getConversationKey(selectedConversation);
     return messagesResult.messages.filter((message) => getConversationKey(message) === key);
-  }, [activeConversation, messagesResult.messages]);
+  }, [selectedConversation, messagesResult.messages]);
 
-  const chips: Array<{ value: SimpleFilter; label: string }> = [
-    { value: "ALL", label: "الكل" },
-    { value: "UNANSWERED", label: "تحتاج رد" },
-    { value: "HANDOFF", label: "تدخل بشري" },
-    { value: "TODAY", label: "اليوم" },
-  ];
   const unansweredCount = messagesResult.messages.filter((message) => message.status === "RECEIVED").length;
   const aiRepliesCount = messagesResult.messages.filter((message) => message.status === "REPLIED" && Boolean(message.aiReplyText)).length;
   const failedCount = messagesResult.messages.filter((message) => message.status === "FAILED").length;
@@ -124,183 +145,182 @@ export function MessageList() {
   const todayCount = messagesResult.messages.filter((message) => isToday(message.createdAt)).length;
 
   return (
-    <div className="relative mx-auto max-w-[1120px] px-3 pb-8 pt-4 sm:px-6 lg:pt-10">
-      <header className="mb-4 overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:mb-5 sm:rounded-[28px]">
-        <div className="flex flex-col gap-4 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-4 sm:gap-6 sm:p-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-[680px]">
-            <Link
-              className="mb-4 inline-flex min-h-9 items-center gap-2 rounded-full border border-wa-gray-100 bg-white px-3 text-body-sm font-semibold text-wa-gray-600 transition hover:bg-wa-gray-50 sm:mb-5 sm:min-h-10 sm:px-4"
-              href="/dashboard"
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              الرئيسية
-            </Link>
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الرسائل</p>
-            <h1 className="mt-2 text-[28px] font-semibold leading-tight text-wa-gray-900 sm:mt-3 sm:text-[46px]">صندوق وارد واضح لمتابعة العملاء يوميًا.</h1>
-            <p className="mt-3 text-body-sm leading-6 text-wa-gray-600 sm:mt-4 sm:text-body-lg">
-              ابحثي في المحادثات، تابعي الرسائل التي تحتاج اهتمام، وافتحي أي محادثة بدون الخروج من صفحة العمل.
-            </p>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3 lg:w-[380px] lg:grid-cols-1">
-            <InboxHeroStat label="المعروض" value={String(filteredMessages.length)} />
-            <InboxHeroStat label="تحتاج رد" value={String(unansweredCount)} tone={unansweredCount > 0 ? "attention" : "calm"} />
-            <InboxHeroStat label="تدخل بشري" value={String(handoffCount)} tone={handoffCount > 0 ? "attention" : "calm"} />
-            <InboxHeroStat label="ردود تلقائية" value={String(aiRepliesCount)} />
-            {failedCount > 0 ? <InboxHeroStat label="تحتاج إعداد" value={String(failedCount)} tone="attention" /> : null}
-          </div>
-        </div>
-      </header>
-
-      <section className="grid gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
-          <div className="border-b border-wa-gray-100 p-4 sm:p-5">
-            {connectionOptions.length > 1 ? (
-              <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+    <div className="h-[calc(100vh-7.75rem)] min-h-[720px] p-2 sm:p-3 lg:p-4">
+      <section
+        dir="ltr"
+        className="grid h-full min-h-0 overflow-hidden rounded-[28px] border border-white/70 bg-white/68 shadow-[0_24px_80px_rgba(4,44,83,0.14)] backdrop-blur-2xl lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[372px_minmax(0,1fr)_76px]"
+      >
+        <aside dir="rtl" className="flex min-h-0 flex-col border-b border-wa-gray-100/80 bg-white/64 lg:border-b-0 lg:border-l">
+          <header className="shrink-0 border-b border-wa-gray-100/80 px-3 py-3 sm:px-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="text-body font-semibold text-wa-gray-900">المحادثات</h1>
+                <p className="mt-0.5 text-label font-semibold uppercase tracking-widest text-wa-gray-400">
+                  WhatsApp · Instagram · Messenger
+                </p>
+              </div>
+              <div className="flex items-center rounded-full border border-wa-gray-100 bg-white p-1 text-body-sm font-semibold text-wa-gray-600">
                 <button
+                  className={cn("rounded-full px-3 py-1.5", simpleFilter === "ALL" ? "bg-wa-blue-50 text-wa-blue-700" : "text-wa-gray-500")}
                   type="button"
-                  className={cn(
-                    "min-h-9 shrink-0 rounded-full border px-3 text-body-sm font-semibold transition-colors",
-                    connectionFilter === "ALL"
-                      ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
-                      : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
-                  )}
                   onClick={() => {
-                    setConnectionFilter("ALL");
-                    setActiveConversation(null);
+                    setSimpleFilter("ALL");
+                    setStatus("ALL");
                     setPage(1);
                   }}
                 >
-                  كل القنوات
+                  Chats
                 </button>
-                {connectionOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    className={cn(
-                      "min-h-9 shrink-0 rounded-full border px-3 text-body-sm font-semibold transition-colors",
-                      connectionFilter === option.id
-                        ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
-                        : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
-                    )}
-                    onClick={() => {
-                      setConnectionFilter(option.id);
-                      setActiveConversation(null);
-                      setPage(1);
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
+                <button
+                  className={cn("rounded-full px-3 py-1.5", simpleFilter === "UNANSWERED" ? "bg-wa-blue-50 text-wa-blue-700" : "text-wa-gray-500")}
+                  type="button"
+                  onClick={() => {
+                    setSimpleFilter("UNANSWERED");
+                    setStatus("RECEIVED");
+                    setPage(1);
+                  }}
+                >
+                  Unreplied
+                </button>
               </div>
-            ) : null}
-            <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+            </div>
+
+            <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-2">
+              <span className="inline-flex min-h-9 items-center justify-center rounded-full border border-wa-gray-100 bg-white px-3 text-body-sm font-semibold text-wa-gray-700">
+                المفتوحة · الأحدث
+              </span>
+              <span className="rounded-full bg-wa-blue-600 px-2.5 py-1 text-label font-semibold text-white">
+                {unansweredCount}
+              </span>
+            </div>
+
+            <div className="relative mt-3">
+              <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400" aria-hidden="true" />
+              <Input
+                className="h-10 rounded-2xl border-white/70 bg-white/78 pr-9 text-body-sm shadow-none"
+                placeholder="بحث في العملاء أو الرسائل"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+            </div>
+
+            <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+              {queueFilters.map((chip) => (
+                <FilterChip
+                  key={chip.value}
+                  active={simpleFilter === chip.value}
+                  label={chip.label}
+                  onClick={() => {
+                    setSimpleFilter(chip.value);
+                    setStatus(chip.value === "UNANSWERED" ? "RECEIVED" : "ALL");
+                    setPage(1);
+                  }}
+                />
+              ))}
+            </div>
+
+            <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
               {channelOptions.map((option) => {
                 const active = channelFilter === option.value;
                 const channel = option.value === "all" ? null : option.value;
 
                 return (
-                  <button
+                  <FilterChip
                     key={option.value}
-                    type="button"
-                    className={cn(
-                      "inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-body-sm font-semibold transition-colors",
-                      active
-                        ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
-                        : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
-                    )}
+                    active={active}
+                    icon={channel ? <ChannelIcon channel={channel} className="size-3.5" /> : undefined}
+                    label={option.label}
                     onClick={() => {
                       setChannelFilter(option.value);
                       setConnectionFilter("ALL");
                       setActiveConversation(null);
                       setPage(1);
                     }}
-                  >
-                    {channel ? <ChannelIcon channel={channel} className="size-4" /> : null}
-                    {option.label}
-                  </button>
+                  />
                 );
               })}
             </div>
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-              <div className="relative">
-                <Search className="absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-wa-gray-400 sm:right-4" aria-hidden="true" />
-                <Input
-                  className="h-11 rounded-2xl bg-wa-gray-50 pr-10 sm:h-12 sm:pr-11"
-                  placeholder="ابحثي بالرسالة أو رقم الهاتف أو اسم العميل"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+
+            {connectionOptions.length > 1 ? (
+              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+                <FilterChip
+                  active={connectionFilter === "ALL"}
+                  label="كل القنوات"
+                  onClick={() => {
+                    setConnectionFilter("ALL");
+                    setActiveConversation(null);
+                    setPage(1);
+                  }}
                 />
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {chips.map((chip) => (
-                  <button
-                    key={chip.value}
-                    type="button"
-                    className={cn(
-                      "min-h-10 rounded-full border px-3 text-body-sm font-semibold transition-colors sm:min-h-11 sm:px-4",
-                      simpleFilter === chip.value
-                        ? "border-wa-blue-600 bg-wa-blue-50 text-wa-blue-800"
-                        : "border-wa-gray-100 bg-white text-wa-gray-600 hover:bg-wa-gray-50",
-                    )}
+                {connectionOptions.map((option) => (
+                  <FilterChip
+                    key={option.id}
+                    active={connectionFilter === option.id}
+                    label={option.label}
                     onClick={() => {
-                      setSimpleFilter(chip.value);
-                      setStatus(chip.value === "UNANSWERED" ? "RECEIVED" : "ALL");
+                      setConnectionFilter(option.id);
+                      setActiveConversation(null);
                       setPage(1);
                     }}
-                  >
-                    {chip.label}
-                  </button>
+                  />
                 ))}
               </div>
-            </div>
+            ) : null}
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {messagesResult.isLoading ? (
+              <div className="space-y-2.5 p-3">
+                {Array.from({ length: 8 }, (_, index) => (
+                  <Skeleton key={index} className="h-[86px] w-full rounded-2xl" />
+                ))}
+              </div>
+            ) : messagesResult.error ? (
+              <div className="p-4">
+                <Alert>
+                  <AlertTitle>تعذر تحميل الرسائل</AlertTitle>
+                  <AlertDescription>{messagesResult.error.message}</AlertDescription>
+                </Alert>
+              </div>
+            ) : filteredMessages.length === 0 ? (
+              <InboxEmptyState
+                title={search || simpleFilter !== "ALL" ? "لا توجد محادثات مطابقة" : "لا توجد رسائل بعد"}
+                body={search || simpleFilter !== "ALL" ? "غيّر البحث أو الفلتر لعرض محادثات أكثر." : "رسائل واتساب وإنستجرام وماسنجر ستظهر هنا."}
+              />
+            ) : (
+              filteredMessages.map((message) => (
+                <ConversationCard
+                  key={message.id}
+                  aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
+                  className="min-h-[88px] bg-transparent px-3 py-3 hover:bg-white/76 sm:min-h-[92px] sm:px-3"
+                  contactName={message.senderName ?? message.connection?.displayName}
+                  channel={message.channel}
+                  failed={message.status === "FAILED"}
+                  handoff={message.handoffActive}
+                  resolved={Boolean(message.resolvedAt)}
+                  rating={message.rating}
+                  socialIntent={message.socialIntent}
+                  phoneNumber={getCustomerPhone(message)}
+                  preview={
+                    message.status === "FAILED"
+                      ? message.aiReplyText ?? "لم يتم إرسال الرد. افتحي المحادثة لمعرفة المطلوب."
+                      : message.aiReplyText ?? message.bodyText
+                  }
+                  timestamp={formatTimestamp(message.createdAt)}
+                  unread={message.status === "RECEIVED"}
+                  selected={selectedConversation?.id === message.id}
+                  onClick={() => setActiveConversation(message)}
+                />
+              ))
+            )}
           </div>
 
-          {messagesResult.isLoading ? (
-            <div className="space-y-2.5 p-4 sm:space-y-3 sm:p-5">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-20 w-full rounded-2xl sm:h-24" />)}</div>
-          ) : messagesResult.error ? (
-            <div className="p-5">
-              <Alert>
-                <AlertTitle>تعذر تحميل الرسائل</AlertTitle>
-                <AlertDescription>{messagesResult.error.message}</AlertDescription>
-              </Alert>
-            </div>
-          ) : filteredMessages.length === 0 ? (
-            <InboxEmptyState
-              title={search || simpleFilter !== "ALL" ? "لا توجد محادثات مطابقة" : "لا توجد رسائل بعد"}
-              body={search || simpleFilter !== "ALL" ? "جرّبي بحثًا مختلفًا أو أزيلي الفلاتر لعرض محادثات أكثر." : "عندما يرسل العملاء إلى واتساب أو إنستجرام أو ماسنجر ستظهر المحادثات هنا."}
-            />
-          ) : (
-            filteredMessages.map((message) => (
-              <ConversationCard
-                key={message.id}
-                aiGenerated={message.status === "REPLIED" && Boolean(message.aiReplyText)}
-                contactName={message.senderName ?? message.connection?.displayName}
-                channel={message.channel}
-                failed={message.status === "FAILED"}
-                handoff={message.handoffActive}
-                resolved={Boolean(message.resolvedAt)}
-                rating={message.rating}
-                socialIntent={message.socialIntent}
-                phoneNumber={getCustomerPhone(message)}
-                preview={
-                  message.status === "FAILED"
-                    ? message.aiReplyText ?? "لم يتم إرسال الرد. افتحي المحادثة لمعرفة المطلوب."
-                    : message.aiReplyText ?? message.bodyText
-                }
-                timestamp={formatTimestamp(message.createdAt)}
-                unread={message.status === "RECEIVED"}
-                selected={activeConversation?.id === message.id}
-                onClick={() => setActiveConversation(message)}
-              />
-            ))
-          )}
-
-          <div className="flex flex-col gap-3 border-t border-wa-gray-100 p-4 text-body-sm text-wa-gray-600 sm:flex-row sm:items-center sm:justify-between">
+          <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-wa-gray-100/80 bg-white/74 px-3 py-2 text-label font-semibold text-wa-gray-500">
             <span>
-              صفحة {page} من {totalPages}
-              {messagesResult.query.isFetching ? <span className="mr-2 text-wa-blue-600">جارٍ التحديث...</span> : null}
+              صفحة {page} / {totalPages}
+              {messagesResult.query.isFetching ? <span className="mr-2 text-wa-blue-600">تحديث</span> : null}
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <Button disabled={page <= 1} size="sm" variant="outline" onClick={() => setPage((value) => Math.max(1, value - 1))}>
                 السابق
               </Button>
@@ -308,172 +328,158 @@ export function MessageList() {
                 التالي
               </Button>
             </div>
+          </footer>
+        </aside>
+
+        <main dir="rtl" className="flex min-h-0 flex-col bg-white/42">
+          {selectedConversation ? (
+            <ConversationThread
+              className="min-h-0"
+              connectionId={selectedConversation.connectionId}
+              channel={selectedConversation.channel}
+              contactName={selectedConversation.senderName ?? selectedConversation.connection?.displayName ?? getCustomerPhone(selectedConversation)}
+              channelAccountName={
+                selectedConversation.channel === "instagram"
+                  ? selectedConversation.connection?.instagramUsername
+                    ? `@${selectedConversation.connection.instagramUsername}`
+                    : null
+                  : selectedConversation.channel === "messenger"
+                    ? selectedConversation.connection?.facebookPageName ?? null
+                    : selectedConversation.connection?.displayName ?? null
+              }
+              handoffActive={Boolean(selectedConversation.handoffActive)}
+              rating={selectedConversation.rating}
+              ratingRequestedAt={selectedConversation.ratingRequestedAt}
+              resolvedAt={selectedConversation.resolvedAt}
+              phoneNumber={getCustomerPhone(selectedConversation)}
+              threadId={selectedConversation.id}
+              messages={threadMessages}
+              onBack={() => setActiveConversation(null)}
+              onSent={() => messagesResult.refetch().then(() => undefined)}
+              onThreadUpdated={(updates) => {
+                setActiveConversation((current) => (current ? { ...current, ...updates } : current));
+              }}
+              variant="inline"
+            />
+          ) : (
+            <EmptyConversation />
+          )}
+        </main>
+
+        <aside dir="rtl" className="hidden min-h-0 flex-col items-center gap-2 border-r border-wa-gray-100/80 bg-white/58 px-2 py-4 xl:flex">
+          <ToolButton icon={<UserRound />} label="بيانات العميل" />
+          <ToolButton icon={<Bot />} label="AI Assist" active />
+          <ToolButton icon={<Clock3 />} label="السجل" />
+          <ToolButton icon={<ShieldCheck />} label="الجودة" tone={failedCount > 0 ? "danger" : "default"} />
+          <ToolButton icon={<Settings2 />} label="إعدادات القنوات" href="/connect" />
+          <div className="mt-auto flex flex-col items-center gap-2">
+            <RailMetric label="اليوم" value={todayCount} />
+            <RailMetric label="AI" value={aiRepliesCount} />
+            <RailMetric label="بشري" value={handoffCount} />
+            <ToolButton icon={<MoreHorizontal />} label="المزيد" />
           </div>
-        </div>
-
-        <aside className="space-y-4">
-          <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">حالة الصندوق</p>
-            <div className="mt-4 grid gap-3">
-              <InboxHealthRow
-                icon={<CheckCircle2 className="size-4" aria-hidden="true" />}
-                label="اليوم"
-                value={`${todayCount} رسالة`}
-                tone={todayCount > 0 ? "blue" : "neutral"}
-              />
-              <InboxHealthRow
-                icon={<Bot className="size-4" aria-hidden="true" />}
-                label="مساعدة المساعد"
-                value={`${aiRepliesCount} رد`}
-                tone="blue"
-              />
-              <InboxHealthRow
-                icon={<ShieldCheck className="size-4" aria-hidden="true" />}
-                label="حالة المراجعة"
-                value={failedCount > 0 ? `${failedCount} مشكلة إعداد` : handoffCount > 0 ? `${handoffCount} محادثة بشرية` : unansweredCount > 0 ? `${unansweredCount} تنتظر` : "واضح"}
-                tone={failedCount > 0 || unansweredCount > 0 || handoffCount > 0 ? "attention" : "success"}
-              />
-              <InboxHealthRow
-                icon={<UserRoundCheck className="size-4" aria-hidden="true" />}
-                label="التدخل البشري"
-                value={handoffCount > 0 ? `${handoffCount} نشطة` : "لا يوجد"}
-                tone={handoffCount > 0 ? "attention" : "neutral"}
-              />
-            </div>
-          </section>
-
-          {failedCount > 0 ? (
-            <section className="rounded-[22px] border border-wa-error-bg bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
-              <div className="flex items-start gap-3">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-wa-error-bg text-wa-error">
-                  <AlertCircle className="size-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <p className="text-body-sm font-semibold text-wa-gray-900">الرد التلقائي يحتاج إعداد</p>
-                  <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">
-                    وصلت رسالة العميل، لكن الرد توقف قبل الإرسال. افتحي المحادثة لمعرفة السبب المسجل في kallem.
-                  </p>
-                  <p className="mt-2 rounded-2xl bg-wa-gray-50 px-3 py-2 text-body-sm leading-6 text-wa-gray-600">
-                    إذا كانت القناة ما زالت في وضع اختبار من Meta، فالردود مسموحة فقط لحسابات الاختبار المعتمدة.
-                  </p>
-                  <Link
-                    href="/connect"
-                    className="mt-3 inline-flex min-h-10 items-center justify-center rounded-full bg-wa-gray-900 px-4 text-body-sm font-semibold text-white transition hover:bg-wa-gray-700"
-                  >
-                    مراجعة الإعداد
-                  </Link>
-                </div>
-              </div>
-            </section>
-          ) : null}
-
-          <section className="rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px] sm:p-5">
-            <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">طريقة العمل اليومية</p>
-            <div className="mt-4 space-y-3">
-              <WorkflowRow icon={<Inbox className="size-4" aria-hidden="true" />} title="راجعي الرسائل الجديدة" body="ابدئي بالمحادثات المعلّمة بأنها تحتاج رد." />
-              <WorkflowRow icon={<MessageSquareText className="size-4" aria-hidden="true" />} title="افتحي المحادثة" body="راجعي رسالة العميل ورد المساعد في السياق الكامل." />
-              <WorkflowRow icon={<Clock3 className="size-4" aria-hidden="true" />} title="تابعي يدويًا" body="ارسلي ردًا مباشرًا عندما يحتاج الأمر تدخل صاحب النشاط." />
-            </div>
-            <Link
-              href="/connect"
-              className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-full border border-wa-gray-200 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 sm:mt-5 sm:min-h-11"
-            >
-              مراجعة إعداد القنوات
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </section>
         </aside>
       </section>
-      {activeConversation ? (
-        <ConversationThread
-          connectionId={activeConversation.connectionId}
-          channel={activeConversation.channel}
-          contactName={activeConversation.senderName ?? activeConversation.connection?.displayName ?? getCustomerPhone(activeConversation)}
-          channelAccountName={
-            activeConversation.channel === "instagram"
-              ? activeConversation.connection?.instagramUsername
-                ? `@${activeConversation.connection.instagramUsername}`
-                : null
-              : activeConversation.channel === "messenger"
-                ? activeConversation.connection?.facebookPageName ?? null
-                : activeConversation.connection?.displayName ?? null
-          }
-          handoffActive={Boolean(activeConversation.handoffActive)}
-          rating={activeConversation.rating}
-          ratingRequestedAt={activeConversation.ratingRequestedAt}
-          resolvedAt={activeConversation.resolvedAt}
-          phoneNumber={getCustomerPhone(activeConversation)}
-          threadId={activeConversation.id}
-          messages={threadMessages}
-          onBack={() => setActiveConversation(null)}
-          onSent={() => messagesResult.refetch().then(() => undefined)}
-          onThreadUpdated={(updates) => {
-            setActiveConversation((current) => (current ? { ...current, ...updates } : current));
-          }}
-        />
-      ) : null}
     </div>
   );
 }
 
-function InboxHeroStat({ label, tone = "calm", value }: { label: string; tone?: "calm" | "attention"; value: string }) {
+function FilterChip({
+  active,
+  icon,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  icon?: ReactNode;
+  label: string;
+  onClick: () => void;
+}) {
   return (
-    <div className={cn("rounded-2xl border bg-white p-3 sm:p-4", tone === "attention" ? "border-wa-blue-100" : "border-wa-gray-100")}>
-      <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">{label}</p>
-      <p className={cn("mt-1 text-h3 font-semibold sm:text-h2", tone === "attention" ? "text-wa-blue-600" : "text-wa-gray-900")}>{value}</p>
-    </div>
+    <button
+      type="button"
+      className={cn(
+        "inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-semibold transition",
+        active
+          ? "border-wa-blue-200 bg-wa-blue-50 text-wa-blue-800 shadow-[0_8px_20px_rgba(26,86,255,0.08)]"
+          : "border-wa-gray-100 bg-white/74 text-wa-gray-600 hover:bg-white",
+      )}
+      onClick={onClick}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }
 
 function InboxEmptyState({ body, title }: { body: string; title: string }) {
   return (
-    <div className="p-6 text-center sm:p-12">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-wa-blue-50 sm:size-16 sm:rounded-3xl">
-        <Inbox className="size-6 text-wa-blue-600 sm:size-7" aria-hidden="true" />
+    <div className="flex h-full min-h-[320px] flex-col items-center justify-center p-6 text-center">
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-wa-blue-50">
+        <Inbox className="size-6 text-wa-blue-600" aria-hidden="true" />
       </div>
-      <p className="mt-4 text-h3 font-semibold text-wa-gray-900">{title}</p>
-      <p className="mx-auto mt-2 max-w-[440px] text-body-sm leading-6 text-wa-gray-600">{body}</p>
+      <p className="mt-4 text-body font-semibold text-wa-gray-900">{title}</p>
+      <p className="mt-2 max-w-[300px] text-body-sm leading-6 text-wa-gray-600">{body}</p>
     </div>
   );
 }
 
-function InboxHealthRow({
+function EmptyConversation() {
+  return (
+    <div className="flex h-full min-h-[360px] flex-col items-center justify-center p-8 text-center">
+      <div className="flex size-16 items-center justify-center rounded-[24px] bg-white text-wa-blue-600 shadow-[0_16px_42px_rgba(4,44,83,0.08)]">
+        <MessageSquareText className="size-7" aria-hidden="true" />
+      </div>
+      <h2 className="mt-5 text-h2 font-semibold text-wa-gray-900">اختر محادثة للمتابعة</h2>
+      <p className="mt-2 max-w-[420px] text-body-sm leading-6 text-wa-gray-600">
+        افتح محادثة من القائمة لمراجعة رد المساعد، التسليم للبشر، أو إرسال رد يدوي.
+      </p>
+    </div>
+  );
+}
+
+function ToolButton({
+  active = false,
+  href,
   icon,
   label,
-  tone,
-  value,
+  tone = "default",
 }: {
+  active?: boolean;
+  href?: string;
   icon: ReactNode;
   label: string;
-  tone: "attention" | "blue" | "neutral" | "success";
-  value: string;
+  tone?: "danger" | "default";
 }) {
-  const toneClasses = {
-    attention: "bg-wa-blue-50 text-wa-blue-600",
-    blue: "bg-wa-blue-50 text-wa-blue-600",
-    neutral: "bg-wa-gray-50 text-wa-gray-500",
-    success: "bg-wa-success-bg text-wa-success",
-  };
+  const className = cn(
+    "flex size-11 items-center justify-center rounded-[17px] border text-wa-gray-500 transition hover:bg-white hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 [&>svg]:size-5",
+    active
+      ? "border-wa-blue-100 bg-wa-blue-50 text-wa-blue-700 shadow-[0_12px_28px_rgba(26,86,255,0.10)]"
+      : tone === "danger"
+        ? "border-wa-error-bg bg-wa-error-bg/70 text-wa-error"
+        : "border-wa-gray-100 bg-white/70",
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={className} title={label} aria-label={label}>
+        {icon}
+      </Link>
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3 sm:gap-3">
-      <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl sm:size-10 sm:rounded-2xl", toneClasses[tone])}>{icon}</span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-body-sm font-semibold text-wa-gray-900">{label}</span>
-        <span className="block truncate text-body-sm text-wa-gray-600">{value}</span>
-      </span>
-    </div>
+    <button type="button" className={className} title={label} aria-label={label}>
+      {icon}
+    </button>
   );
 }
 
-function WorkflowRow({ body, icon, title }: { body: string; icon: ReactNode; title: string }) {
+function RailMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-start gap-3">
-      <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-xl bg-wa-gray-50 text-wa-gray-500 sm:size-9 sm:rounded-2xl">{icon}</span>
-      <span>
-        <span className="block text-body-sm font-semibold text-wa-gray-900">{title}</span>
-        <span className="mt-0.5 block text-body-sm leading-5 text-wa-gray-600">{body}</span>
-      </span>
+    <div className="w-full rounded-2xl border border-wa-gray-100 bg-white/70 px-2 py-2 text-center">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-wa-gray-400">{label}</p>
+      <p className="mt-0.5 text-body-sm font-semibold text-wa-gray-900">{value}</p>
     </div>
   );
 }

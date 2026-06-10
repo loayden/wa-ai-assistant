@@ -11,6 +11,14 @@
   --wa-blue-100: #C7D7FE;
   --wa-blue-800: #0C447C;
   --wa-blue-900: #042C53;
+  --wa-glass-bg: rgba(255, 255, 255, 0.78);
+  --wa-glass-bg-strong: rgba(255, 255, 255, 0.9);
+  --wa-glass-border: rgba(255, 255, 255, 0.62);
+  --wa-glass-stroke: rgba(199, 215, 254, 0.58);
+  --wa-glass-shadow: 0 24px 80px rgba(4, 44, 83, 0.16), 0 8px 28px rgba(13, 20, 33, 0.08);
+  --wa-app-gradient: radial-gradient(circle at 12% 18%, rgba(106, 153, 255, 0.52), transparent 30%),
+    radial-gradient(circle at 86% 12%, rgba(26, 86, 255, 0.42), transparent 28%),
+    linear-gradient(135deg, #2f6fec 0%, #1a56ff 42%, #0b2147 100%);
   --wa-gray-0: #FFFFFF;
   --wa-gray-50: #F7F7F8;
   --wa-gray-100: #EFEFEF;

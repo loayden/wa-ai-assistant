@@ -104,9 +104,10 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
   }
 
   return (
-    <main className="min-h-screen bg-white text-wa-gray-900">
-      <header className="border-b border-wa-gray-100 bg-white/90 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-[980px] items-center justify-between gap-3 px-3 py-3 sm:px-6">
+    <main className="app-glass-background min-h-screen text-wa-gray-900">
+      <div className="pointer-events-none fixed inset-0 opacity-24 [background-image:linear-gradient(rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.14)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <header className="relative px-2 py-2 sm:px-4">
+        <nav className="glass-surface mx-auto flex max-w-[980px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5">
           <Link href="/" className="inline-flex items-baseline gap-2 text-xl font-semibold text-wa-gray-900" aria-label="kallem home">
             <span>{BRAND_NAME}</span>
             <span lang="ar" dir="rtl" className="text-wa-blue-600">
@@ -119,7 +120,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
         </nav>
       </header>
 
-      <article className="mx-auto max-w-[980px] px-3 py-10 sm:px-6 sm:py-16">
+      <article className="relative mx-auto max-w-[980px] px-3 py-10 sm:px-6 sm:py-16">
         <Link href="/blog" className="inline-flex items-center gap-2 text-body-sm font-semibold text-wa-blue-600 hover:underline">
           <ArrowLeft className="size-4 rotate-180" aria-hidden="true" />
           العودة للمدونة

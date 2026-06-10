@@ -51,12 +51,12 @@ export default function AuthLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <main className="min-h-screen bg-white text-wa-gray-900">
-      <div className="pointer-events-none fixed inset-0 opacity-60 [background-image:linear-gradient(rgba(26,86,255,.06)_1px,transparent_1px),linear-gradient(90deg,rgba(26,86,255,.06)_1px,transparent_1px)] [background-size:72px_72px]" />
-      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(180deg,rgba(235,240,255,0.88),rgba(255,255,255,0.94)_30%,rgba(255,255,255,1)_70%)]" />
+    <main className="app-glass-background min-h-screen text-wa-gray-900">
+      <div className="pointer-events-none fixed inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.18),rgba(255,255,255,0.56)_42%,rgba(255,255,255,0.18)_100%)]" />
 
       <div className="relative mx-auto grid min-h-screen max-w-[1320px] gap-5 px-3 py-4 sm:px-4 sm:py-6 lg:grid-cols-[0.98fr_0.82fr] lg:px-6 lg:py-8">
-        <section className="order-2 flex flex-col overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.06)] sm:rounded-[32px] lg:order-1">
+        <section className="glass-surface order-2 flex flex-col overflow-hidden rounded-[24px] sm:rounded-[32px] lg:order-1">
           <div className="relative min-h-[220px] w-full border-b border-wa-gray-100 sm:min-h-[340px]">
             <Image
               src={authImage}
@@ -66,7 +66,7 @@ export default function AuthLayout({
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 56vw"
             />
-            <div className="absolute inset-x-3 bottom-3 rounded-[20px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_52px_rgba(13,20,33,0.10)] backdrop-blur sm:inset-x-5 sm:bottom-5 sm:rounded-[24px] sm:p-5">
+            <div className="glass-panel absolute inset-x-3 bottom-3 rounded-[20px] p-4 sm:inset-x-5 sm:bottom-5 sm:rounded-[24px] sm:p-5">
               <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">إعداد جاهز للعمل</p>
               <p className="mt-2 max-w-[620px] text-body font-medium text-wa-gray-900">طريقة واضحة لربط واتساب وإنستجرام وماسنجر، تشغيل ردود الذكاء، ومتابعة العملاء بدون تعقيد.</p>
             </div>
@@ -90,7 +90,7 @@ export default function AuthLayout({
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-wa-blue-100 bg-white p-4 shadow-[0_14px_42px_rgba(26,86,255,0.06)] sm:rounded-[28px] sm:p-5">
+            <div className="glass-panel rounded-[22px] p-4 sm:rounded-[28px] sm:p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-label font-semibold uppercase tracking-widest text-wa-gray-400">مسار الإعداد</p>
@@ -119,12 +119,12 @@ export default function AuthLayout({
                 })}
               </div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+                <div className="glass-control rounded-2xl p-4">
                   <ShieldCheck className="size-5 text-wa-blue-600" aria-hidden="true" />
                   <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">تخزين آمن</p>
                   <p className="mt-1 text-body-sm text-wa-gray-600">بيانات الربط تُحفظ بعد التحقق منها وتبقى محمية.</p>
                 </div>
-                <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
+                <div className="glass-control rounded-2xl p-4">
                   <Sparkles className="size-5 text-wa-blue-600" aria-hidden="true" />
                   <p className="mt-3 text-body-sm font-semibold text-wa-gray-900">تحكم يومي</p>
                   <p className="mt-1 text-body-sm text-wa-gray-600">افتحي الرئيسية والرسائل والإعدادات والفوترة من نفس الحساب.</p>

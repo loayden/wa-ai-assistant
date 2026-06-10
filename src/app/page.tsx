@@ -653,23 +653,23 @@ function PromoVideoSection() {
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-white text-wa-gray-900">
+    <main className="app-glass-background relative min-h-screen overflow-x-hidden text-wa-gray-900">
       <SmoothScroll />
       <CinematicScrollEffects />
       <StructuredData />
 
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(180deg,#F7F9FF_0%,#FFFFFF_28%,#F7F7F8_68%,#FFFFFF_100%)]" />
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-70 [background-image:linear-gradient(rgba(26,86,255,.055)_1px,transparent_1px),linear-gradient(90deg,rgba(26,86,255,.055)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(255,255,255,0.18),transparent_24%)]" />
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-24 [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:72px_72px]" />
 
-      <header className="sticky top-0 z-50 border-b border-wa-gray-100 bg-white/88 backdrop-blur-2xl">
-        <nav className="mx-auto flex max-w-[1200px] items-center justify-between gap-3 px-3 py-3 sm:px-6 sm:py-4">
+      <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
+        <nav className="glass-surface mx-auto flex max-w-[1200px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5 sm:py-4">
           <BrandLockup />
-          <div className="hidden items-center gap-1 rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1 lg:flex">
+          <div className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 lg:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="rounded-full px-4 py-2 text-sm font-medium text-wa-gray-600 transition hover:bg-white hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
+                className="rounded-full px-4 py-2 text-sm font-medium text-wa-gray-600 transition hover:bg-white/82 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
               >
                 {item.label}
               </Link>
@@ -692,7 +692,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <section className="relative z-10 mx-auto grid max-w-[1200px] gap-8 px-3 pb-12 pt-10 sm:px-6 sm:pb-16 sm:pt-16 lg:min-h-[calc(100svh-78px)] lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-10 lg:py-20">
+      <section className="glass-surface relative z-10 mx-2 mt-3 grid max-w-[1200px] gap-8 rounded-[28px] px-3 pb-12 pt-10 sm:mx-auto sm:mt-5 sm:rounded-[36px] sm:px-6 sm:pb-16 sm:pt-16 lg:min-h-[calc(100svh-110px)] lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-10 lg:py-12">
         <div>
           <MotionReveal>
             <div className="inline-flex items-center gap-2 rounded-full border border-wa-blue-100 bg-white px-3 py-2 text-xs font-semibold text-wa-blue-600 shadow-[0_10px_30px_rgba(26,86,255,0.08)]">

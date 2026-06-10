@@ -141,11 +141,11 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-30 h-14 border-b border-wa-gray-100 bg-white/95 backdrop-blur-xl md:h-16">
-        <div className="mx-auto flex h-full max-w-[1120px] items-center justify-between gap-3 px-3 sm:px-6">
+      <header className="fixed inset-x-0 top-2 z-30 px-2 sm:top-3 sm:px-4">
+        <div className="glass-surface mx-auto flex h-14 max-w-[1200px] items-center justify-between gap-3 rounded-[22px] px-3 md:h-16 md:rounded-[26px] sm:px-5">
           <BrandLogo wordmarkSize="sm" />
           <nav
-            className="hidden items-center gap-1 rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1 md:flex"
+            className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] backdrop-blur-xl md:flex"
             aria-label="تنقل التطبيق"
           >
             {desktopPrimaryItems.map((item) => {
@@ -159,7 +159,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
                   aria-current={active ? "page" : undefined}
                   className={cn(
                     "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
-                    active ? "bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.06)]" : "text-wa-gray-600 hover:bg-white hover:text-wa-gray-900",
+                    active ? "bg-white/92 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.12)]" : "text-wa-gray-600 hover:bg-white/80 hover:text-wa-gray-900",
                   )}
                   >
                   <Icon className="size-4" aria-hidden="true" />
@@ -174,7 +174,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
                 onClick={() => setMenuOpen(true)}
                 className={cn(
                   "inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-body-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
-                  moreActive ? "bg-white text-wa-blue-600 shadow-[0_10px_28px_rgba(13,20,33,0.06)]" : "text-wa-gray-600 hover:bg-white hover:text-wa-gray-900",
+                  moreActive ? "bg-white/92 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.12)]" : "text-wa-gray-600 hover:bg-white/80 hover:text-wa-gray-900",
                 )}
               >
                 <Menu className="size-4" aria-hidden="true" />
@@ -186,14 +186,14 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
             type="button"
             aria-label="فتح الحساب"
             onClick={() => setProfileOpen(true)}
-            className="flex size-10 items-center justify-center rounded-full bg-wa-gray-50 text-[11px] font-semibold text-wa-gray-600 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 sm:text-label"
+            className="glass-control flex size-10 items-center justify-center rounded-full text-[11px] font-semibold text-wa-gray-700 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 sm:text-label"
           >
             {initialsFor(displayName, displayEmail)}
           </button>
         </div>
       </header>
       <nav
-        className="fixed inset-x-2 bottom-2 z-40 mx-auto grid max-w-[560px] grid-cols-5 gap-1 rounded-[22px] border border-wa-gray-100 bg-white/96 p-1 shadow-[0_14px_44px_rgba(13,20,33,0.16)] backdrop-blur-xl md:hidden"
+        className="glass-surface fixed inset-x-2 bottom-2 z-40 mx-auto grid max-w-[560px] grid-cols-5 gap-1 rounded-[22px] p-1 md:hidden"
         aria-label="تنقل التطبيق"
       >
         {mobilePrimaryItems.map((item) => {
@@ -207,7 +207,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-1 text-[10px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600",
-                active ? "bg-wa-blue-50 text-wa-blue-600" : "text-wa-gray-500 hover:bg-wa-gray-50 hover:text-wa-gray-900",
+                active ? "bg-white/90 text-wa-blue-600 shadow-[0_10px_28px_rgba(4,44,83,0.10)]" : "text-wa-gray-500 hover:bg-white/72 hover:text-wa-gray-900",
               )}
             >
               <Icon className="size-4" aria-hidden="true" />
@@ -219,7 +219,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
         <button
           type="button"
           onClick={() => setMenuOpen(true)}
-          className="flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-1 text-[10px] font-semibold text-wa-gray-500 transition hover:bg-wa-gray-50 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
+          className="flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-[16px] px-1 text-[10px] font-semibold text-wa-gray-500 transition hover:bg-white/72 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
         >
           <Menu className="size-4" aria-hidden="true" />
           المزيد

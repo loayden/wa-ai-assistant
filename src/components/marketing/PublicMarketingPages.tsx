@@ -44,20 +44,20 @@ const sharedPublicHeroPhoto =
 
 function PublicHeader() {
   return (
-    <header className="sticky top-0 z-50 border-b border-wa-gray-100 bg-white/90 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-[1160px] items-center justify-between gap-3 px-3 py-3 sm:px-6">
+    <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
+      <nav className="glass-surface mx-auto flex max-w-[1160px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5">
         <Link href="/" className="inline-flex items-baseline gap-2 text-xl font-semibold text-wa-gray-900" aria-label="kallem home">
           <span>{BRAND_NAME}</span>
           <span lang="ar" dir="rtl" className="text-wa-blue-600">
             {BRAND_NAME_AR}
           </span>
         </Link>
-        <div className="hidden items-center gap-1 rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1 lg:flex">
+        <div className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 lg:flex">
           {publicNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full px-3 py-2 text-sm font-medium text-wa-gray-600 transition hover:bg-white hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
+              className="rounded-full px-3 py-2 text-sm font-medium text-wa-gray-600 transition hover:bg-white/80 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
             >
               {item.label}
             </Link>
@@ -84,10 +84,13 @@ function PublicHeader() {
 
 function PublicShell({ children }: { children: ReactNode }) {
   return (
-    <main className="min-h-screen bg-white text-wa-gray-900">
+    <main className="app-glass-background min-h-screen text-wa-gray-900">
+      <div className="pointer-events-none fixed inset-0 opacity-24 [background-image:linear-gradient(rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.14)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="public-glass-pages relative">
       <PublicHeader />
       {children}
       <AppFooter />
+      </div>
     </main>
   );
 }
@@ -110,7 +113,7 @@ function PrimaryCta({
         "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wa-blue-600",
         variant === "primary"
           ? "bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] hover:bg-[#0E47E8]"
-          : "border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50",
+          : "glass-control text-wa-gray-900 hover:bg-white/90",
         className,
       )}
     >
@@ -121,9 +124,9 @@ function PrimaryCta({
 
 function HeroVisual({ asset, title }: { asset: string; title: string }) {
   return (
-    <div className="relative overflow-hidden rounded-[28px] border border-wa-gray-100 bg-white p-4 shadow-[0_24px_72px_rgba(13,20,33,0.08)] sm:rounded-[34px] sm:p-5">
+    <div className="glass-surface relative overflow-hidden rounded-[28px] p-4 sm:rounded-[34px] sm:p-5">
       <div className="absolute inset-x-0 top-0 h-36 bg-[linear-gradient(180deg,rgba(26,86,255,0.12),transparent)]" />
-      <div className="relative rounded-[24px] border border-wa-gray-100 bg-wa-gray-50 p-4 sm:p-5">
+      <div className="relative rounded-[24px] border border-white/62 bg-white/54 p-4 sm:p-5">
         <div className="relative mb-4 h-48 overflow-hidden rounded-[20px] border border-wa-gray-100 sm:h-56">
           <Image
             src={sharedPublicHeroPhoto}

@@ -37,15 +37,21 @@ export default async function DashboardLayout({
     typeof user.user_metadata.full_name === "string" ? user.user_metadata.full_name : appUser.fullName ?? null;
 
   return (
-    <div className="min-h-screen bg-wa-gray-50">
+    <div className="app-glass-background relative min-h-screen overflow-hidden">
+      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.14)_1px,transparent_1px)] bg-[size:72px_72px] opacity-30" />
+      <div className="pointer-events-none fixed inset-x-0 top-0 h-44 bg-white/12 blur-3xl" />
       <TopBar
         isAdmin={Boolean(appUser.isAdmin)}
         planTier={appUser.planTier}
         userEmail={user.email ?? null}
         userName={fullName}
       />
-      <main className="min-h-screen bg-wa-gray-50 pb-24 pt-14 md:pb-10 md:pt-16">
-        {children}
+      <main className="relative mx-auto min-h-screen w-full max-w-[1480px] px-2 pb-24 pt-[4.5rem] sm:px-4 md:pb-8 md:pt-20 xl:px-6">
+        <div className="glass-surface min-h-[calc(100vh-6.5rem)] overflow-hidden rounded-[28px] p-2 sm:rounded-[34px] sm:p-3 md:min-h-[calc(100vh-7rem)] md:p-4">
+          <div className="min-h-[calc(100vh-7.5rem)] rounded-[24px] bg-white/48 md:min-h-[calc(100vh-8.5rem)]">
+            {children}
+          </div>
+        </div>
       </main>
     </div>
   );

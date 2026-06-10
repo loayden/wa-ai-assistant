@@ -54,7 +54,7 @@ export function BottomSheet({ children, className, onClose, open, title }: Botto
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label={title ?? "لوحة خيارات"}>
       <motion.button
         type="button"
-        className="absolute inset-0 bg-black/30"
+        className="absolute inset-0 bg-[#061633]/44 backdrop-blur-sm"
         aria-label="إغلاق اللوحة"
         initial={reduceMotion ? false : { opacity: 0 }}
         animate={reduceMotion ? undefined : { opacity: 1 }}
@@ -66,7 +66,7 @@ export function BottomSheet({ children, className, onClose, open, title }: Botto
         animate={reduceMotion ? undefined : { y: 0 }}
         transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
-          "absolute inset-x-0 bottom-0 max-h-[88vh] overflow-y-auto rounded-t-2xl bg-white px-4 pb-5 pt-2 shadow-wa-2 sm:max-h-[85vh] sm:px-5 sm:pb-6",
+          "glass-surface absolute inset-x-2 bottom-2 max-h-[88vh] overflow-y-auto rounded-[26px] px-4 pb-5 pt-2 sm:inset-x-4 sm:max-h-[85vh] sm:rounded-[32px] sm:px-5 sm:pb-6",
           className,
         )}
       >

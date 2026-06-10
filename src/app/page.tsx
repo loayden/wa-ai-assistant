@@ -18,10 +18,8 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Sparkles,
-  Store,
   Target,
   TrendingUp,
-  Users,
   UserPlus,
   Zap,
 } from "lucide-react";
@@ -82,6 +80,29 @@ const workflowSteps = [
   },
 ];
 
+const lifecycleStages = [
+  {
+    title: "اجمع الرسائل",
+    body: "واتساب، إنستجرام، وماسنجر يدخلون إلى صندوق واحد بدل متابعة كل تطبيق وحده.",
+    icon: Inbox,
+  },
+  {
+    title: "افهم العميل",
+    body: "kallem يقرأ السؤال مع المنتجات، الأسعار، المعرفة، وسياق المحادثة قبل الرد.",
+    icon: Bot,
+  },
+  {
+    title: "رد أو سلّم للبشر",
+    body: "الرد يخرج تلقائيًا عند الثقة، أو تنتقل المحادثة لصاحب النشاط عند الحاجة.",
+    icon: MessageSquareText,
+  },
+  {
+    title: "حوّلها لنتيجة",
+    body: "Lead، طلب، رابط دفع، أو تذكرة دعم واضحة بدل رسالة تضيع في الزحمة.",
+    icon: Target,
+  },
+] as const;
+
 const featureGroups = [
   {
     title: "ردود ذكية لكل قناة",
@@ -133,12 +154,6 @@ const featureGroups = [
   },
 ];
 
-const connectDetails = [
-  "العميل لا يرى أي إعدادات تقنية. هو يرسل من القناة التي يعرفها.",
-  "kallem يتحقق من اتصال كل قناة قبل تشغيل الردود عليها.",
-  "القوالب والحملات تلتزم بقواعد Meta ونافذة خدمة العملاء.",
-];
-
 const pricingPlans = [
   {
     name: "FREE",
@@ -182,36 +197,7 @@ const pexelsPhotos = {
     src: "https://images.pexels.com/photos/7709227/pexels-photo-7709227.jpeg?auto=compress&cs=tinysrgb&w=1400",
     alt: "فريق خدمة عملاء يدير رسائل العملاء من أجهزة لابتوب",
   },
-  cafePhone: {
-    src: "https://images.pexels.com/photos/27896990/pexels-photo-27896990.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    alt: "صاحب نشاط يتابع رسائل العملاء من الهاتف داخل كافيه",
-  },
-  businessOwner: {
-    src: "https://images.pexels.com/photos/10376233/pexels-photo-10376233.jpeg?auto=compress&cs=tinysrgb&w=1200",
-    alt: "صاحب نشاط ينظم الطلبات والفواتير على لابتوب",
-  },
 };
-
-const industryCards = [
-  {
-    title: "مطاعم وكافيهات",
-    body: "أسئلة المنيو، المواعيد، الحجز، والتوصيل تظهر في صندوق واحد بدل رسائل متفرقة.",
-    image: pexelsPhotos.cafePhone,
-    icon: Store,
-  },
-  {
-    title: "خدمات وتعليم",
-    body: "المساعد يرد من تفاصيل الخدمة والأسئلة الشائعة، ثم يسلم للبشر عند الحاجة.",
-    image: pexelsPhotos.supportAgent,
-    icon: Users,
-  },
-  {
-    title: "تجارة ومنتجات",
-    body: "أسئلة السعر، المقاس، التوفر، والدفع تتحول إلى Leads وطلبات قابلة للمتابعة.",
-    image: pexelsPhotos.businessOwner,
-    icon: ShoppingBag,
-  },
-];
 
 const comparisonRows = [
   {
@@ -281,13 +267,45 @@ function FormalCard({
   return (
     <div
       className={cn(
-        "rounded-[20px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.06)] sm:rounded-[28px]",
+        "glass-panel rounded-[20px] sm:rounded-[28px]",
         className,
       )}
       {...props}
     >
       {children}
     </div>
+  );
+}
+
+function OperatingSystemSection() {
+  return (
+    <section className="relative z-10 mx-2 max-w-[1200px] rounded-[28px] border border-white/50 bg-white/70 px-3 py-10 shadow-[0_18px_64px_rgba(4,44,83,0.10)] backdrop-blur-2xl sm:mx-auto sm:rounded-[36px] sm:px-6 sm:py-14" data-cinema-section>
+      <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
+        <SectionHeading
+          eyebrow="نظام تشغيل المحادثات"
+          title="كل صفحة لها هدف واحد: تحويل الرسائل إلى عمل منظم."
+          body="بدل عرض مميزات كثيرة في نفس اللحظة، kallem يقسم التجربة إلى أربع مراحل يفهمها صاحب النشاط خلال ثوانٍ."
+        />
+        <div className="grid gap-3 md:grid-cols-2">
+          {lifecycleStages.map((stage, index) => {
+            const Icon = stage.icon;
+
+            return (
+              <div key={stage.title} className="rounded-[24px] border border-white/70 bg-white/76 p-4 shadow-[0_12px_34px_rgba(4,44,83,0.08)]">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-600 text-white shadow-[0_14px_34px_rgba(26,86,255,0.22)]">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <span className="text-sm font-semibold text-wa-blue-600">{String(index + 1).padStart(2, "0")}</span>
+                </div>
+                <h3 className="mt-4 text-xl font-semibold text-wa-gray-900">{stage.title}</h3>
+                <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{stage.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -464,39 +482,6 @@ function CustomerProofSection() {
             })}
           </div>
         </div>
-      </div>
-    </section>
-  );
-}
-
-function IndustryPhotoSection() {
-  return (
-    <section className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
-      <SectionHeading
-        eyebrow="استخدامات حقيقية"
-        title="مناسب لأي نشاط يعتمد على رسائل السوشيال يوميًا."
-        body="القيمة ليست في تشغيل bot فقط، بل في تنظيم أسئلة العملاء، معرفة من يريد الشراء، وتقليل الردود المتكررة عبر القنوات الثلاثة."
-      />
-      <div className="mt-8 grid gap-4 sm:mt-12 lg:grid-cols-3">
-        {industryCards.map((card) => {
-          const Icon = card.icon;
-
-          return (
-            <article key={card.title} className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.055)]" data-cinema-reveal>
-              <div className="relative h-52">
-                <Image src={card.image.src} alt={card.image.alt} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 370px" />
-                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0),rgba(13,20,33,0.36))]" />
-              </div>
-              <div className="p-4 sm:p-5">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
-                  <Icon className="size-5" aria-hidden="true" />
-                </div>
-                <h3 className="mt-4 text-xl font-semibold text-wa-gray-900">{card.title}</h3>
-                <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{card.body}</p>
-              </div>
-            </article>
-          );
-        })}
       </div>
     </section>
   );
@@ -702,8 +687,8 @@ export default function Home() {
             <h1 className="mt-5 max-w-[13ch] text-[40px] font-semibold leading-[1.06] text-wa-gray-900 sm:text-[66px] sm:leading-[1.03] lg:text-[78px]">
               كل محادثات عملائك تتحول لعمل واضح.
             </h1>
-            <p className="mt-5 max-w-[680px] text-body leading-7 text-wa-gray-600 sm:mt-7 sm:text-xl sm:leading-8">
-              {BRAND_NAME_AR} | {BRAND_NAME} منصة رسائل سوشيال ترد على العملاء في واتساب وإنستجرام وماسنجر، تفهم الرسائل، تسجل الطلبات، تكتشف العملاء المحتملين، وترسل روابط الدفع من لوحة عربية بسيطة.
+            <p className="mt-5 max-w-[620px] text-body leading-7 text-wa-gray-600 sm:mt-7 sm:text-xl sm:leading-8">
+              صندوق موحد وردود AI عربية لواتساب وإنستجرام وماسنجر. اجمع الرسائل، افهم العميل، ورد أو سلّم للبشر، ثم حوّل المحادثة إلى Lead أو طلب.
             </p>
             <div className="mt-6 grid gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
               <MagneticLink href="/signup" className="w-full bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] hover:bg-[#0E47E8] sm:w-auto">
@@ -735,29 +720,9 @@ export default function Home() {
         <ProductPreview />
       </section>
 
+      <OperatingSystemSection />
       <PromoVideoSection />
       <CustomerProofSection />
-
-      <section className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16">
-        <FormalCard className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-          <div>
-            <p className="text-sm font-semibold text-wa-blue-600">مهم للمستخدمين</p>
-            <p className="mt-2 text-body-sm leading-6 text-wa-gray-700 sm:text-base sm:leading-7">
-              kallem لا يجعل عميلك يتعلم أي شيء جديد. العميل يرسل من واتساب أو إنستجرام أو ماسنجر، وصاحب النشاط يدير الردود، الطلبات، الدفع، والتحليلات من داخل التطبيق.
-            </p>
-          </div>
-          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-            {connectDetails.map((item) => (
-              <div key={item} className="flex items-start gap-2 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 px-3 py-2.5">
-                <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
-                <span className="text-xs leading-5 text-wa-gray-600">{item}</span>
-              </div>
-            ))}
-          </div>
-        </FormalCard>
-      </section>
-
-      <IndustryPhotoSection />
 
       <section id="workflow" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
         <SectionHeading

@@ -235,8 +235,8 @@ export function TemplatesPageClient() {
         : "إرسال إلى Meta";
 
   return (
-    <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-8 pt-4 sm:px-6 sm:pt-8">
-      <section className="rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:p-8">
+    <div className="kallem-workspace-page space-y-4">
+      <section className="workspace-hero rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:p-8">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">قوالب الرسائل</p>

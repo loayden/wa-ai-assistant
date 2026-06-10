@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { BrandLogo } from "@/components/shared/BrandLogo";
+import { LogoMark } from "@/components/shared/LogoMark";
 import { ForbiddenError, UnauthorizedError, requireAdminUser } from "@/lib/api/auth";
 import { noIndexMetadata } from "@/lib/marketing/seo";
 
@@ -35,7 +35,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-wa-gray-50">
       <header className="sticky top-0 z-30 border-b border-wa-gray-100 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex min-h-16 max-w-[1180px] flex-col gap-3 px-3 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
-          <BrandLogo wordmarkSize="sm" />
+          <Link href="/admin" aria-label="إدارة كَلّم" className="inline-flex">
+            <LogoMark size="lg" />
+          </Link>
           <nav className="flex gap-1 overflow-x-auto rounded-full border border-wa-gray-100 bg-wa-gray-50 p-1" aria-label="تنقل الإدارة">
             {adminLinks.map((link) => (
               <Link

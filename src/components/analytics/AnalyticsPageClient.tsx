@@ -71,7 +71,7 @@ export function AnalyticsPageClient() {
   const locked = summary?.planTier === "FREE";
 
   return (
-    <div className="relative mx-auto max-w-[1120px] px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-10">
+    <div className="kallem-workspace-page">
       <header className="mb-4 overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:mb-5 sm:rounded-[28px]">
         <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <div>
@@ -88,7 +88,7 @@ export function AnalyticsPageClient() {
               أرقام بسيطة توضّح عدد الردود، المحادثات، العملاء المحتملين، ومتى يكون العملاء أكثر نشاطًا.
             </p>
           </div>
-          <div className="flex gap-2 overflow-x-auto rounded-full border border-wa-gray-100 bg-white p-1">
+          <div className="scrollbar-none flex gap-2 overflow-x-auto rounded-full border border-wa-gray-100 bg-white p-1">
             {(Object.keys(RANGE_LABELS) as RangeValue[]).map((item) => (
               <button
                 key={item}

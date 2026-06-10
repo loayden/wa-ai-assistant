@@ -10,7 +10,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-body-sm font-medium tracking-normal transition-all duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-wa-gray-200 disabled:text-wa-gray-400 sm:min-h-11 sm:text-body",
+  "inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl text-body-sm font-medium tracking-normal transition-[background-color,border-color,color,box-shadow,opacity,transform] duration-150 ease-out focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-wa-gray-200 disabled:text-wa-gray-400 sm:min-h-11 sm:text-body",
   {
     variants: {
       variant: {

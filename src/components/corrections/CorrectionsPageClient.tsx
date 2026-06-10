@@ -54,8 +54,8 @@ export function CorrectionsPageClient() {
   const corrections = correctionsQuery.data ?? [];
 
   return (
-    <section className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-4 sm:px-6">
-      <div className="rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-8">
+    <section className="kallem-workspace-page flex flex-col gap-4">
+      <div className="workspace-hero rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="space-y-3">
             <span className="inline-flex w-fit items-center gap-2 rounded-full border border-wa-blue-100 bg-wa-blue-50 px-3 py-1 text-label font-semibold text-wa-blue-700">

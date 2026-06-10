@@ -152,7 +152,7 @@ export function LeadsPageClient() {
   }
 
   return (
-    <div className="relative mx-auto max-w-[1120px] px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-10">
+    <div className="kallem-workspace-page">
       <header className="mb-4 overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:mb-5 sm:rounded-[28px]">
         <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-4 sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
           <div>
@@ -205,7 +205,7 @@ export function LeadsPageClient() {
             </div>
           </div>
 
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto pb-1">
             {CHANNEL_FILTERS.map((item) => (
               <button
                 key={item.value}

@@ -27,9 +27,10 @@ import {
   UserPlus,
 } from "lucide-react";
 
-import { BrandLogo } from "@/components/shared/BrandLogo";
+import { LogoMark } from "@/components/shared/LogoMark";
 import { ProfileSheet } from "@/components/shared/ProfileSheet";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { useFastNavigation } from "@/hooks/useFastNavigation";
 import { useLaunchReadiness } from "@/hooks/useReadiness";
 import { useAuthStore } from "@/store/authStore";
 import type { PlanTier } from "@/types/subscription";
@@ -101,6 +102,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const fastNavigation = useFastNavigation();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const readinessQuery = useLaunchReadiness("light", Boolean(userEmail));
   const readinessScore = readinessQuery.data?.score;
@@ -124,7 +126,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
       return;
     }
 
-    router.push("/billing");
+    fastNavigation.push("/billing");
   }
 
   async function handleSignOut() {
@@ -135,7 +137,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
 
     await fetch("/api/auth/logout", { method: "POST" });
     clearAuth();
-    router.push("/login");
+    fastNavigation.push("/login");
     router.refresh();
   }
 
@@ -145,9 +147,9 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
         <Link
           href="/dashboard"
           aria-label="الرئيسية"
-          className="flex size-12 items-center justify-center rounded-[18px] bg-white/88 text-xl font-semibold text-wa-blue-600 shadow-[0_12px_30px_rgba(4,44,83,0.10)]"
+          className="flex size-12 items-center justify-center rounded-[18px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
         >
-          ك
+          <LogoMark size="lg" />
         </Link>
         <nav className="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto py-1" aria-label="تنقل التطبيق">
           {desktopPrimaryItems.map((item) => {
@@ -194,7 +196,9 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
       <header className="fixed inset-x-2 top-2 z-30 sm:top-3 sm:px-2 md:left-[92px] md:right-4 md:px-0">
         <div className="glass-surface mx-auto flex h-14 max-w-[1360px] items-center justify-between gap-3 rounded-[22px] px-3 md:h-16 md:rounded-[26px] sm:px-5">
           <div className="flex min-w-0 items-center gap-3">
-            <BrandLogo className="hidden sm:flex" wordmarkSize="sm" />
+            <Link href="/dashboard" className="hidden sm:inline-flex" aria-label="الرئيسية">
+              <LogoMark size="md" />
+            </Link>
             <span className="hidden h-6 w-px bg-white/70 sm:block" aria-hidden="true" />
             <div className="min-w-0">
               <p className="truncate text-body-sm font-semibold text-wa-gray-900">{activeItem?.label ?? "kallem"}</p>

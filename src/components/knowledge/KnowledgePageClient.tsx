@@ -385,8 +385,8 @@ export function KnowledgePageClient({ initialEntries, initialProducts }: Knowled
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] px-3 pb-10 pt-4 sm:px-6 lg:pt-8">
-      <section className="rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-7 lg:p-8">
+    <div className="kallem-workspace-page">
+      <section className="workspace-hero rounded-[28px] border border-wa-gray-100 bg-white p-5 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-7 lg:p-8">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-[760px]">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">قاعدة المعرفة</p>

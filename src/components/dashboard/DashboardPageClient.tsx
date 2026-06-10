@@ -34,6 +34,7 @@ import { ConversationThread } from "@/components/conversations/ConversationThrea
 import { CustomizeDrawer, type CustomizeDrawerValues } from "@/components/customize/CustomizeDrawer";
 import { MockMessageSender } from "@/components/messages/MockMessageSender";
 import { ReadinessWidget } from "@/components/readiness/ReadinessWidget";
+import { useFastNavigation } from "@/hooks/useFastNavigation";
 import { useUpdateSettings, type SettingsRecord } from "@/hooks/useSettings";
 import type { MessageRecord } from "@/hooks/useMessages";
 import type { UpdateSettingsInput } from "@/lib/validators/settings";
@@ -108,6 +109,7 @@ export function DashboardPageClient({
   mockMode,
 }: DashboardPageClientProps) {
   const router = useRouter();
+  const fastNavigation = useFastNavigation();
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const updateSettings = useUpdateSettings();
   const [settings, setSettings] = useState(initialSettings);
@@ -138,7 +140,7 @@ export function DashboardPageClient({
   async function handleSignOut() {
     await fetch("/api/auth/logout", { method: "POST" });
     clearAuth();
-    router.push("/login");
+    fastNavigation.push("/login");
     router.refresh();
   }
 
@@ -212,7 +214,7 @@ export function DashboardPageClient({
   const ready = connected && autoReplyEnabled;
 
   return (
-    <div className="relative mx-auto max-w-[1180px] px-3 pb-8 pt-4 sm:px-6 lg:pt-8">
+    <div className="kallem-workspace-page space-y-4">
       {trialDaysRemaining > 0 ? (
         <section className="mb-4 rounded-[22px] border border-wa-blue-100 bg-white p-4 shadow-[0_14px_38px_rgba(26,86,255,0.06)] sm:mb-5 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:rounded-[28px]">
           <div>
@@ -278,7 +280,7 @@ export function DashboardPageClient({
           onSkip={skipOnboarding}
         />
       ) : null}
-      <section className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
+      <section className="workspace-hero overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="border-b border-wa-gray-100 bg-[radial-gradient(circle_at_10%_0%,rgba(48,86,255,0.10),transparent_32%),linear-gradient(135deg,#ffffff_0%,#f7f9ff_100%)] p-4 sm:p-7 lg:border-b-0 lg:border-r lg:p-8">
             <div className="flex flex-wrap items-center gap-2">
@@ -310,7 +312,7 @@ export function DashboardPageClient({
               </p>
             </div>
             <div className="mt-5 flex flex-col gap-2 sm:mt-7 sm:flex-row sm:gap-3">
-              <Button className="rounded-full" onClick={() => router.push(connected ? "/messages" : "/connect")}>
+              <Button className="rounded-full" onClick={() => fastNavigation.push(connected ? "/messages" : "/connect")}>
                 {connected ? "فتح الرسائل" : "ربط القنوات"}
                 <ArrowRight className="size-4" aria-hidden="true" />
               </Button>
@@ -460,7 +462,7 @@ export function DashboardPageClient({
               title="لا توجد محادثات بعد"
               body="عندما يرسل العملاء إلى واتساب أو إنستجرام أو ماسنجر، ستظهر المحادثات هنا مع رد المساعد."
               actionLabel={connected ? "فتح الرسائل" : "ربط القنوات"}
-              onAction={() => router.push(connected ? "/messages" : "/connect")}
+              onAction={() => fastNavigation.push(connected ? "/messages" : "/connect")}
             />
           )}
         </div>
@@ -526,7 +528,7 @@ export function DashboardPageClient({
           isSaving={updateSettings.isPending}
           open={drawerOpen}
           values={drawerValues}
-          onBilling={() => router.push("/billing")}
+          onBilling={() => fastNavigation.push("/billing")}
           onChange={updateDrawer}
           onClose={() => setDrawerOpen(false)}
           onSave={saveDrawer}

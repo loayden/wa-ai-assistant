@@ -145,21 +145,21 @@ export function MessageList() {
   const todayCount = messagesResult.messages.filter((message) => isToday(message.createdAt)).length;
 
   return (
-    <div className="h-[calc(100vh-7.75rem)] min-h-[720px] p-2 sm:p-3 lg:p-4">
+    <div className="h-[calc(100dvh-7.75rem)] min-h-[620px] p-2 sm:p-3 md:min-h-[720px] lg:p-4">
       <section
         dir="ltr"
-        className="grid h-full min-h-0 overflow-hidden rounded-[28px] border border-white/70 bg-white/68 shadow-[0_24px_80px_rgba(4,44,83,0.14)] backdrop-blur-2xl lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[372px_minmax(0,1fr)_76px]"
+        className="grid h-full min-h-0 min-w-0 overflow-hidden rounded-[28px] border border-white/70 bg-white/68 shadow-[0_24px_80px_rgba(4,44,83,0.14)] backdrop-blur-2xl lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[372px_minmax(0,1fr)_76px]"
       >
-        <aside dir="rtl" className="flex min-h-0 flex-col border-b border-wa-gray-100/80 bg-white/64 lg:border-b-0 lg:border-l">
+        <aside dir="rtl" className="flex min-h-0 min-w-0 flex-col border-b border-wa-gray-100/80 bg-white/64 lg:border-b-0 lg:border-l">
           <header className="shrink-0 border-b border-wa-gray-100/80 px-3 py-3 sm:px-4">
-            <div className="flex items-center justify-between gap-3">
-              <div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
                 <h1 className="text-body font-semibold text-wa-gray-900">المحادثات</h1>
-                <p className="mt-0.5 text-label font-semibold uppercase tracking-widest text-wa-gray-400">
+                <p className="mt-0.5 break-words text-label font-semibold uppercase tracking-widest text-wa-gray-400">
                   WhatsApp · Instagram · Messenger
                 </p>
               </div>
-              <div className="flex items-center rounded-full border border-wa-gray-100 bg-white p-1 text-body-sm font-semibold text-wa-gray-600">
+              <div className="scrollbar-none flex w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-full border border-wa-gray-100 bg-white p-1 text-body-sm font-semibold text-wa-gray-600">
                 <button
                   className={cn("rounded-full px-3 py-1.5", simpleFilter === "ALL" ? "bg-wa-blue-50 text-wa-blue-700" : "text-wa-gray-500")}
                   type="button"
@@ -204,7 +204,7 @@ export function MessageList() {
               />
             </div>
 
-            <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1">
+            <div className="scrollbar-none mt-3 flex gap-1.5 overflow-x-auto pb-1">
               {queueFilters.map((chip) => (
                 <FilterChip
                   key={chip.value}
@@ -219,7 +219,7 @@ export function MessageList() {
               ))}
             </div>
 
-            <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+            <div className="scrollbar-none mt-2 flex gap-1.5 overflow-x-auto pb-1">
               {channelOptions.map((option) => {
                 const active = channelFilter === option.value;
                 const channel = option.value === "all" ? null : option.value;
@@ -242,7 +242,7 @@ export function MessageList() {
             </div>
 
             {connectionOptions.length > 1 ? (
-              <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+              <div className="scrollbar-none mt-2 flex gap-1.5 overflow-x-auto pb-1">
                 <FilterChip
                   active={connectionFilter === "ALL"}
                   label="كل القنوات"
@@ -331,7 +331,7 @@ export function MessageList() {
           </footer>
         </aside>
 
-        <main dir="rtl" className="flex min-h-0 flex-col bg-white/42">
+        <main dir="rtl" className="flex min-h-0 min-w-0 flex-col bg-white/42">
           {selectedConversation ? (
             <ConversationThread
               className="min-h-0"

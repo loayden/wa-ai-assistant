@@ -31,7 +31,7 @@ import { CinematicScrollEffects } from "@/components/landing/CinematicScrollEffe
 import { MagneticLink } from "@/components/landing/MagneticLink";
 import { MotionReveal } from "@/components/landing/MotionReveal";
 import { SmoothScroll } from "@/components/landing/SmoothScroll";
-import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
+import { LogoMark } from "@/components/shared/LogoMark";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -245,13 +245,10 @@ function BrandLockup({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      className={cn("inline-flex items-baseline gap-2 text-xl font-semibold text-wa-gray-900", className)}
+      className={cn("inline-flex items-center", className)}
       aria-label="kallem home"
     >
-      <span>{BRAND_NAME}</span>
-      <span lang="ar" dir="rtl" className="text-wa-blue-600">
-        {BRAND_NAME_AR}
-      </span>
+      <LogoMark size="lg" />
     </Link>
   );
 }

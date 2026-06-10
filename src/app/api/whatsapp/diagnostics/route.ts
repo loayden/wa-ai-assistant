@@ -213,7 +213,39 @@ export async function GET(request: Request) {
       });
     }
 
-    const accessToken = decrypt(connection.accessToken);
+    let accessToken: string;
+
+    try {
+      accessToken = decrypt(connection.accessToken);
+    } catch (error) {
+      logger.warn("api.whatsapp.diagnostics", "Stored WhatsApp access token cannot be decrypted.", {
+        connectionId: connection.id,
+        error,
+      });
+      await prisma.whatsAppConnection.update({
+        where: { id: connection.id },
+        data: {
+          webhookSubscribed: false,
+          lastVerifiedAt: new Date(),
+        },
+      });
+
+      return jsonSuccess({
+        connected: true,
+        mode: "live",
+        connection: sanitizeConnection({ ...connection, webhookSubscribed: false }),
+        checks: [
+          ...checks,
+          createCheck(
+            "meta-token",
+            "صلاحية ربط Meta",
+            "failed",
+            "بيانات ربط واتساب المحفوظة غير صالحة أو قديمة. أعيدي ربط القناة من صفحة القنوات حتى يحصل kallem على توكن Meta صحيح.",
+          ),
+        ],
+      });
+    }
+
     const phoneProfile = await getPhoneProfile(connection.phoneNumberId, accessToken);
 
     checks.push(
@@ -269,6 +301,16 @@ export async function GET(request: Request) {
 
     const subscribedApps = await getSubscribedAppsForBusinessAccount(connection.businessAccountId, accessToken);
     const hasWebhookSubscription = subscribedApps.length > 0;
+
+    if (connection.webhookSubscribed !== hasWebhookSubscription) {
+      await prisma.whatsAppConnection.update({
+        where: { id: connection.id },
+        data: {
+          webhookSubscribed: hasWebhookSubscription,
+          lastVerifiedAt: new Date(),
+        },
+      });
+    }
 
     checks.push(
       createCheck(

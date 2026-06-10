@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { AppFooter } from "@/components/shared/AppFooter";
-import { BRAND_NAME, BRAND_NAME_AR } from "@/lib/utils/brand";
+import { LogoMark } from "@/components/shared/LogoMark";
 import { cn } from "@/lib/utils";
 import {
   channelPages,
@@ -46,11 +46,8 @@ function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
       <nav className="glass-surface mx-auto flex max-w-[1160px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5">
-        <Link href="/" className="inline-flex items-baseline gap-2 text-xl font-semibold text-wa-gray-900" aria-label="kallem home">
-          <span>{BRAND_NAME}</span>
-          <span lang="ar" dir="rtl" className="text-wa-blue-600">
-            {BRAND_NAME_AR}
-          </span>
+        <Link href="/" className="inline-flex items-center" aria-label="kallem home">
+          <LogoMark size="lg" />
         </Link>
         <div className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 lg:flex">
           {publicNavItems.map((item) => (

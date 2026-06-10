@@ -206,8 +206,8 @@ export function ProductsPageClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-8" dir="rtl">
-      <section className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[28px]">
+    <div className="kallem-workspace-page space-y-4" dir="rtl">
+      <section className="workspace-hero overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[28px]">
         <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div>
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">المنتجات</p>
@@ -359,13 +359,13 @@ export function ProductsPageClient() {
                   placeholder="ابحثي بالاسم، الفئة، أو الوصف"
                 />
               </label>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                 <FilterChip active={categoryFilter === "all"} label="كل الفئات" onClick={() => setCategoryFilter("all")} />
                 {categories.map((category) => (
                   <FilterChip key={category} active={categoryFilter === category} label={category} onClick={() => setCategoryFilter(category)} />
                 ))}
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1">
+              <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
                 <FilterChip active={availabilityFilter === "all"} label="كل الحالات" onClick={() => setAvailabilityFilter("all")} />
                 <FilterChip active={availabilityFilter === "available"} label="متاح للبيع" onClick={() => setAvailabilityFilter("available")} />
                 <FilterChip active={availabilityFilter === "paused"} label="متوقف" onClick={() => setAvailabilityFilter("paused")} />

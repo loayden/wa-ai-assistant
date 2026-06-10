@@ -21,6 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { IconButton } from "@/components/ui/IconButton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useFastNavigation } from "@/hooks/useFastNavigation";
 import { apiData } from "@/lib/api/client";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { strictZodResolver } from "@/lib/validators/resolver";
@@ -29,6 +30,7 @@ const REMEMBERED_EMAIL_KEY = "kallem:lastEmail";
 
 export function LoginForm() {
   const router = useRouter();
+  const fastNavigation = useFastNavigation();
   const searchParams = useSearchParams();
   const authError = searchParams.get("authError");
   const authReason = searchParams.get("authReason");
@@ -54,7 +56,7 @@ export function LoginForm() {
        * Decision: After a normal sign-in, users should land on WhatsApp setup
        * or connection status first because that is the critical next step.
        */
-      router.push(searchParams.get("next") || "/connect");
+      fastNavigation.push(searchParams.get("next") || "/connect");
       router.refresh();
     },
   });

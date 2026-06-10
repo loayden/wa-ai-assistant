@@ -144,8 +144,8 @@ export function OrdersPageClient() {
   });
 
   return (
-    <div className="mx-auto max-w-[1120px] space-y-5 px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-8" dir="rtl">
-      <section className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[28px]">
+    <div className="kallem-workspace-page space-y-4" dir="rtl">
+      <section className="workspace-hero overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[28px]">
         <div className="grid gap-4 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-5 sm:grid-cols-3 sm:p-8">
           <div className="sm:col-span-2">
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الطلبات</p>
@@ -170,7 +170,7 @@ export function OrdersPageClient() {
       <section className="rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_14px_42px_rgba(13,20,33,0.04)] sm:rounded-[28px]">
         <div className="border-b border-wa-gray-100 p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
               {statusFilters.map((item) => (
                 <button
                   key={item.value}

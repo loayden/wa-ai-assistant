@@ -2,7 +2,7 @@ import { GeneralSettings } from "@/components/settings/GeneralSettings";
 
 export default function SettingsPage() {
   return (
-    <main className="mx-auto max-w-[1040px] px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-10">
+    <main className="kallem-workspace-page">
       <header className="mb-4 rounded-[22px] border border-wa-gray-100 bg-white p-4 shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:mb-5 sm:rounded-[28px] sm:p-8">
         <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">الإعدادات</p>
         <h1 className="mt-2 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px]">مركز التحكم في المساعد</h1>

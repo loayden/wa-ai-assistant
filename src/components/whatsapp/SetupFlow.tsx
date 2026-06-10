@@ -71,8 +71,8 @@ export function SetupFlow({
   const webhookUrl = useMemo(() => `${appUrl.replace(/\/$/, "")}/api/webhooks/whatsapp`, [appUrl]);
 
   return (
-    <div className="mx-auto max-w-[1120px] space-y-4 px-3 pb-8 pt-4 sm:space-y-6 sm:px-6 sm:pt-8">
-      <section className="overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
+    <div className="space-y-4">
+      <section className="workspace-hero overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:rounded-[32px]">
         <div className="grid gap-4 p-4 sm:gap-6 sm:p-8 lg:grid-cols-[1fr_0.74fr] lg:items-end">
           <div>
             <p className="text-label font-semibold uppercase tracking-widest text-wa-blue-600">مركز القنوات</p>

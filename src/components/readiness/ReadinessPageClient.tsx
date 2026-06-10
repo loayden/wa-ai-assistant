@@ -137,8 +137,8 @@ export function ReadinessPageClient({ initialReadiness }: ReadinessPageClientPro
   );
 
   return (
-    <div className="mx-auto max-w-[1120px] px-3 pb-10 pt-4 sm:px-6 lg:pt-8" dir="rtl">
-      <section className={cn("rounded-[28px] border bg-white p-4 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-6 lg:p-7", tone.border)}>
+    <div className="kallem-workspace-page" dir="rtl">
+      <section className={cn("workspace-hero rounded-[28px] border bg-white p-4 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-6 lg:p-7", tone.border)}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div>
             <div className="flex flex-wrap items-center gap-2">

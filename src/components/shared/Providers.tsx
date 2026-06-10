@@ -12,6 +12,7 @@ import { Toaster } from "sonner";
 
 import { MarketingEventTracker } from "@/components/marketing/MarketingEventTracker";
 import { AuthProvider } from "@/components/shared/AuthProvider";
+import { NavigationSpeedBoost } from "@/components/shared/NavigationSpeedBoost";
 
 export function Providers({ children }: Readonly<{ children: React.ReactNode }>) {
   const [queryClient] = useState(
@@ -29,6 +30,7 @@ export function Providers({ children }: Readonly<{ children: React.ReactNode }>)
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>{children}</AuthProvider>
+      <NavigationSpeedBoost />
       <Suspense fallback={null}>
         <MarketingEventTracker />
       </Suspense>

@@ -227,7 +227,7 @@ export function SupportPageClient() {
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] px-3 pb-24 pt-4 sm:px-6 lg:pb-10 lg:pt-10">
+    <div className="kallem-workspace-page">
       <header className="mb-4 overflow-hidden rounded-[22px] border border-wa-gray-100 bg-white shadow-[0_18px_56px_rgba(13,20,33,0.05)] sm:mb-5 sm:rounded-[30px]">
         <div className="grid gap-5 bg-[linear-gradient(135deg,#ffffff_0%,#f6f8ff_100%)] p-4 sm:p-8 lg:grid-cols-[1fr_280px] lg:items-end">
           <div>

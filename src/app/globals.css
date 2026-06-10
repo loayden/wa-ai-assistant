@@ -98,6 +98,93 @@
     background: var(--wa-app-gradient);
   }
 
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  .kallem-workspace-page {
+    direction: rtl;
+    margin-inline: auto;
+    width: 100%;
+    max-width: 1280px;
+    padding: 0.75rem 0.5rem 6.5rem;
+  }
+
+  .kallem-workspace-page > header,
+  .kallem-workspace-page .workspace-hero {
+    overflow: hidden;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 12% 0%, rgba(26, 86, 255, 0.12), transparent 34%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.66));
+    box-shadow: 0 18px 60px rgba(4, 44, 83, 0.1);
+    backdrop-filter: blur(18px) saturate(1.12);
+    -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  }
+
+  .kallem-workspace-page .bg-white {
+    background-color: rgba(255, 255, 255, 0.74);
+  }
+
+  .kallem-workspace-page .bg-wa-gray-50 {
+    background-color: rgba(247, 250, 255, 0.62);
+  }
+
+  .kallem-workspace-page h1 {
+    max-width: 760px;
+    font-size: 1.85rem;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .kallem-workspace-page h2 {
+    letter-spacing: 0;
+  }
+
+  .kallem-workspace-page > header p,
+  .kallem-workspace-page .workspace-hero p {
+    max-width: 720px;
+  }
+
+  .kallem-workspace-page > header a[href="/dashboard"],
+  .kallem-workspace-page .workspace-hero a[href="/dashboard"] {
+    display: none;
+  }
+
+  .kallem-workspace-page > section:not(.workspace-hero),
+  .kallem-workspace-page > aside,
+  .kallem-workspace-page > form,
+  .kallem-workspace-page > article {
+    backdrop-filter: blur(14px) saturate(1.08);
+    -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  }
+
+  @media (min-width: 640px) {
+    .kallem-workspace-page {
+      padding: 1rem 1rem 2.5rem;
+    }
+
+    .kallem-workspace-page > header,
+    .kallem-workspace-page .workspace-hero {
+      border-radius: 32px;
+    }
+
+    .kallem-workspace-page h1 {
+      font-size: 2.35rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .kallem-workspace-page {
+      padding-top: 1.25rem;
+    }
+  }
+
   .public-glass-pages > section {
     border-color: rgba(255, 255, 255, 0.42);
     background: rgba(255, 255, 255, 0.68);
@@ -133,5 +220,33 @@
 
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .kallem-route-progress {
+    width: 42%;
+    transform-origin: center;
+    animation: kallem-route-progress 0.95s ease-in-out infinite;
+  }
+
+  html[data-route-pending="true"] a,
+  html[data-route-pending="true"] button {
+    cursor: progress;
+  }
+}
+
+@keyframes kallem-route-progress {
+  0% {
+    transform: translateX(-130%) scaleX(0.45);
+    opacity: 0.55;
+  }
+
+  45% {
+    transform: translateX(45%) scaleX(1);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(260%) scaleX(0.55);
+    opacity: 0.7;
   }
 }

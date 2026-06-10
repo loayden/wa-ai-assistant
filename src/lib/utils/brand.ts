@@ -7,4 +7,4 @@
 export const BRAND_NAME = "kallem";
 export const BRAND_NAME_AR = "كَلّم";
 export const BRAND_LOCKUP = `${BRAND_NAME} ${BRAND_NAME_AR}`;
-export const BRAND_TAGLINE = "مساعد واتساب ذكي لإدارة رسائل عملك";
+export const BRAND_TAGLINE = "مساعد ذكي لإدارة رسائل واتساب وإنستجرام وماسنجر";

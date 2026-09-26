@@ -50,6 +50,9 @@ export async function GET(request: Request) {
       prisma.message.findMany({
         where,
         orderBy: { createdAt: "asc" },
+        // Bounded: per-message detail is needed for conversation/hour
+        // breakdowns, but aggregation must never load an unbounded range.
+        take: 5000,
         select: {
           id: true,
           direction: true,

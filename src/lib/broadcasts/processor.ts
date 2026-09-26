@@ -97,6 +97,19 @@ async function processBroadcastBatch(
   }
 
   for (const [index, recipient] of recipients.entries()) {
+    /*
+     * Claim this recipient so overlapping runs (daily cron + the
+     * client-driven ticker) can never send it twice.
+     */
+    const claim = await prisma.broadcastRecipient.updateMany({
+      where: { id: recipient.id, status: "pending" },
+      data: { status: "sending" },
+    });
+
+    if (claim.count === 0) {
+      continue;
+    }
+
     try {
       await sendBroadcastRecipient(broadcast, recipient, connection);
       await prisma.broadcastRecipient.update({

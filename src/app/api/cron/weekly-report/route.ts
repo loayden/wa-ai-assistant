@@ -11,6 +11,7 @@ import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 120;
 
 function getWeeklyRange() {
   const end = new Date();
@@ -165,6 +166,11 @@ export async function GET(request: Request) {
 
   try {
     settingsRows = await prisma.userSettings.findMany({
+      orderBy: { userId: "asc" },
+      // Bounded: circuit breaker so one run cannot OOM/timeout no matter
+      // how large the user table grows. Past ~2000 users this needs cursor
+      // rotation instead of a fixed window.
+      take: 2000,
       select: {
         userId: true,
         notificationPrefs: true,

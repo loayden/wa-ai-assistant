@@ -12,6 +12,7 @@ const broadcastMocks = vi.hoisted(() => ({
       count: vi.fn(),
       findMany: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }));
@@ -93,6 +94,7 @@ describe("broadcast cron processor", () => {
     broadcastMocks.sendTemplateMessage.mockResolvedValue({ messages: [{ id: "wamid.test" }] });
     broadcastMocks.prisma.broadcast.update.mockResolvedValue({});
     broadcastMocks.prisma.broadcastRecipient.update.mockResolvedValue({});
+    broadcastMocks.prisma.broadcastRecipient.updateMany.mockResolvedValue({ count: 1 });
   });
 
   it("processes at most 50 pending recipients per cron run", async () => {
@@ -141,8 +143,7 @@ describe("broadcast cron processor", () => {
     expect(result.completedBroadcasts).toBe(1);
   });
 
-  it("can process one client-driven broadcast batch by id", async () => {
-    const recipients = createRecipients(5);
+  it("can process one client-driven broadcast batch by id", async () => {    const recipients = createRecipients(5);
 
     broadcastMocks.prisma.broadcast.findMany.mockResolvedValue([createBroadcast()]);
     broadcastMocks.prisma.broadcastRecipient.findMany.mockResolvedValue(recipients);
@@ -165,5 +166,28 @@ describe("broadcast cron processor", () => {
       }),
     );
     expect(result.processedRecipients).toBe(5);
+  });
+
+  it("skips recipients already claimed by another worker", async () => {
+    const recipients = createRecipients(3);
+
+    broadcastMocks.prisma.broadcast.findMany.mockResolvedValue([createBroadcast()]);
+    broadcastMocks.prisma.broadcastRecipient.findMany.mockResolvedValue(recipients);
+    broadcastMocks.prisma.broadcastRecipient.count.mockResolvedValue(0);
+    broadcastMocks.prisma.broadcastRecipient.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
+
+    const result = await processBroadcastQueue({ broadcastId: "broadcast-1", maxBroadcasts: 1, batchSize: 3, delayMs: 0 });
+
+    expect(broadcastMocks.sendTemplateMessage).toHaveBeenCalledTimes(2);
+    expect(broadcastMocks.prisma.broadcastRecipient.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ status: "pending" }),
+        data: { status: "sending" },
+      }),
+    );
+    expect(result.processedRecipients).toBe(3);
   });
 });

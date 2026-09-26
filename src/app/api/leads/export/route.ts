@@ -13,6 +13,8 @@ export async function GET() {
     const leads = await prisma.lead.findMany({
       where: { userId: user.id },
       orderBy: { detectedAt: "desc" },
+      // Bounded: a single CSV response must never load an unbounded table.
+      take: 5000,
     });
 
     return new Response(leadsToCsv(leads), {

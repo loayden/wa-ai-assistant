@@ -3,8 +3,18 @@
  * [ROLE: BACKEND ENGINEER]
  * Decision: Auth endpoints need a dependency-free fallback limiter so local and
  * Render deployments have abuse protection before adding a distributed store.
+ *
+ * @WARNING: This rate limiter uses a module-level in-memory Map.
+ * On serverless or PaaS environments (like Render/Vercel), state is wiped on
+ * every deployment or cold start, rendering rate limiting ineffective across restarts.
+ * TODO: Migrate to Redis (e.g., Upstash) or Supabase for distributed rate limiting.
  */
+import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+
+if (appEnv.NODE_ENV === "production") {
+  logger.warn("rateLimit", "Using in-memory rate limiter in production. State will be lost on restart.");
+}
 
 type RateLimitBucket = {
   count: number;

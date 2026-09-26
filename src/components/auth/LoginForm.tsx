@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useFastNavigation } from "@/hooks/useFastNavigation";
 import { apiData } from "@/lib/api/client";
+import { normalizeAuthNextPath } from "@/lib/auth/redirect-url";
+import { translateError } from "@/lib/errors/translateError";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth";
 import { strictZodResolver } from "@/lib/validators/resolver";
 
@@ -34,7 +36,7 @@ export function LoginForm() {
   const searchParams = useSearchParams();
   const authError = searchParams.get("authError");
   const authReason = searchParams.get("authReason");
-  const nextPath = searchParams.get("next") || "/connect";
+  const nextPath = normalizeAuthNextPath(searchParams.get("next"));
   const [showPassword, setShowPassword] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const form = useForm<LoginInput>({
@@ -56,7 +58,7 @@ export function LoginForm() {
        * Decision: After a normal sign-in, users should land on WhatsApp setup
        * or connection status first because that is the critical next step.
        */
-      fastNavigation.push(searchParams.get("next") || "/connect");
+      fastNavigation.push(normalizeAuthNextPath(searchParams.get("next")));
       router.refresh();
     },
   });
@@ -139,14 +141,14 @@ export function LoginForm() {
         <form className="flex flex-col gap-3.5 sm:gap-4" onSubmit={form.handleSubmit((values) => mutation.mutate(values))}>
           {mutation.error ? (
             <Alert className="border-wa-error bg-wa-error-bg">
-              <AlertDescription>{mutation.error.message}</AlertDescription>
+              <AlertDescription>{translateError(mutation.error.message)}</AlertDescription>
             </Alert>
           ) : null}
           {authError === "confirmation_failed" ? (
             <Alert className="border-wa-error bg-wa-error-bg">
               <AlertDescription>
                 تعذر إكمال تسجيل الدخول الاجتماعي.
-                {authReason ? <span className="mt-1 block text-xs opacity-80">{authReason}</span> : null}
+                {authReason ? <span className="mt-1 block text-xs opacity-80">{translateError(authReason)}</span> : null}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -154,7 +156,7 @@ export function LoginForm() {
             <Alert className="border-wa-error bg-wa-error-bg">
               <AlertDescription>
                 موفر تسجيل الدخول رفض الطلب. راجعي إعدادات Google/Facebook OAuth ثم حاولي مرة أخرى.
-                {authReason ? <span className="mt-1 block text-xs opacity-80">{authReason}</span> : null}
+                {authReason ? <span className="mt-1 block text-xs opacity-80">{translateError(authReason)}</span> : null}
               </AlertDescription>
             </Alert>
           ) : null}

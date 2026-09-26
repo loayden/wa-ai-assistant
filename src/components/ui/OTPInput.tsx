@@ -43,14 +43,14 @@ export function OTPInput({ disabled = false, error, onChange, onComplete, value 
 
   return (
     <div className="space-y-2">
-      <div className="flex justify-center gap-1.5 sm:gap-2" role="group" aria-label="Verification code">
+      <div className="flex justify-center gap-1.5 sm:gap-2" role="group" aria-label="رمز التحقق">
         {cells.map((digit, index) => (
           <input
             key={index}
             ref={(node) => {
               inputRefs.current[index] = node;
             }}
-            aria-label={`Verification digit ${index + 1}`}
+            aria-label={`رقم التحقق ${index + 1}`}
             disabled={disabled}
             inputMode="numeric"
             maxLength={1}

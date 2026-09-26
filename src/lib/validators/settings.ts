@@ -24,11 +24,11 @@ function optionalTrimmedString(maxLength: number) {
 export const languageSchema = z
   .string()
   .trim()
-  .min(2)
-  .max(10)
-  .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, "Language must use a short locale code such as en or en-US.");
+  .min(2, "رمز اللغة قصير جداً.")
+  .max(10, "رمز اللغة طويل جداً.")
+  .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, "رمز اللغة غير صحيح. مثال: ar أو ar-EG.");
 
-export const timeStringSchema = z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Use HH:mm time.");
+export const timeStringSchema = z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "استخدم صيغة الوقت HH:mm مثل 09:00.");
 
 export const notificationPrefsSchema = z
   .object({

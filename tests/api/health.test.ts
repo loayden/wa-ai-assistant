@@ -1,10 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("@/lib/prisma/client", () => ({
+  prisma: {
+    $queryRaw: vi.fn().mockResolvedValue([{ ok: 1 }]),
+  },
+}));
 
 import { GET } from "@/app/api/health/route";
 
 describe("health endpoint", () => {
   it("returns a lightweight ok response", async () => {
-    const response = GET();
+    const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -13,4 +19,3 @@ describe("health endpoint", () => {
     expect(typeof body.version).toBe("string");
   });
 });
-

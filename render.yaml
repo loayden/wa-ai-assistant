@@ -38,17 +38,23 @@ services:
         sync: false
       - key: WHATSAPP_MOCK_MODE
         sync: false
-      - key: STRIPE_SECRET_KEY
+      - key: WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID
         sync: false
-      - key: STRIPE_PUBLISHABLE_KEY
+      - key: PAYMOB_SECRET_KEY
         sync: false
-      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+      - key: PAYMOB_PUBLIC_KEY
         sync: false
-      - key: STRIPE_WEBHOOK_SECRET
+      - key: PAYMOB_HMAC_SECRET
         sync: false
-      - key: STRIPE_PRO_PRICE_ID
+      - key: PAYMOB_CARD_INTEGRATION_ID
         sync: false
-      - key: STRIPE_BUSINESS_PRICE_ID
+      - key: PAYMOB_CURRENCY
+        sync: false
+      - key: PAYMOB_PRO_AMOUNT_CENTS
+        sync: false
+      - key: PAYMOB_BUSINESS_AMOUNT_CENTS
+        sync: false
+      - key: PAYMOB_IFRAME_ID
         sync: false
       - key: RESEND_API_KEY
         sync: false
@@ -56,7 +62,29 @@ services:
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         sync: false
-      - key: E2E_AUTH_BYPASS_SECRET
+      - key: AUTH_EMAIL_REDIRECT_URL
+        sync: false
+      - key: META_VERIFY_TOKEN
+        sync: false
+      - key: NEXT_PUBLIC_META_APP_ID
+        sync: false
+      - key: META_APP_SECRET
+        sync: false
+      - key: CRON_SECRET
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        sync: false
+      - key: SENTRY_AUTH_TOKEN
+        sync: false
+      - key: SENTRY_ORG
+        sync: false
+      - key: SENTRY_PROJECT
+        sync: false
+      - key: GA_MEASUREMENT_ID
+        sync: false
+      - key: GA_API_SECRET
         sync: false
       - key: ENCRYPTION_SECRET
         sync: false

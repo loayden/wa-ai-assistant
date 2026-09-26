@@ -7,6 +7,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { BrandLogo } from "@/components/shared/BrandLogo";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { normalizeAuthNextPath } from "@/lib/auth/redirect-url";
+import { translateError } from "@/lib/errors/translateError";
 import { createClient } from "@/lib/supabase/client";
 
 function buildLoginRedirect(errorCode: string, nextPath: string, errorDescription?: string) {
@@ -16,7 +17,7 @@ function buildLoginRedirect(errorCode: string, nextPath: string, errorDescriptio
   });
 
   if (errorDescription) {
-    search.set("authReason", errorDescription);
+    search.set("authReason", translateError(errorDescription));
   }
 
   return `/login?${search.toString()}`;

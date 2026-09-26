@@ -159,11 +159,13 @@ export async function getWhatsAppPageBootstrap() {
     return null;
   }
 
-  const settings = await getOrCreateUserSettings(auth.appUser.id);
-  const connections = await prisma.whatsAppConnection.findMany({
-    where: { userId: auth.appUser.id, channel: "whatsapp" },
-    orderBy: { createdAt: "desc" },
-  });
+  const [settings, connections] = await Promise.all([
+    getOrCreateUserSettings(auth.appUser.id),
+    prisma.whatsAppConnection.findMany({
+      where: { userId: auth.appUser.id, channel: "whatsapp" },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return {
     user: serializeSettingsUser(auth.appUser),
@@ -184,11 +186,11 @@ export async function getDashboardBootstrap() {
     return null;
   }
 
-  const settings = await getOrCreateUserSettings(auth.appUser.id);
   const monthStart = new Date();
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
-  const [connections, messages, knowledgeCount, productCount, monthlyLeadsCount] = await Promise.all([
+  const [settings, connections, messages, knowledgeCount, productCount, monthlyLeadsCount] = await Promise.all([
+    getOrCreateUserSettings(auth.appUser.id),
     prisma.whatsAppConnection.findMany({
       where: { userId: auth.appUser.id },
       orderBy: { createdAt: "desc" },

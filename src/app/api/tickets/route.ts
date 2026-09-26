@@ -13,9 +13,9 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const createTicketSchema = z.object({
-  subject: z.string().trim().min(3).max(160),
+  subject: z.string({ required_error: "عنوان التذكرة مطلوب." }).trim().min(3, "اكتب عنواناً أوضح (3 أحرف على الأقل).").max(160, "العنوان طويل جداً."),
   category: z.enum(TICKET_CATEGORIES),
-  firstMessage: z.string().trim().min(5).max(3000),
+  firstMessage: z.string({ required_error: "اكتب تفاصيل المشكلة." }).trim().min(5, "اكتب تفاصيل أكثر (5 أحرف على الأقل).").max(3000, "الرسالة طويلة جداً."),
 });
 
 export async function GET() {

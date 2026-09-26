@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { buildOAuthRedirectUrl, normalizeAuthNextPath } from "@/lib/auth/redirect-url";
+import { translateError } from "@/lib/errors/translateError";
 import { sendMarketingEvent } from "@/lib/marketing/client-events";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -80,7 +81,7 @@ export function SocialAuthButtons({
       }
     } catch (error) {
       setLoadingProvider(null);
-      setErrorMessage(error instanceof Error ? error.message : "تعذر فتح تسجيل الدخول الاجتماعي. حاولي مرة أخرى.");
+      setErrorMessage(translateError(error, "تعذر فتح تسجيل الدخول الاجتماعي. حاولي مرة أخرى."));
     }
   }
 

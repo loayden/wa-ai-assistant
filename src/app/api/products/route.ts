@@ -10,11 +10,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const productMutationSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  nameEn: z.string().trim().max(120).optional().nullable(),
-  description: z.string().trim().max(500).optional().nullable(),
-  priceEGP: z.coerce.number().positive().max(1_000_000),
-  category: z.string().trim().max(80).optional().nullable(),
+  name: z.string({ required_error: "اسم المنتج مطلوب." }).trim().min(2, "اكتب اسم المنتج (حرفان على الأقل).").max(120, "اسم المنتج طويل جداً. الحد الأقصى 120 حرف."),
+  nameEn: z.string().trim().max(120, "الاسم بالإنجليزية طويل جداً.").optional().nullable(),
+  description: z.string().trim().max(500, "الوصف طويل جداً. الحد الأقصى 500 حرف.").optional().nullable(),
+  priceEGP: z.coerce.number({ invalid_type_error: "اكتب سعراً صحيحاً بالأرقام." }).positive("اكتب سعراً صحيحاً أكبر من صفر.").max(1_000_000, "السعر كبير جداً."),
+  category: z.string().trim().max(80, "اسم الفئة طويل جداً.").optional().nullable(),
   isAvailable: z.boolean().optional(),
 });
 

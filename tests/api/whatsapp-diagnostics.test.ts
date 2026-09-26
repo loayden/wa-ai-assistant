@@ -50,6 +50,7 @@ const diagnosticsMocks = vi.hoisted(() => {
       },
       whatsAppConnection: {
         findFirst: vi.fn(),
+        update: vi.fn(),
       },
     },
     requireAppUser: vi.fn(),
@@ -117,11 +118,13 @@ describe("WhatsApp diagnostics API", () => {
     diagnosticsMocks.isWithinWorkingHours.mockReset();
     diagnosticsMocks.prisma.message.findFirst.mockReset();
     diagnosticsMocks.prisma.whatsAppConnection.findFirst.mockReset();
+    diagnosticsMocks.prisma.whatsAppConnection.update.mockReset();
     diagnosticsMocks.requireAppUser.mockReset();
     diagnosticsMocks.sanitizeConnection.mockReset();
 
     diagnosticsMocks.decrypt.mockImplementation((value: string) => value);
     diagnosticsMocks.sanitizeConnection.mockImplementation((connection: { id: string }) => ({ id: connection.id }));
+    diagnosticsMocks.prisma.whatsAppConnection.update.mockResolvedValue({ id: CONNECTION_ID });
   });
 
   it("returns automatic reply blockers in diagnostics checks", async () => {

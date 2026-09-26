@@ -3,6 +3,7 @@ import { z } from "zod";
 import { jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { marketingEventNames } from "@/lib/marketing/events";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit, getRequestRateLimitKey } from "@/lib/utils/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,6 +82,17 @@ async function forwardToGoogleAnalytics(input: z.infer<typeof marketingEventSche
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = checkRateLimit({
+      key: getRequestRateLimitKey(request, "marketing:events"),
+      limit: 60,
+      windowMs: 60_000,
+      context: "api.marketing.events",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonSuccess({ accepted: false, forwarded: false });
+    }
+
     const parsed = marketingEventSchema.safeParse(await request.json());
 
     if (!parsed.success) {

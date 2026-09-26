@@ -12,39 +12,51 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   if (!isAuthorizedCronRequest(request)) {
-    return NextResponse.json({ success: false, error: "Forbidden." }, { status: 403 });
+    return NextResponse.json({ success: false, error: "غير مصرح." }, { status: 403 });
   }
 
-  const expiredTrials = await prisma.user.findMany({
-    where: buildExpiredTrialWhere(),
-    select: {
-      id: true,
-      email: true,
-      fullName: true,
-    },
-  });
-
-  for (const user of expiredTrials) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: getExpiredTrialDowngradeData(),
-      select: { id: true },
+  try {
+    const expiredTrials = await prisma.user.findMany({
+      where: buildExpiredTrialWhere(),
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+      },
     });
 
-    await sendSupportEmail({
-      to: user.email,
-      subject: "انتهت تجربة Pro المجانية",
-      html: `<div dir="rtl" style="font-family:Arial,sans-serif">
-        <p>أهلاً ${user.fullName ?? user.email}، انتهت تجربة Pro المجانية.</p>
-        <p>تم تحويل الحساب إلى الخطة المجانية. يمكنك الرجوع إلى Pro في أي وقت من صفحة الفوترة.</p>
-        <p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/billing">ترقية الخطة</a></p>
-      </div>`,
+    for (const user of expiredTrials) {
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: getExpiredTrialDowngradeData(),
+          select: { id: true },
+        });
+
+        await sendSupportEmail({
+          to: user.email,
+          subject: "انتهت تجربة Pro المجانية",
+          html: `<div dir="rtl" style="font-family:Arial,sans-serif">
+            <p>أهلاً ${user.fullName ?? user.email}، انتهت تجربة Pro المجانية.</p>
+            <p>تم تحويل الحساب إلى الخطة المجانية. يمكنك الرجوع إلى Pro في أي وقت من صفحة الفوترة.</p>
+            <p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/billing">ترقية الخطة</a></p>
+          </div>`,
+        });
+      } catch (error) {
+        logger.warn("cron.expire-trials", "Failed to downgrade one expired trial, continuing.", {
+          error,
+          userId: user.id,
+        });
+      }
+    }
+
+    logger.info("cron.expire-trials", "Expired unpaid trials processed.", {
+      count: expiredTrials.length,
     });
+
+    return NextResponse.json({ success: true, expired: expiredTrials.length });
+  } catch (error) {
+    logger.error("cron.expire-trials", "Failed to process expired trials.", { error });
+    return NextResponse.json({ success: false, error: "تعذر معالجة التجارب المنتهية. حاول مرة أخرى." }, { status: 500 });
   }
-
-  logger.info("cron.expire-trials", "Expired unpaid trials processed.", {
-    count: expiredTrials.length,
-  });
-
-  return NextResponse.json({ success: true, expired: expiredTrials.length });
 }

@@ -1,8 +1,12 @@
 const FALLBACK_ERROR_MESSAGE = "حدث خطأ غير متوقع. حاول مرة أخرى بعد قليل.";
 
 const ERROR_TRANSLATIONS: Array<[RegExp, string]> = [
-  [/invalid login credentials/i, "البريد الإلكتروني أو كلمة المرور غير صحيحة."],
-  [/account with this email already exists/i, "يوجد حساب بهذا البريد بالفعل. سجّل الدخول بدلاً من إنشاء حساب جديد."],
+  [/invalid login credentials|invalid email or password/i, "البريد الإلكتروني أو كلمة المرور غير صحيحة."],
+  [/user already registered|account with this email already exists|email already in use|duplicate email/i, "يوجد حساب بهذا البريد بالفعل. سجّل الدخول بدلاً من إنشاء حساب جديد."],
+  [/email not confirmed|email not verified|confirmation required/i, "لم يتم تأكيد البريد بعد. راجع بريدك واضغط رابط التأكيد ثم سجّل الدخول."],
+  [/email link is invalid or has expired|link.*expired|token.*expired|otp.*expired/i, "انتهت صلاحية رابط التأكيد. اطلب رابطاً جديداً وحاول مرة أخرى."],
+  [/password should be at least|password.*too short|weak password/i, "كلمة المرور قصيرة جداً. استخدم 8 أحرف على الأقل."],
+  [/invalid refresh token|invalid login|session.*expired/i, "انتهت الجلسة. سجّل الدخول مرة أخرى."],
   [/validation failed/i, "يرجى مراجعة البيانات المطلوبة ثم المحاولة مرة أخرى."],
   [/database temporarily unavailable|can't reach database|connection terminated|connection refused/i, "الخدمة غير متاحة مؤقتاً. حاول مرة أخرى بعد قليل."],
   [/too many requests|rate limit/i, "طلبات كثيرة في وقت قصير. انتظر قليلاً ثم حاول مرة أخرى."],

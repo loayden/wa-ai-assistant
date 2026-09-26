@@ -13,6 +13,7 @@ import {
   BarChart2,
   BookMarked,
   BookOpen,
+  Bot,
   CreditCard,
   FileText,
   LayoutDashboard,
@@ -25,6 +26,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   UserPlus,
+  Users,
 } from "lucide-react";
 
 import { LogoMark } from "@/components/shared/LogoMark";
@@ -55,6 +57,7 @@ const appNavItems = [
   { href: "/dashboard", label: "الرئيسية", icon: LayoutDashboard },
   { href: "/readiness", label: "جاهزية الإطلاق", icon: ShieldCheck },
   { href: "/connect", label: "القنوات", icon: RadioTower },
+  { href: "/assistant", label: "المساعد", icon: Bot },
   { href: "/knowledge", label: "المعرفة", icon: BookOpen },
   { href: "/products", label: "المنتجات", icon: Package },
   { href: "/orders", label: "الطلبات", icon: ShoppingBag },
@@ -65,6 +68,7 @@ const appNavItems = [
   { href: "/analytics", label: "التحليلات", icon: BarChart2 },
   { href: "/messages", label: "الرسائل", icon: MessageSquareText },
   { href: "/billing", label: "الفوترة", icon: CreditCard },
+  { href: "/team", label: "الفريق", icon: Users },
   { href: "/support", label: "الدعم", icon: LifeBuoy },
 ];
 

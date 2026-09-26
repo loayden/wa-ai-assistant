@@ -105,7 +105,7 @@ const apiRouteContracts: ApiRouteContract[] = [
   {
     route: "/api/billing/portal",
     methods: ["GET"],
-    expectedInputs: ["Supabase session with stripeCustomerId"],
+    expectedInputs: ["Supabase session with paymentCustomerId"],
     successResponse: "Stripe Billing Portal URL",
     expectedErrors: [400, 401, 500, 503],
   },

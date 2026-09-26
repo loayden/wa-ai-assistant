@@ -38,40 +38,85 @@ export type SubscriptionLimitResult = {
   planTier: PlanTier;
 };
 
+export type SubscriptionClaimResult = SubscriptionLimitResult & {
+  claimed: boolean;
+  monthlyReplyCount: number;
+};
+
 function getCurrentUtcMonthStart(): Date {
   const now = new Date();
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
-function isBeforeCurrentUtcMonth(date: Date): boolean {
-  return date.getTime() < getCurrentUtcMonthStart().getTime();
+function buildLimitResult(planTier: PlanTier, monthlyReplyCount: number): SubscriptionLimitResult {
+  const limitConfig = PLAN_REPLY_LIMITS[planTier];
+  const remaining = Math.max(limitConfig.includedRepliesPerMonth - monthlyReplyCount, 0);
+  const overageCount = limitConfig.allowsOverage ? Math.max(monthlyReplyCount - limitConfig.includedRepliesPerMonth, 0) : 0;
+
+  return {
+    allowed: limitConfig.allowsOverage ? true : remaining > 0,
+    remaining,
+    includedRepliesPerMonth: limitConfig.includedRepliesPerMonth,
+    overageCount,
+    allowsOverage: limitConfig.allowsOverage,
+    planTier,
+  };
+}
+
+function emptyLimitResult(): SubscriptionLimitResult {
+  return {
+    allowed: false,
+    remaining: 0,
+    includedRepliesPerMonth: 0,
+    overageCount: 0,
+    allowsOverage: false,
+    planTier: PlanTier.FREE,
+  };
 }
 
 export async function resetMonthlyCountIfNeeded(userId: string): Promise<void> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, replyCountResetAt: true },
-  });
+  try {
+    const result = await prisma.user.updateMany({
+      where: {
+        id: userId,
+        replyCountResetAt: {
+          lt: getCurrentUtcMonthStart(),
+        },
+      },
+      data: {
+        monthlyReplyCount: 0,
+        replyCountResetAt: new Date(),
+        usageAlert80SentAt: null,
+        usageAlert100SentAt: null,
+      },
+    });
 
-  if (!user) {
-    logger.warn("subscription.resetMonthlyCountIfNeeded", "User not found while resetting monthly count.", { userId });
-    return;
+    if (result.count > 0) {
+      logger.info("subscription.resetMonthlyCountIfNeeded", "Monthly AI reply count reset.", { userId });
+    }
+  } catch (error) {
+    // If the columns don't exist yet, catch the error and fallback to simple reset
+    const message = error instanceof Error ? error.message : String(error);
+    if (/column .* does not exist/i.test(message)) {
+      const fallbackResult = await prisma.user.updateMany({
+        where: {
+          id: userId,
+          replyCountResetAt: {
+            lt: getCurrentUtcMonthStart(),
+          },
+        },
+        data: {
+          monthlyReplyCount: 0,
+          replyCountResetAt: new Date(),
+        },
+      });
+      if (fallbackResult.count > 0) {
+        logger.info("subscription.resetMonthlyCountIfNeeded", "Monthly AI reply count reset (fallback).", { userId });
+      }
+    } else {
+      throw error;
+    }
   }
-
-  if (!isBeforeCurrentUtcMonth(user.replyCountResetAt)) {
-    return;
-  }
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      monthlyReplyCount: 0,
-      replyCountResetAt: new Date(),
-    },
-    select: { id: true },
-  });
-
-  logger.info("subscription.resetMonthlyCountIfNeeded", "Monthly AI reply count reset.", { userId });
 }
 
 export async function checkSubscriptionLimit(userId: string): Promise<SubscriptionLimitResult> {
@@ -87,31 +132,13 @@ export async function checkSubscriptionLimit(userId: string): Promise<Subscripti
 
   if (!user) {
     logger.warn("subscription.checkSubscriptionLimit", "User not found during subscription limit check.", { userId });
-    return {
-      allowed: false,
-      remaining: 0,
-      includedRepliesPerMonth: 0,
-      overageCount: 0,
-      allowsOverage: false,
-      planTier: PlanTier.FREE,
-    };
+    return emptyLimitResult();
   }
 
-  const limitConfig = PLAN_REPLY_LIMITS[user.planTier];
-  const remaining = Math.max(limitConfig.includedRepliesPerMonth - user.monthlyReplyCount, 0);
-  const overageCount = limitConfig.allowsOverage ? Math.max(user.monthlyReplyCount - limitConfig.includedRepliesPerMonth, 0) : 0;
-
-  return {
-    allowed: limitConfig.allowsOverage ? true : remaining > 0,
-    remaining,
-    includedRepliesPerMonth: limitConfig.includedRepliesPerMonth,
-    overageCount,
-    allowsOverage: limitConfig.allowsOverage,
-    planTier: user.planTier,
-  };
+  return buildLimitResult(user.planTier, user.monthlyReplyCount);
 }
 
-export async function incrementReplyCount(userId: string): Promise<number> {
+export async function claimSubscriptionReply(userId: string): Promise<SubscriptionClaimResult> {
   await resetMonthlyCountIfNeeded(userId);
 
   const currentUser = await prisma.user.findUnique({
@@ -121,29 +148,84 @@ export async function incrementReplyCount(userId: string): Promise<number> {
       fullName: true,
       planTier: true,
       monthlyReplyCount: true,
+      usageAlert80SentAt: true,
+      usageAlert100SentAt: true,
     },
   });
 
   if (!currentUser) {
-    logger.warn("subscription.incrementReplyCount", "User not found while incrementing monthly count.", { userId });
-    return 0;
+    logger.warn("subscription.claimSubscriptionReply", "User not found while claiming monthly reply quota.", { userId });
+    return {
+      ...emptyLimitResult(),
+      claimed: false,
+      monthlyReplyCount: 0,
+    };
   }
 
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      monthlyReplyCount: {
-        increment: 1,
-      },
-    },
-    select: {
-      monthlyReplyCount: true,
-    },
-  });
+  const limitConfig = PLAN_REPLY_LIMITS[currentUser.planTier];
+  const currentLimit = buildLimitResult(currentUser.planTier, currentUser.monthlyReplyCount);
 
-  logger.info("subscription.incrementReplyCount", "Incremented monthly AI reply count.", {
+  if (!currentLimit.allowed) {
+    return {
+      ...currentLimit,
+      claimed: false,
+      monthlyReplyCount: currentUser.monthlyReplyCount,
+    };
+  }
+
+  let nextCount: number;
+
+  if (limitConfig.allowsOverage) {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        monthlyReplyCount: {
+          increment: 1,
+        },
+      },
+      select: {
+        monthlyReplyCount: true,
+      },
+    });
+    nextCount = updatedUser.monthlyReplyCount;
+  } else {
+    const claim = await prisma.user.updateMany({
+      where: {
+        id: userId,
+        monthlyReplyCount: {
+          lt: limitConfig.includedRepliesPerMonth,
+        },
+      },
+      data: {
+        monthlyReplyCount: {
+          increment: 1,
+        },
+      },
+    });
+
+    if (claim.count === 0) {
+      const latestUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          planTier: true,
+          monthlyReplyCount: true,
+        },
+      });
+      const latestLimit = latestUser ? buildLimitResult(latestUser.planTier, latestUser.monthlyReplyCount) : emptyLimitResult();
+
+      return {
+        ...latestLimit,
+        claimed: false,
+        monthlyReplyCount: latestUser?.monthlyReplyCount ?? currentUser.monthlyReplyCount,
+      };
+    }
+
+    nextCount = currentUser.monthlyReplyCount + 1;
+  }
+
+  logger.info("subscription.claimSubscriptionReply", "Claimed monthly AI reply quota.", {
     userId,
-    monthlyReplyCount: user.monthlyReplyCount,
+    monthlyReplyCount: nextCount,
   });
 
   await sendUsageAlertsIfNeeded({
@@ -152,12 +234,21 @@ export async function incrementReplyCount(userId: string): Promise<number> {
     fullName: currentUser.fullName,
     planTier: currentUser.planTier,
     previousCount: currentUser.monthlyReplyCount,
-    nextCount: user.monthlyReplyCount,
-    usageAlert80SentAt: null,
-    usageAlert100SentAt: null,
+    nextCount,
+    usageAlert80SentAt: currentUser.usageAlert80SentAt,
+    usageAlert100SentAt: currentUser.usageAlert100SentAt,
   });
 
-  return user.monthlyReplyCount;
+  return {
+    ...buildLimitResult(currentUser.planTier, nextCount),
+    claimed: true,
+    monthlyReplyCount: nextCount,
+  };
+}
+
+export async function incrementReplyCount(userId: string): Promise<number> {
+  const claim = await claimSubscriptionReply(userId);
+  return claim.monthlyReplyCount;
 }
 
 async function sendUsageAlertsIfNeeded({

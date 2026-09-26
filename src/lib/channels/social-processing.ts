@@ -19,7 +19,7 @@ import { sendEmail } from "@/lib/resend/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
-import { checkSubscriptionLimit, incrementReplyCount } from "@/lib/utils/subscription";
+import { claimSubscriptionReply } from "@/lib/utils/subscription";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => {
@@ -299,7 +299,6 @@ async function sendSocialFallbackReply(params: {
     }),
   ]);
 
-  await incrementReplyCount(params.connection.userId);
 }
 
 function intentTag(intent: SocialIntent) {
@@ -595,9 +594,9 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
     return;
   }
 
-  const limit = await checkSubscriptionLimit(connection.userId);
+  const limit = await claimSubscriptionReply(connection.userId);
 
-  if (!limit.allowed) {
+  if (!limit.claimed) {
     await prisma.message.update({
       where: { id: inboundMessage.id },
       data: {
@@ -824,7 +823,6 @@ export async function processSocialMessage(msg: NormalizedInboundMessage) {
       }),
     ]);
 
-    await incrementReplyCount(connection.userId);
   } catch (error) {
     logger.error("meta.social", "Social AI reply processing failed.", { error });
 

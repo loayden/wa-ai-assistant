@@ -292,7 +292,7 @@ export function ProductsPageClient() {
             </div>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">اسم إنجليزي اختياري</span>
-              <Input value={form.nameEn} onChange={(event) => updateForm("nameEn", event.target.value)} placeholder="Large shawarma meal" dir="ltr" />
+              <Input value={form.nameEn} onChange={(event) => updateForm("nameEn", event.target.value)} placeholder="مثال: Large shawarma meal" dir="ltr" />
             </label>
             <label className="space-y-2">
               <span className="text-body-sm font-semibold text-wa-gray-800">وصف مختصر</span>

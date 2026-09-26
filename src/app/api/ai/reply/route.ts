@@ -13,7 +13,7 @@ import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidation
 import { getOrCreateUserSettings } from "@/lib/api/settings";
 import { generateAIReply } from "@/lib/openai/client";
 import { prisma } from "@/lib/prisma/client";
-import { checkSubscriptionLimit, incrementReplyCount } from "@/lib/utils/subscription";
+import { claimSubscriptionReply } from "@/lib/utils/subscription";
 import { logger } from "@/lib/utils/logger";
 import { checkRateLimit } from "@/lib/utils/rateLimit";
 
@@ -61,9 +61,9 @@ export async function POST(request: Request) {
       return jsonError("WhatsApp connection not found.", 404);
     }
 
-    const limit = await checkSubscriptionLimit(user.id);
+    const limit = await claimSubscriptionReply(user.id);
 
-    if (!limit.allowed) {
+    if (!limit.claimed) {
       return jsonError("Monthly AI reply limit reached.", 403, { remaining: limit.remaining });
     }
 
@@ -75,8 +75,6 @@ export async function POST(request: Request) {
       channel: (connection.channel === "instagram" || connection.channel === "messenger" ? connection.channel : "whatsapp"),
       connectionId: connection.id,
     });
-
-    await incrementReplyCount(user.id);
 
     return jsonSuccess(reply);
   } catch (error) {

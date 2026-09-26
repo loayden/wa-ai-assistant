@@ -9,12 +9,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, CheckCircle2, Megaphone, RefreshCw, SendHorizonal } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiData } from "@/lib/api/client";
 import { parseRecipientLines } from "@/lib/broadcasts/utils";
+import { translateError } from "@/lib/errors/translateError";
 import { extractTemplateVariables, maskTemplateVariables } from "@/lib/templates/meta";
 import { cn } from "@/lib/utils";
 import type {
@@ -156,10 +158,14 @@ export function BroadcastsPageClient() {
         method: "POST",
       }),
     onSuccess: () => {
+      toast.success("بدأ إرسال الحملة. تابع التقدم من الأسفل.");
       void queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
       if (activeBroadcastId) {
         void queryClient.invalidateQueries({ queryKey: ["broadcast-status", activeBroadcastId] });
       }
+    },
+    onError: (error) => {
+      toast.error(translateError(error instanceof Error ? error.message : error));
     },
   });
   const processMutation = useMutation({
@@ -189,8 +195,12 @@ export function BroadcastsPageClient() {
       }),
     onSuccess: (data) => {
       setActiveBroadcastId(data.broadcast.id);
+      toast.success("تم إنشاء الحملة بنجاح. بدأ الإرسال الآن.");
       void queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
       sendMutation.mutate(data.broadcast.id);
+    },
+    onError: (error) => {
+      toast.error(translateError(error instanceof Error ? error.message : error));
     },
   });
 
@@ -327,7 +337,7 @@ export function BroadcastsPageClient() {
             </div>
             {createMutation.error || sendMutation.error ? (
               <p className="mt-4 rounded-2xl bg-red-50 px-3 py-2 text-body-sm text-red-700">
-                {createMutation.error?.message ?? sendMutation.error?.message}
+                {translateError(createMutation.error?.message ?? sendMutation.error?.message ?? "")}
               </p>
             ) : null}
             {latestProgress ? (
@@ -356,9 +366,31 @@ export function BroadcastsPageClient() {
                 ) : null}
               </div>
             ) : null}
-            <Button className="mt-4 w-full sm:w-auto" disabled={!canSend} isLoading={createMutation.isPending || sendMutation.isPending} onClick={() => createMutation.mutate()}>
+            <Button
+              className="mt-4 min-h-11 w-full sm:w-auto"
+              disabled={!canSend}
+              isLoading={createMutation.isPending || sendMutation.isPending}
+              onClick={() => {
+                if (!form.name.trim()) {
+                  toast.error("اكتب اسماً للحملة أولاً.");
+                  return;
+                }
+                if (!form.templateId) {
+                  toast.error("اختر قالباً معتمداً قبل الإرسال.");
+                  return;
+                }
+                if (recipients.length === 0) {
+                  toast.error("أضف رقماً واحداً على الأقل مع كود الدولة.");
+                  return;
+                }
+                if (!window.confirm(`سيتم إرسال رسالة إلى ${recipients.length.toLocaleString("ar-EG")} مستلم. الإرسال تدريجي لحماية رقمك. هل تريد المتابعة؟`)) {
+                  return;
+                }
+                createMutation.mutate();
+              }}
+            >
               <SendHorizonal className="size-4" aria-hidden="true" />
-              إرسال الحملة
+              إرسال الحملة ({recipients.length.toLocaleString("ar-EG")} مستلم)
             </Button>
           </div>
         </div>

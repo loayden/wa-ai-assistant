@@ -16,13 +16,17 @@ const PUBLIC_API_PREFIXES = ["/api/webhooks", "/api/auth", "/api/health"];
 const PUBLIC_API_PATHS = new Set([
   "/api/billing/paymob-return",
   "/api/cron/process-broadcasts",
+  "/api/cron/process-outbox",
   "/api/cron/daily-summary",
   "/api/cron/weekly-report",
   "/api/cron/expire-trials",
+  "/api/cron/onboarding-emails",
   "/api/marketing/events",
 ]);
 const DASHBOARD_PAGE_PREFIXES = [
   "/dashboard",
+  "/assistant",
+  "/team",
   "/inbox",
   "/messages",
   "/settings",
@@ -95,7 +99,7 @@ function createUnauthenticatedResponse(request: NextRequest, sessionResponse: Ne
     const response = NextResponse.json(
       {
         success: false,
-        error: "Authentication required.",
+        error: "يرجى تسجيل الدخول أولاً.",
       },
       { status: 401 },
     );

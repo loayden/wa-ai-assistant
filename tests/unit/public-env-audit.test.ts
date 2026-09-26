@@ -16,7 +16,6 @@ describe("public environment audit", () => {
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
       NEXT_PUBLIC_META_APP_ID: "123",
       NEXT_PUBLIC_SENTRY_DSN: "https://public@sentry.example/1",
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_x",
     });
 
     expect(result.safe).toBe(true);

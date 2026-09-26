@@ -62,8 +62,8 @@ model User {
   avatarUrl             String?                @map("avatar_url")
   isAdmin               Boolean                @default(false) @map("is_admin")
   planTier              PlanTier               @default(FREE) @map("plan_tier")
-  paymentCustomerId     String?                @unique @map("stripe_customer_id")
-  paymentSubscriptionId String?                @map("stripe_subscription_id")
+  paymentCustomerId     String?                @unique @map("payment_customer_id")
+  paymentSubscriptionId String?                @map("payment_subscription_id")
   subscriptionStatus    SubscriptionStatus     @default(INACTIVE) @map("subscription_status")
   monthlyReplyCount     Int                    @default(0) @map("monthly_reply_count")
   onboardingCompleted   Boolean                @default(false) @map("onboarding_completed")
@@ -72,6 +72,9 @@ model User {
   paidAt                DateTime?              @map("paid_at")
   usageAlert80SentAt    DateTime?              @map("usage_alert_80_sent_at")
   usageAlert100SentAt   DateTime?              @map("usage_alert_100_sent_at")
+  welcomeEmailSentAt    DateTime?              @map("welcome_email_sent_at")
+  onboardingNudgeSentAt DateTime?              @map("onboarding_nudge_sent_at")
+  weekOneSummarySentAt  DateTime?              @map("week_one_summary_sent_at")
   replyCountResetAt     DateTime               @default(now()) @map("reply_count_reset_at")
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
@@ -100,6 +103,7 @@ model User {
   auditLogs             AuditLog[]
   aiReplyTraces         AIReplyTrace[]
   readinessSnapshots    ReadinessSnapshot[]
+  teamMembers           TeamMember[]
 
   @@index([createdAt])
   @@index([planTier])
@@ -558,7 +562,7 @@ model UserSettings {
 model SubscriptionEvent {
   id             String    @id @default(uuid()) @db.Uuid
   userId         String    @map("user_id") @db.Uuid
-  paymentEventId String    @unique @map("stripe_event_id")
+  paymentEventId String    @unique @map("payment_event_id")
   eventType      String    @map("event_type")
   planTier       PlanTier  @map("plan_tier")
   status         String
@@ -866,4 +870,22 @@ model Appointment {
   @@index([userId, date])
   @@index([userId, status])
   @@map("appointments")
+}
+
+// [ROLE: BACKEND ENGINEER]
+// Decision: Team seats are tenant-owned invite records on the app user.
+// Supabase Auth owns identity; this table owns roles and invite state.
+model TeamMember {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  email     String
+  role      String   @default("member")
+  status    String   @default("invited")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, email])
+  @@index([userId, status])
+  @@map("team_members")
 }

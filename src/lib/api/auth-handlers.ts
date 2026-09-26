@@ -155,7 +155,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
       });
 
       if (error) {
-        return jsonError(error.message, 400);
+        return jsonError(translateError(error.message, "تعذر إنشاء الحساب. حاول مرة أخرى."), 400);
       }
 
       /*
@@ -207,7 +207,7 @@ export async function handleAuthPost(request: Request, pathAction?: string) {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      return jsonError(error.message, 400);
+      return jsonError(translateError(error.message, "تعذر تسجيل الخروج. حاول مرة أخرى."), 400);
     }
 
     return jsonSuccess({ signedOut: true });

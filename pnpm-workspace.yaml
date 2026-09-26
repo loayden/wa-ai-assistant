@@ -1,0 +1,6 @@
+packages:
+  - "."
+
+overrides:
+  js-cookie: 3.0.7
+  postcss: 8.5.10

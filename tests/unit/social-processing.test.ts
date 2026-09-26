@@ -23,8 +23,7 @@ const socialMocks = vi.hoisted(() => {
     buildAIReplyTraceMetadata: vi.fn(() => ({ traceId: "trace-1", confidence: 0.8 })),
     detectSocialIntent: vi.fn(),
     getOrUpsertCustomerProfile: vi.fn(),
-    checkSubscriptionLimit: vi.fn(),
-    incrementReplyCount: vi.fn(),
+    claimSubscriptionReply: vi.fn(),
     prisma: {
       whatsAppConnection: { findFirst: vi.fn() },
       message: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -108,8 +107,7 @@ vi.mock("@/lib/utils/logger", () => ({
 }));
 
 vi.mock("@/lib/utils/subscription", () => ({
-  checkSubscriptionLimit: socialMocks.checkSubscriptionLimit,
-  incrementReplyCount: socialMocks.incrementReplyCount,
+  claimSubscriptionReply: socialMocks.claimSubscriptionReply,
 }));
 
 import { processSocialMessage } from "@/lib/channels/social-processing";
@@ -205,7 +203,7 @@ describe("processSocialMessage", () => {
     socialMocks.prisma.$transaction.mockImplementation((operations) => Promise.all(operations));
     socialMocks.detectSocialIntent.mockResolvedValue("general");
     socialMocks.getOrUpsertCustomerProfile.mockResolvedValue({});
-    socialMocks.checkSubscriptionLimit.mockResolvedValue({ allowed: true });
+    socialMocks.claimSubscriptionReply.mockResolvedValue({ allowed: true, claimed: true });
   });
 
   it("sends a fallback Instagram reply when OpenAI quota is unavailable", async () => {
@@ -241,7 +239,7 @@ describe("processSocialMessage", () => {
         externalMessageId: "fallback-mid",
       }),
     });
-    expect(socialMocks.incrementReplyCount).toHaveBeenCalledWith(USER_ID);
+    expect(socialMocks.claimSubscriptionReply).toHaveBeenCalledWith(USER_ID);
   });
 
   it("keeps the Instagram message failed when fallback delivery is rejected", async () => {
@@ -276,6 +274,6 @@ describe("processSocialMessage", () => {
         }),
       }),
     });
-    expect(socialMocks.incrementReplyCount).not.toHaveBeenCalled();
+    expect(socialMocks.claimSubscriptionReply).toHaveBeenCalledWith(USER_ID);
   });
 });

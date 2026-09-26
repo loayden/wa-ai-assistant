@@ -1,5 +1,5 @@
 export function parseCsatRating(messageText: string) {
-  const digit = messageText.trim().match(/^([1-5])(?:\D|$)/)?.[1];
+  const digit = messageText.trim().match(/^([1-5])[\s.،]*$/)?.[1];
 
   if (!digit) {
     return null;

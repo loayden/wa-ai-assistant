@@ -48,6 +48,8 @@ export function useMessages({ page = 1, limit = 20, channel, connectionId, direc
   );
   const query = useQuery({
     queryKey: messagesQueryKey(queryParams),
+    refetchInterval: 4000,
+    refetchIntervalInBackground: false,
     queryFn: () => {
       const params = new URLSearchParams({
         page: String(queryParams.page),

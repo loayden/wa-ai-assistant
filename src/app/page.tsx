@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { HTMLAttributes, ReactNode } from "react";
 import {
   ArrowLeft,
@@ -11,249 +10,200 @@ import {
   Clock3,
   CreditCard,
   Inbox,
-  Megaphone,
+  MessageCircle,
   MessageSquareText,
-  Mic2,
+  MousePointerClick,
+  Send,
   ShieldCheck,
   ShoppingBag,
-  SlidersHorizontal,
   Sparkles,
-  Target,
-  TrendingUp,
-  UserPlus,
-  Zap,
+  UserRoundCheck,
+  Users,
 } from "lucide-react";
 
-import { AppFooter } from "@/components/shared/AppFooter";
 import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
 import { InstagramIcon, MessengerIcon, WhatsAppIcon } from "@/components/icons/ChannelIcons";
-import { CinematicScrollEffects } from "@/components/landing/CinematicScrollEffects";
-import { MagneticLink } from "@/components/landing/MagneticLink";
 import { MotionReveal } from "@/components/landing/MotionReveal";
-import { SmoothScroll } from "@/components/landing/SmoothScroll";
+import { AppFooter } from "@/components/shared/AppFooter";
 import { LogoMark } from "@/components/shared/LogoMark";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "القنوات الثلاثة", href: "#connect" },
-  { label: "الصندوق الموحد", href: "/features/inbox" },
-  { label: "المساعد", href: "/features/ai" },
-  { label: "الأسعار", href: "/pricing" },
-  { label: "الأمان", href: "/security" },
-  { label: "المقارنة", href: "/compare/respondio" },
-  { label: "المدونة", href: "/blog" },
+  { label: "المميزات", href: "#features" },
+  { label: "طريقة العمل", href: "#workflow" },
+  { label: "القنوات", href: "#channels" },
+  { label: "الأسعار", href: "#pricing" },
+  { label: "الأسئلة", href: "#faq" },
 ];
 
-const heroStats = [
-  { label: "القنوات", value: "3" },
-  { label: "الصندوق", value: "موحد" },
-  { label: "اللغة", value: "عربي" },
-  { label: "التحكم", value: "فوري" },
+const proofItems = [
+  { label: "قنوات Meta", value: "واتساب + إنستجرام + ماسنجر" },
+  { label: "الواجهة", value: "عربية RTL من البداية" },
+  { label: "التحكم", value: "رد تلقائي أو تدخل بشري" },
 ];
 
-const channelPreview = [
-  { label: "واتساب", body: "رسائل الرقم التجاري", icon: WhatsAppIcon, className: "bg-[#E9FBF0] text-[#0B8F45]" },
-  { label: "إنستجرام", body: "DM وتعليقات العملاء", icon: InstagramIcon, className: "bg-[#FFF0F7] text-[#C13584]" },
-  { label: "ماسنجر", body: "رسائل صفحة Facebook", icon: MessengerIcon, className: "bg-[#EEF6FF] text-[#0078FF]" },
-];
-
-const workflowSteps = [
+const channels = [
   {
-    title: "اربط قنوات السوشيال",
-    body: "ابدأ بأي قناة جاهزة، ثم أضف واتساب وإنستجرام وماسنجر عندما تكون الصلاحيات مكتملة.",
+    name: "واتساب",
+    detail: "رسائل الرقم التجاري والطلبات السريعة",
+    icon: WhatsAppIcon,
+    tone: "bg-[#E9FBF0] text-[#0B8F45]",
+  },
+  {
+    name: "إنستجرام",
+    detail: "DM وأسئلة المنتجات من الحساب الاحترافي",
+    icon: InstagramIcon,
+    tone: "bg-[#FFF0F7] text-[#C13584]",
+  },
+  {
+    name: "ماسنجر",
+    detail: "رسائل صفحة Facebook في نفس الصندوق",
+    icon: MessengerIcon,
+    tone: "bg-[#EEF6FF] text-[#0078FF]",
+  },
+];
+
+const painPoints = [
+  "رسائل من ثلاث تطبيقات بدون ترتيب واضح.",
+  "نفس الأسئلة تتكرر طول اليوم.",
+  "عميل مهتم يضيع قبل ما يتحول لطلب.",
+];
+
+const outcomePoints = [
+  "صندوق واحد يعرف القناة والعميل والسياق.",
+  "ردود مبنية على معرفة النشاط والمنتجات.",
+  "Lead أو طلب أو تدخل بشري في اللحظة المناسبة.",
+];
+
+const useCases = [
+  {
+    title: "رد على الأسئلة المتكررة",
+    body: "المساعد يجيب من الأسعار، المواعيد، السياسات، ومعلومات النشاط بدل ردود عامة.",
+    icon: Bot,
+  },
+  {
+    title: "حوّل المحادثات إلى Leads",
+    body: "اكتشف العملاء المهتمين بالسعر أو الحجز أو الشراء، وسجّلهم في لوحة واضحة.",
+    icon: UserRoundCheck,
+  },
+  {
+    title: "نظّم الطلبات والدفع",
+    body: "سجّل الطلب من المحادثة، تابع حالته، وجهّز رابط الدفع عندما يكون العميل جاهزًا.",
+    icon: ShoppingBag,
+  },
+  {
+    title: "سلّم المحادثة للبشر",
+    body: "عندما يحتاج العميل قرارًا حساسًا، يوقف kallem الردود التلقائية ويترك التحكم لصاحب النشاط.",
+    icon: Users,
+  },
+];
+
+const workflow = [
+  {
+    title: "اربط القنوات",
+    body: "ابدأ بالقنوات الجاهزة، وتأكد من الصلاحيات والـ webhook قبل استقبال عملاء حقيقيين.",
     icon: ShieldCheck,
   },
   {
-    title: "علّم المساعد",
-    body: "أضف وصف النشاط، الأسئلة الشائعة، ساعات العمل، المنتجات، والتعليمات الخاصة.",
+    title: "علّم kallem نشاطك",
+    body: "أضف وصف النشاط، قاعدة المعرفة، المنتجات، الأسعار، وساعات العمل.",
     icon: BookOpen,
   },
   {
-    title: "استقبل المحادثات",
-    body: "العميل يرسل من واتساب أو إنستجرام أو ماسنجر. المساعد يرد، والمالك يراجع كل شيء من صندوق واحد.",
-    icon: Inbox,
+    title: "اختبر الردود",
+    body: "راجع إجابات المساعد قبل التشغيل، وعدّل التعليمات حتى تصبح مناسبة لطريقتك.",
+    icon: MessageSquareText,
   },
   {
-    title: "حوّل الرسائل لقيمة",
-    body: "اكتشف Leads، سجل طلبات، أرسل روابط دفع، وتابع التحليلات من نفس اللوحة.",
+    title: "شغّل بثقة",
+    body: "راقب الرسائل، الردود، العملاء المحتملين، الطلبات، والمشاكل من نفس الشاشة.",
     icon: BarChart3,
   },
 ];
 
-const lifecycleStages = [
+const featureCards = [
   {
-    title: "اجمع الرسائل",
-    body: "واتساب، إنستجرام، وماسنجر يدخلون إلى صندوق واحد بدل متابعة كل تطبيق وحده.",
+    title: "صندوق وارد موحد",
+    body: "كل رسالة تظهر مع القناة، العميل، حالة الرد، وحالة التدخل البشري.",
     icon: Inbox,
   },
   {
-    title: "افهم العميل",
-    body: "kallem يقرأ السؤال مع المنتجات، الأسعار، المعرفة، وسياق المحادثة قبل الرد.",
-    icon: Bot,
+    title: "ردود AI عربية",
+    body: "ردود قصيرة وواضحة مبنية على بيانات نشاطك، وليست نصوصًا عامة.",
+    icon: Sparkles,
   },
   {
-    title: "رد أو سلّم للبشر",
-    body: "الرد يخرج تلقائيًا عند الثقة، أو تنتقل المحادثة لصاحب النشاط عند الحاجة.",
-    icon: MessageSquareText,
+    title: "جاهزية قبل الإطلاق",
+    body: "صفحة readiness توضّح ما يعمل وما يحتاج Meta أو OpenAI أو Paymob.",
+    icon: BadgeCheck,
   },
   {
-    title: "حوّلها لنتيجة",
-    body: "Lead، طلب، رابط دفع، أو تذكرة دعم واضحة بدل رسالة تضيع في الزحمة.",
-    icon: Target,
-  },
-] as const;
-
-const featureGroups = [
-  {
-    title: "ردود ذكية لكل قناة",
-    body: "ردود تلقائية مبنية على معلومات نشاطك لواتساب وإنستجرام وماسنجر، مع إيقاف أو تسليم للبشر في أي وقت.",
-    icon: Bot,
-    href: "/connect",
+    title: "إشارات بيع",
+    body: "kallem يلتقط نية الشراء والسعر والحجز حتى لا تضيع الفرص داخل الدردشة.",
+    icon: MousePointerClick,
   },
   {
-    title: "قاعدة معرفة",
-    body: "أدخل المنتجات، المواعيد، الأسعار، السياسات، والأسئلة الشائعة حتى لا تكون الردود عامة.",
-    icon: BookOpen,
-    href: "/knowledge",
-  },
-  {
-    title: "صندوق وارد عملي",
-    body: "صندوق موحد يوضح القناة، الرسائل الواردة والصادرة، حالة الذكاء، والتسليم اليدوي عند الحاجة.",
-    icon: MessageSquareText,
-    href: "/messages",
-  },
-  {
-    title: "Leads وتحليلات",
-    body: "اكتشاف العملاء المحتملين، متابعة المحادثات، ومعرفة أثر المساعد على نشاطك.",
-    icon: UserPlus,
-    href: "/leads",
-  },
-  {
-    title: "ساعات عمل وتقييمات",
-    body: "رسائل خارج الدوام، تقييم رضا العملاء بعد الإغلاق، وتنبيهات عند الحالات المهمة.",
+    title: "ساعات عمل",
+    body: "رسالة خارج الدوام وتوقيت محلي واضح حتى لا يرد المساعد عكس نظامك.",
     icon: Clock3,
-    href: "/settings",
   },
   {
-    title: "قوالب وحملات",
-    body: "إدارة قوالب Meta المعتمدة وإرسال حملات منظمة مع احترام قواعد القنوات.",
-    icon: Megaphone,
-    href: "/templates",
-  },
-  {
-    title: "طلبات ودفع",
-    body: "استقبال طلبات من المحادثة، متابعة الحالة، وإرسال روابط دفع Paymob للعميل.",
-    icon: ShoppingBag,
-    href: "/orders",
-  },
-  {
-    title: "صوت، عربيزي، وتصحيح",
-    body: "فهم الرسائل الصوتية، Franco-Arabic، وتعلّم المساعد من تصحيحات صاحب النشاط.",
-    icon: Mic2,
-    href: "/corrections",
+    title: "دفع واشتراكات",
+    body: "مسار Paymob جاهز للكود، مع منع الدفع الحقيقي إذا كانت المفاتيح اختبار.",
+    icon: CreditCard,
   },
 ];
 
 const pricingPlans = [
   {
-    name: "FREE",
+    name: "Free",
     price: "٠ جنيه",
-    description: "لبداية آمنة وتجربة الردود على نشاط واحد.",
-    replies: "٥٠ رد / شهر",
-    numbers: "قناة واحدة",
-    cta: "ابدأ مجانًا",
-    href: "/signup",
-    features: ["لوحة تحكم أساسية", "إعداد قناة موجّه", "تشغيل وإيقاف الردود"],
+    description: "تجربة أولى لفهم المنتج وإعداد قناة واحدة.",
+    features: ["بداية سريعة", "إعداد قناة واحدة", "اختبار الردود"],
   },
   {
-    name: "PRO",
+    name: "Pro",
     price: "٩٩٩ جنيه",
-    description: "للأنشطة التي تستقبل رسائل يومية وتحتاج متابعة منظمة.",
-    replies: "٢٬٠٠٠ رد / شهر",
-    numbers: "حتى ٣ قنوات",
-    cta: "اختر Pro",
-    href: "/signup",
+    description: "للأنشطة التي تستقبل رسائل يومية وتحتاج تنظيمًا وردودًا أسرع.",
+    features: ["٣ قنوات", "قاعدة معرفة", "Leads وتحليلات", "ساعات عمل"],
     featured: true,
-    features: ["واتساب + إنستجرام + ماسنجر", "قاعدة معرفة", "Leads وتحليلات", "ساعات عمل وتقييمات"],
   },
   {
-    name: "BUSINESS",
+    name: "Business",
     price: "٢٬٤٩٩ جنيه",
-    description: "للعمليات الأكبر، فرق متعددة، وحجم محادثات أعلى.",
-    replies: "١٠٬٠٠٠ رد / شهر",
-    numbers: "حتى ١٠ قنوات",
-    cta: "اختر Business",
-    href: "/signup",
-    features: ["قنوات متعددة", "حملات Broadcast", "طلبات ودفع", "أولوية دعم"],
+    description: "لحجم محادثات أكبر، منتجات أكثر، ومتابعة تشغيلية أوسع.",
+    features: ["قنوات أكثر", "طلبات ودفع", "قوالب وحملات", "أولوية دعم"],
   },
 ];
 
-const pexelsPhotos = {
-  supportAgent: {
-    src: "https://images.pexels.com/photos/7709195/pexels-photo-7709195.jpeg?auto=compress&cs=tinysrgb&w=1400",
-    alt: "فريق دعم عملاء يستخدم سماعة ولابتوب لمتابعة المحادثات",
-  },
-  supportTeam: {
-    src: "https://images.pexels.com/photos/7709227/pexels-photo-7709227.jpeg?auto=compress&cs=tinysrgb&w=1400",
-    alt: "فريق خدمة عملاء يدير رسائل العملاء من أجهزة لابتوب",
-  },
-};
-
-const comparisonRows = [
+const faqs = [
   {
-    area: "التركيز",
-    competitors: "منصات واسعة تحتاج إعدادات كثيرة وفرق تشغيل أكبر.",
-    kallem: "تجربة عربية مركزة على واتساب وإنستجرام وماسنجر لصاحب نشاط صغير أو متوسط.",
+    question: "هل kallem مخصص للواتساب فقط؟",
+    answer: "لا. الصفحة والتجربة مصممة حول واتساب وإنستجرام وماسنجر من نفس صندوق الرسائل.",
   },
   {
-    area: "وضوح القنوات",
-    competitors: "قد يعرف المستخدم أن القناة لا تعمل بعد تجربة فاشلة.",
-    kallem: "يعرض الجاهزية والويب هوك والصلاحيات قبل تشغيل الردود على العملاء الحقيقيين.",
+    question: "هل أحتاج خبرة تقنية؟",
+    answer: "لا. المسار الأساسي هو ربط القناة، إضافة معلومات النشاط، اختبار الرد، ثم التشغيل.",
   },
   {
-    area: "جودة الرد",
-    competitors: "أتمتة عامة أو chatbot يحتاج بناء طويل.",
-    kallem: "يرد من معرفة النشاط والمنتجات والسياسات وسياق المحادثة، مع تسليم للبشر عند انخفاض الثقة.",
+    question: "هل الردود تخرج دائمًا تلقائيًا؟",
+    answer: "يمكن تشغيلها أو إيقافها، ويمكن تسليم محادثة واحدة للبشر عندما تحتاج مراجعة.",
   },
   {
-    area: "التسعير",
-    competitors: "تسعير عالمي قد يكون أعلى أو غير واضح للسوق المحلي.",
-    kallem: "خطط واضحة بالجنيه المصري وحدود ردود وقنوات مفهومة قبل التسجيل.",
-  },
-];
-
-const faqItems = [
-  {
-    question: "هل kallem للواتساب فقط؟",
-    answer: "لا. kallem مصمم لإدارة واتساب وإنستجرام وماسنجر من صندوق واحد، مع توضيح حالة كل قناة قبل تشغيل الردود.",
-  },
-  {
-    question: "هل يرد الذكاء الاصطناعي من نفسه؟",
-    answer: "الردود تعتمد على معلومات النشاط والمنتجات والسياسات والأسئلة الشائعة. عند نقص البيانات أو انخفاض الثقة يمكن تسليم المحادثة للبشر.",
-  },
-  {
-    question: "هل العميل يحتاج تحميل تطبيق جديد؟",
-    answer: "لا. العميل يرسل من واتساب أو إنستجرام أو ماسنجر كالمعتاد، وصاحب النشاط يدير كل شيء من kallem.",
-  },
-  {
-    question: "متى يكون المنتج جاهزًا للعملاء الحقيقيين؟",
-    answer: "عندما تكون القنوات متصلة بصلاحيات Meta الصحيحة، والويب هوك فعال، والدفع والإيميلات ومزود الذكاء مهيأة للإنتاج.",
+    question: "ما الذي يمنع الإطلاق العام؟",
+    answer: "يلزم صلاحيات Meta الإنتاجية، رقم WhatsApp Business حقيقي، رصيد OpenAI، ومفاتيح Paymob live.",
   },
 ];
 
 function BrandLockup({ className }: { className?: string }) {
   return (
-    <Link
-      href="/"
-      className={cn("inline-flex items-center", className)}
-      aria-label="kallem home"
-    >
+    <Link href="/" className={cn("inline-flex items-center", className)} aria-label="kallem home">
       <LogoMark size="lg" />
     </Link>
   );
 }
 
-function FormalCard({
+function Surface({
   children,
   className,
   ...props
@@ -264,7 +214,7 @@ function FormalCard({
   return (
     <div
       className={cn(
-        "glass-panel rounded-[20px] sm:rounded-[28px]",
+        "border border-white/65 bg-white/82 shadow-[0_20px_70px_rgba(4,44,83,0.10)] backdrop-blur-2xl",
         className,
       )}
       {...props}
@@ -274,35 +224,30 @@ function FormalCard({
   );
 }
 
-function OperatingSystemSection() {
+function LandingButton({
+  children,
+  href,
+  variant = "primary",
+  className,
+}: {
+  children: ReactNode;
+  href: string;
+  variant?: "primary" | "secondary";
+  className?: string;
+}) {
   return (
-    <section className="relative z-10 mx-2 max-w-[1200px] rounded-[28px] border border-white/50 bg-white/70 px-3 py-10 shadow-[0_18px_64px_rgba(4,44,83,0.10)] backdrop-blur-2xl sm:mx-auto sm:rounded-[36px] sm:px-6 sm:py-14" data-cinema-section>
-      <div className="grid gap-7 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-        <SectionHeading
-          eyebrow="نظام تشغيل المحادثات"
-          title="كل صفحة لها هدف واحد: تحويل الرسائل إلى عمل منظم."
-          body="بدل عرض مميزات كثيرة في نفس اللحظة، kallem يقسم التجربة إلى أربع مراحل يفهمها صاحب النشاط خلال ثوانٍ."
-        />
-        <div className="grid gap-3 md:grid-cols-2">
-          {lifecycleStages.map((stage, index) => {
-            const Icon = stage.icon;
-
-            return (
-              <div key={stage.title} className="rounded-[24px] border border-white/70 bg-white/76 p-4 shadow-[0_12px_34px_rgba(4,44,83,0.08)]">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-600 text-white shadow-[0_14px_34px_rgba(26,86,255,0.22)]">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </div>
-                  <span className="text-sm font-semibold text-wa-blue-600">{String(index + 1).padStart(2, "0")}</span>
-                </div>
-                <h3 className="mt-4 text-xl font-semibold text-wa-gray-900">{stage.title}</h3>
-                <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{stage.body}</p>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
+    <Link
+      href={href}
+      className={cn(
+        "inline-flex min-h-12 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wa-blue-600 sm:min-h-14 sm:px-7",
+        variant === "primary"
+          ? "bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.23)] hover:bg-[#0E47E8]"
+          : "border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50",
+        className,
+      )}
+    >
+      {children}
+    </Link>
   );
 }
 
@@ -310,200 +255,464 @@ function SectionHeading({
   eyebrow,
   title,
   body,
-  className,
+  center = false,
 }: {
   eyebrow: string;
   title: string;
   body: string;
-  className?: string;
+  center?: boolean;
 }) {
   return (
-    <div className={cn("max-w-[760px]", className)} data-cinema-reveal>
+    <div className={cn("max-w-[760px]", center && "mx-auto text-center")}>
       <p className="text-sm font-semibold text-wa-blue-600">{eyebrow}</p>
-      <h2 className="mt-3 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[48px] sm:leading-[1.12]">
+      <h2 className="mt-3 text-[30px] font-semibold leading-[1.12] text-wa-gray-900 [text-wrap:balance] sm:text-[48px]">
         {title}
       </h2>
-      <p className="mt-4 text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">{body}</p>
+      <p className="mt-4 text-body-sm leading-7 text-wa-gray-600 sm:text-lg sm:leading-8">{body}</p>
     </div>
   );
 }
 
-function ProductPreview() {
+function Header() {
   return (
-    <FormalCard className="relative overflow-hidden p-3 sm:p-4" data-cinema-reveal>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_28%_0%,rgba(26,86,255,0.13),transparent_36%),linear-gradient(180deg,rgba(247,247,248,0.35),rgba(255,255,255,0))]" />
-      <div className="relative rounded-[18px] border border-wa-gray-100 bg-white p-3 sm:rounded-[24px] sm:p-4">
-        <div className="relative mb-3 overflow-hidden rounded-[18px] border border-wa-gray-100 sm:rounded-[22px]">
-          <Image
-            src={pexelsPhotos.supportTeam.src}
-            alt={pexelsPhotos.supportTeam.alt}
-            width={960}
-            height={520}
-            priority
-            className="h-[210px] w-full object-cover sm:h-[260px]"
-            sizes="(max-width: 1024px) 100vw, 520px"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0.02),rgba(13,20,33,0.62))]" />
-          <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/90 p-3 shadow-[0_18px_48px_rgba(13,20,33,0.14)] backdrop-blur">
-            <p className="text-xs font-semibold text-wa-blue-600">ليس واتساب فقط</p>
-            <p className="mt-1 text-sm font-semibold leading-6 text-wa-gray-900">
-              صندوق واحد يجمع واتساب، إنستجرام، وماسنجر مع حالة الرد والتسليم للبشر.
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-3 border-b border-wa-gray-100 pb-3">
-          <div>
-            <p className="text-xs font-semibold text-wa-gray-400">مثال للواجهة</p>
-            <h2 className="mt-1 text-xl font-semibold text-wa-gray-900 sm:text-2xl">المساعد يعمل الآن</h2>
-          </div>
-          <span className="inline-flex min-h-9 items-center rounded-full bg-wa-blue-600 px-3 text-xs font-semibold text-white">
-            Replying
-          </span>
-        </div>
-
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          {channelPreview.map((channel) => {
-            const Icon = channel.icon;
-
-            return (
-              <div key={channel.label} className="flex items-center gap-2 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 px-3 py-2">
-                <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl bg-white", channel.className)}>
-                  <Icon className="size-5" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-xs font-semibold text-wa-gray-900">{channel.label}</span>
-                  <span className="block truncate text-[11px] text-wa-gray-500">{channel.body}</span>
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="grid gap-3 py-3 sm:grid-cols-3">
-          {[
-            { label: "الردود", value: "جاهزة" },
-            { label: "Leads", value: "تلقائي" },
-            { label: "طلبات", value: "منظم" },
-          ].map((item) => (
-            <div key={item.label} className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3">
-              <p className="text-xs text-wa-gray-400">{item.label}</p>
-              <p className="mt-2 text-lg font-semibold text-wa-gray-900">{item.value}</p>
-            </div>
+    <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
+      <nav className="mx-auto flex max-w-[1180px] items-center justify-between gap-3 rounded-[24px] border border-white/70 bg-white/78 px-3 py-3 shadow-[0_16px_48px_rgba(4,44,83,0.10)] backdrop-blur-2xl sm:px-5">
+        <BrandLockup />
+        <div className="hidden items-center gap-1 rounded-full border border-wa-gray-100 bg-wa-gray-50/80 p-1 lg:flex">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="rounded-full px-4 py-2 text-sm font-semibold text-wa-gray-600 transition hover:bg-white hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
+            >
+              {item.label}
+            </Link>
           ))}
         </div>
-
-        <div className="grid gap-3 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="rounded-[18px] border border-wa-gray-100 bg-wa-gray-50 p-3">
-            <p className="text-xs font-semibold text-wa-gray-400">محادثة واردة من أي قناة</p>
-            <div className="mt-3 space-y-2">
-              <div className="max-w-[86%] rounded-2xl rounded-tr-sm bg-white px-3 py-2 text-sm leading-6 text-wa-gray-700">
-                عايز أعرف السعر والتوصيل؟
-              </div>
-              <div className="mr-auto max-w-[88%] rounded-2xl rounded-tl-sm bg-wa-blue-600 px-3 py-2 text-sm leading-6 text-white">
-                أهلاً بك. التوصيل متاح داخل القاهرة، والسعر يبدأ من ١٢٠ جنيه حسب الطلب.
-              </div>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {[
-              { icon: UserPlus, label: "Lead جديد", value: "العميل يسأل عن السعر والتوصيل" },
-              { icon: ShoppingBag, label: "طلب قابل للتسجيل", value: "يمكن تحويل المحادثة لطلب" },
-              { icon: CreditCard, label: "رابط دفع", value: "Paymob جاهز للإرسال عند التأكيد" },
-            ].map((row) => {
-              const Icon = row.icon;
-
-              return (
-                <div key={row.label} className="flex gap-3 rounded-2xl border border-wa-gray-100 bg-white p-3">
-                  <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-wa-blue-50 text-wa-blue-600">
-                    <Icon className="size-4" aria-hidden="true" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-wa-gray-900">{row.label}</p>
-                    <p className="mt-1 text-xs leading-5 text-wa-gray-500">{row.value}</p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="hidden min-h-11 items-center rounded-full px-4 text-sm font-semibold text-wa-gray-600 transition hover:bg-wa-gray-50 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 sm:inline-flex"
+          >
+            تسجيل الدخول
+          </Link>
+          <LandingButton href="/signup" className="min-h-11 px-4 sm:min-h-11 sm:px-5">
+            ابدأ الآن
+          </LandingButton>
         </div>
-      </div>
-    </FormalCard>
+      </nav>
+    </header>
   );
 }
 
-function CustomerProofSection() {
+function UnifiedInboxMockup() {
   return (
-    <section className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16">
-      <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
-        <div className="relative overflow-hidden rounded-[30px] border border-wa-gray-100 bg-wa-gray-900 shadow-[0_24px_74px_rgba(13,20,33,0.16)]" data-cinema-reveal>
-          <Image
-            src={pexelsPhotos.supportAgent.src}
-            alt={pexelsPhotos.supportAgent.alt}
-            width={1100}
-            height={780}
-            className="h-[360px] w-full object-cover sm:h-[460px]"
-            sizes="(max-width: 1024px) 100vw, 520px"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,20,33,0.04),rgba(13,20,33,0.72))]" />
-          <div className="absolute inset-x-4 bottom-4 rounded-[22px] border border-white/40 bg-white/90 p-4 shadow-[0_20px_56px_rgba(13,20,33,0.16)] backdrop-blur sm:inset-x-5 sm:bottom-5 sm:p-5">
-            <p className="text-sm font-semibold text-wa-blue-600">تجربة أصحاب الأنشطة</p>
-            <h2 className="mt-2 text-2xl font-semibold leading-tight text-wa-gray-900">
-              الردود تصبح منظّمة، لكن التحكم يبقى لصاحب النشاط.
-            </h2>
+    <Surface className="relative mx-auto mt-10 max-w-[1040px] overflow-hidden rounded-[28px] p-2 sm:mt-12 sm:rounded-[34px] sm:p-3 lg:mt-14">
+      <div className="rounded-[22px] border border-wa-gray-100 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] sm:rounded-[28px]">
+        <div className="flex items-center justify-between gap-3 border-b border-wa-gray-100 px-3 py-3 sm:px-4">
+          <div className="flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-2xl bg-wa-blue-600 text-white">
+              <Inbox className="size-4" aria-hidden="true" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-wa-gray-900">صندوق الرسائل</p>
+              <p className="text-xs text-wa-gray-400">كل القنوات في شاشة واحدة</p>
+            </div>
+          </div>
+          <div className="hidden items-center gap-2 sm:flex">
+            <span className="rounded-full bg-wa-success-bg px-3 py-1.5 text-xs font-semibold text-wa-success">
+              المساعد نشط
+            </span>
+            <span className="rounded-full bg-wa-blue-50 px-3 py-1.5 text-xs font-semibold text-wa-blue-600">
+              ٣ قنوات
+            </span>
           </div>
         </div>
 
-        <div>
-          <SectionHeading
-            eyebrow="ثقة وتحويل"
-            title="العميل يسأل من القناة التي يعرفها، وkallem يحولها إلى متابعة واضحة."
-            body="بدل أن يتنقل صاحب النشاط بين واتساب وإنستجرام وماسنجر، تظهر الرسائل والطلبات والـLeads في مكان واحد، مع سبب واضح إذا لم يخرج الرد."
-          />
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {[
-              { icon: BadgeCheck, title: "جاهزية صريحة", body: "لا نقول متصل إذا كانت القناة غير جاهزة للإنتاج." },
-              { icon: Target, title: "مسار أقصر", body: "تسجيل، ربط، تدريب، اختبار، تشغيل." },
-              { icon: TrendingUp, title: "بيع ودعم", body: "المحادثة تتحول إلى Lead أو طلب أو رد دعم." },
-            ].map((item) => {
-              const Icon = item.icon;
+        <div className="grid min-h-[560px] bg-wa-gray-50/70 lg:grid-cols-[76px_300px_1fr_230px]">
+          <aside className="hidden border-l border-wa-gray-100 bg-white/80 p-3 lg:block">
+            <div className="space-y-3">
+              {[Inbox, MessageCircle, Users, BarChart3, ShieldCheck].map((Icon, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    "flex size-12 items-center justify-center rounded-2xl text-wa-gray-500",
+                    index === 1 && "bg-wa-blue-50 text-wa-blue-600",
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden="true" />
+                </span>
+              ))}
+            </div>
+          </aside>
 
-              return (
-                <FormalCard key={item.title} className="p-4" data-cinema-reveal>
-                  <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
-                    <Icon className="size-5" aria-hidden="true" />
+          <section className="border-l border-wa-gray-100 bg-white p-3 sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-base font-semibold text-wa-gray-900">المحادثات</h3>
+              <span className="rounded-full bg-wa-gray-50 px-3 py-1.5 text-xs font-semibold text-wa-gray-500">الأحدث</span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { name: "عميل من إنستجرام", text: "هل المعسكر مناسب للمبتدئين؟", active: true, channel: "instagram" },
+                { name: "رقم واتساب", text: "عايز أعرف السعر والتوصيل", active: false, channel: "whatsapp" },
+                { name: "صفحة Facebook", text: "هل يوجد حجز هذا الأسبوع؟", active: false, channel: "messenger" },
+                { name: "Lead جديد", text: "أرسل تفاصيل الاشتراك", active: false, channel: "instagram" },
+              ].map((item) => (
+                <div
+                  key={item.name}
+                  className={cn(
+                    "rounded-[18px] border p-3 transition",
+                    item.active
+                      ? "border-wa-blue-100 bg-wa-blue-50 shadow-[0_12px_32px_rgba(26,86,255,0.10)]"
+                      : "border-wa-gray-100 bg-white",
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <ChannelDot channel={item.channel} />
+                    <p className="truncate text-sm font-semibold text-wa-gray-900">{item.name}</p>
                   </div>
-                  <h3 className="mt-4 text-base font-semibold text-wa-gray-900">{item.title}</h3>
-                  <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{item.body}</p>
-                </FormalCard>
-              );
-            })}
+                  <p className="mt-2 truncate text-xs leading-5 text-wa-gray-500">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="flex min-h-[500px] flex-col bg-white/60">
+            <div className="border-b border-wa-gray-100 bg-white/85 px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-wa-blue-600">إنستجرام DM</p>
+                  <h3 className="mt-1 text-lg font-semibold text-wa-gray-900">عميل يسأل عن الخدمة</h3>
+                </div>
+                <span className="rounded-full bg-wa-warning-bg px-3 py-1.5 text-xs font-semibold text-wa-warning">
+                  يحتاج رد سريع
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-1 space-y-3 p-4">
+              <ChatBubble align="start">تفاصيل المعسكر الصيفي لو سمحت؟</ChatBubble>
+              <ChatBubble align="end">
+                أهلاً بك. المعسكر مناسب للمبتدئين، ويغطي أساسيات البرمجة بمشاريع عملية ومتابعة من المدربين.
+              </ChatBubble>
+              <ChatBubble align="start">هل فيه حجز أونلاين؟</ChatBubble>
+            </div>
+
+            <div className="border-t border-wa-gray-100 bg-white p-3">
+              <div className="rounded-[20px] border border-wa-gray-100 bg-wa-gray-50 p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-wa-gray-500">اكتب ردًا أو استخدم المساعد</p>
+                  <button
+                    type="button"
+                    className="flex size-10 items-center justify-center rounded-full bg-wa-blue-600 text-white"
+                    aria-label="إرسال الرد"
+                  >
+                    <Send className="size-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <aside className="hidden border-r border-wa-gray-100 bg-white p-4 xl:block">
+            <p className="text-sm font-semibold text-wa-gray-900">إشارات المحادثة</p>
+            <div className="mt-3 space-y-3">
+              {[
+                { label: "نية العميل", value: "حجز / سعر" },
+                { label: "الثقة", value: "عالية" },
+                { label: "الإجراء التالي", value: "إرسال خطوات الحجز" },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3">
+                  <p className="text-xs text-wa-gray-400">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold text-wa-gray-900">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </Surface>
+  );
+}
+
+function ChannelDot({ channel }: { channel: string }) {
+  const config =
+    channel === "whatsapp"
+      ? { Icon: WhatsAppIcon, className: "bg-[#E9FBF0] text-[#0B8F45]" }
+      : channel === "messenger"
+        ? { Icon: MessengerIcon, className: "bg-[#EEF6FF] text-[#0078FF]" }
+        : { Icon: InstagramIcon, className: "bg-[#FFF0F7] text-[#C13584]" };
+  const Icon = config.Icon;
+
+  return (
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-xl", config.className)}>
+      <Icon className="size-4" aria-hidden="true" />
+    </span>
+  );
+}
+
+function ChatBubble({ align, children }: { align: "start" | "end"; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        "max-w-[86%] rounded-2xl px-4 py-3 text-sm leading-6 shadow-[0_10px_30px_rgba(13,20,33,0.06)]",
+        align === "end"
+          ? "mr-auto rounded-tl-sm bg-wa-blue-600 text-white"
+          : "rounded-tr-sm border border-wa-gray-100 bg-white text-wa-gray-700",
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Hero() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1180px] px-3 pb-12 pt-8 sm:px-5 sm:pb-16 sm:pt-12 lg:pb-20">
+      <MotionReveal>
+        <div className="mx-auto max-w-[920px] text-center">
+          <h1 className="text-[42px] font-semibold leading-[1.03] tracking-[-0.01em] text-white [text-wrap:balance] sm:text-[72px] lg:text-[88px]">
+            حوّل رسائل السوشيال إلى مبيعات ودعم تلقائي.
+          </h1>
+          <p className="mx-auto mt-5 max-w-[720px] text-base leading-7 text-white/82 sm:mt-7 sm:text-xl sm:leading-9">
+            kallem يجمع واتساب وإنستجرام وماسنجر في صندوق واحد، ويرد بالذكاء الاصطناعي من بيانات نشاطك مع تحكم كامل لصاحب العمل.
+          </p>
+          <div className="mx-auto mt-7 grid max-w-[520px] gap-3 sm:flex sm:max-w-none sm:justify-center">
+            <LandingButton href="/signup" className="w-full sm:w-auto">
+              ابدأ مجانًا
+              <ArrowLeft className="size-4" aria-hidden="true" />
+            </LandingButton>
+            <LandingButton href="#workflow" variant="secondary" className="w-full sm:w-auto">
+              شاهد طريقة العمل
+            </LandingButton>
           </div>
+          <div className="mx-auto mt-5 max-w-[440px] rounded-[22px] border border-white/24 bg-white/88 p-3 shadow-[0_20px_60px_rgba(4,44,83,0.18)] backdrop-blur-xl sm:p-4">
+            <p className="mb-3 text-center text-sm font-semibold text-wa-gray-700">أو سجّل بسرعة</p>
+            <SocialAuthButtons mode="signup" nextPath="/connect" />
+          </div>
+        </div>
+      </MotionReveal>
+
+      <UnifiedInboxMockup />
+    </section>
+  );
+}
+
+function ProofStrip() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1180px] px-3 pb-8 sm:px-5">
+      <Surface className="rounded-[26px] p-3 sm:rounded-[32px] sm:p-4">
+        <div className="grid gap-3 md:grid-cols-3">
+          {proofItems.map((item) => (
+            <div key={item.label} className="rounded-[20px] border border-wa-gray-100 bg-white p-4 text-center">
+              <p className="text-xs font-semibold text-wa-gray-400">{item.label}</p>
+              <p className="mt-2 text-sm font-semibold leading-6 text-wa-gray-900">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </Surface>
+    </section>
+  );
+}
+
+function BeforeAfterSection() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1180px] px-3 py-12 sm:px-5 sm:py-16">
+      <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <SectionHeading
+          eyebrow="قبل وبعد"
+          title="بدل متابعة كل رسالة يدويًا، اجعل النظام يفهم وينظم ويرد."
+          body="الهدف من الصفحة الجديدة أن يفهم الزائر خلال ثوانٍ: المشكلة واضحة، النتيجة واضحة، والخطوة التالية واضحة."
+        />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Surface className="rounded-[28px] p-5">
+            <p className="text-sm font-semibold text-wa-error">قبل kallem</p>
+            <div className="mt-4 space-y-3">
+              {painPoints.map((point) => (
+                <p key={point} className="rounded-2xl border border-wa-gray-100 bg-white px-4 py-3 text-sm leading-6 text-wa-gray-600">
+                  {point}
+                </p>
+              ))}
+            </div>
+          </Surface>
+          <Surface className="rounded-[28px] p-5 ring-4 ring-wa-blue-50">
+            <p className="text-sm font-semibold text-wa-blue-600">بعد kallem</p>
+            <div className="mt-4 space-y-3">
+              {outcomePoints.map((point) => (
+                <p key={point} className="flex items-start gap-2 rounded-2xl border border-wa-blue-100 bg-white px-4 py-3 text-sm font-semibold leading-6 text-wa-gray-800">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
+                  {point}
+                </p>
+              ))}
+            </div>
+          </Surface>
         </div>
       </div>
     </section>
   );
 }
 
-function ComparisonSection() {
+function UseCasesSection() {
   return (
-    <section id="comparison" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
-      <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+    <section id="features" className="relative z-10 bg-white py-14 sm:py-20">
+      <div className="mx-auto max-w-[1180px] px-3 sm:px-5">
         <SectionHeading
-          eyebrow="مقارنة عملية"
-          title="الهدف ليس تقليد المنافسين، بل بناء تجربة أبسط للسوق العربي."
-          body="kallem يركز على أول قيمة يحتاجها المستخدم: ربط القنوات الثلاثة، فهم حالة كل قناة، والرد من بيانات النشاط بدون لوحة تشغيل معقدة."
+          eyebrow="ما الذي يفعله عمليًا؟"
+          title="أتمتة مفهومة لصاحب نشاط، وليس لوحة تقنية مزدحمة."
+          body="استلهمنا من صفحات SaaS عالية التحويل: كل كارت يشرح نتيجة عملية، وليس مجرد اسم ميزة."
+          center
         />
-        <div className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.05)]" data-cinema-reveal>
-          <div className="grid grid-cols-[0.62fr_1fr_1fr] border-b border-wa-gray-100 bg-wa-gray-50 text-sm font-semibold text-wa-gray-700">
-            <div className="p-4">المعيار</div>
-            <div className="p-4 text-center">أدوات عامة</div>
-            <div className="bg-wa-blue-50 p-4 text-center text-wa-blue-700">kallem</div>
-          </div>
-          {comparisonRows.map((row) => (
-            <div key={row.area} className="grid grid-cols-[0.62fr_1fr_1fr] border-b border-wa-gray-100 last:border-b-0">
-              <div className="p-4 text-sm font-semibold text-wa-gray-900">{row.area}</div>
-              <div className="p-4 text-body-sm leading-6 text-wa-gray-600">{row.competitors}</div>
-              <div className="bg-wa-blue-50/50 p-4 text-body-sm font-medium leading-6 text-wa-gray-800">{row.kallem}</div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {useCases.map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <MotionReveal key={item.title}>
+                <div className="h-full rounded-[26px] border border-wa-gray-100 bg-wa-gray-50 p-5 transition hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_18px_54px_rgba(13,20,33,0.08)]">
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-wa-blue-600 text-white shadow-[0_14px_34px_rgba(26,86,255,0.20)]">
+                    <Icon className="size-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="mt-5 text-xl font-semibold text-wa-gray-900">{item.title}</h3>
+                  <p className="mt-3 text-body-sm leading-7 text-wa-gray-600">{item.body}</p>
+                </div>
+              </MotionReveal>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function WorkflowSection() {
+  return (
+    <section id="workflow" className="relative z-10 mx-auto max-w-[1180px] px-3 py-14 sm:px-5 sm:py-20">
+      <SectionHeading
+        eyebrow="طريقة العمل"
+        title="أربع خطوات من التسجيل إلى التشغيل."
+        body="المسار مصمم ليقلل التفكير: كل خطوة لها فعل واحد واضح، وحالة جاهزية توضح ما ينقص قبل الإطلاق."
+      />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {workflow.map((step, index) => {
+          const Icon = step.icon;
+
+          return (
+            <Surface key={step.title} className="rounded-[26px] p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex size-12 items-center justify-center rounded-2xl bg-white text-wa-blue-600">
+                  <Icon className="size-5" aria-hidden="true" />
+                </div>
+                <span className="text-sm font-semibold text-wa-blue-600">{String(index + 1).padStart(2, "0")}</span>
+              </div>
+              <h3 className="mt-5 text-xl font-semibold text-wa-gray-900">{step.title}</h3>
+              <p className="mt-3 text-body-sm leading-7 text-wa-gray-600">{step.body}</p>
+            </Surface>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ChannelsSection() {
+  return (
+    <section id="channels" className="relative z-10 bg-wa-gray-50 py-14 sm:py-20">
+      <div className="mx-auto grid max-w-[1180px] gap-8 px-3 sm:px-5 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <SectionHeading
+          eyebrow="القنوات"
+          title="الاتجاه الكامل للتجربة: الثلاث قنوات معًا."
+          body="الصفحة لا تبيع واتساب فقط. الرسالة الأساسية الآن: kallem هو مركز رسائل لواتساب وإنستجرام وماسنجر بنفس الأهمية."
+        />
+        <div className="grid gap-3">
+          {channels.map((channel) => {
+            const Icon = channel.icon;
+
+            return (
+              <div key={channel.name} className="flex items-center gap-4 rounded-[24px] border border-wa-gray-100 bg-white p-4 shadow-[0_12px_36px_rgba(13,20,33,0.04)]">
+                <span className={cn("flex size-14 shrink-0 items-center justify-center rounded-2xl", channel.tone)}>
+                  <Icon className="size-7" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-wa-gray-900">{channel.name}</h3>
+                  <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">{channel.detail}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FeatureGridSection() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1180px] px-3 py-14 sm:px-5 sm:py-20">
+      <SectionHeading
+        eyebrow="تفاصيل المنتج"
+        title="كل ما يحتاجه صاحب النشاط ليبدأ بدون فوضى."
+        body="حافظت الصفحة على العمق، لكنها تعرضه بعد أن يفهم الزائر القيمة الأساسية أولًا."
+      />
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {featureCards.map((feature) => {
+          const Icon = feature.icon;
+
+          return (
+            <div key={feature.title} className="rounded-[24px] border border-wa-gray-100 bg-white p-5 shadow-[0_14px_44px_rgba(13,20,33,0.045)]">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
+                <Icon className="size-5" aria-hidden="true" />
+              </div>
+              <h3 className="mt-4 text-lg font-semibold text-wa-gray-900">{feature.title}</h3>
+              <p className="mt-2 text-body-sm leading-7 text-wa-gray-600">{feature.body}</p>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function PricingSection() {
+  return (
+    <section id="pricing" className="relative z-10 bg-white py-14 sm:py-20">
+      <div className="mx-auto max-w-[1180px] px-3 sm:px-5">
+        <SectionHeading
+          eyebrow="الأسعار"
+          title="ابدأ صغيرًا، ثم وسّع عندما تزيد المحادثات."
+          body="تسعير واضح بالجنيه المصري، مع إبراز أن التشغيل الحقيقي يحتاج إعدادات الإنتاج للقنوات والدفع والذكاء."
+          center
+        />
+        <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          {pricingPlans.map((plan) => (
+            <div
+              key={plan.name}
+              className={cn(
+                "relative flex flex-col rounded-[28px] border border-wa-gray-100 bg-wa-gray-50 p-5 shadow-[0_16px_50px_rgba(13,20,33,0.05)]",
+                plan.featured && "border-wa-blue-600 bg-white ring-4 ring-wa-blue-50",
+              )}
+            >
+              {plan.featured ? (
+                <span className="absolute left-5 top-5 rounded-full bg-wa-blue-600 px-3 py-1 text-xs font-semibold text-white">
+                  الأنسب
+                </span>
+              ) : null}
+              <h3 className="text-lg font-semibold text-wa-gray-900">{plan.name}</h3>
+              <div className="mt-5 flex items-end gap-2">
+                <p className="text-[42px] font-semibold leading-none text-wa-gray-900">{plan.price}</p>
+                <p className="pb-1 text-sm text-wa-gray-500">/ شهر</p>
+              </div>
+              <p className="mt-4 text-body-sm leading-7 text-wa-gray-600">{plan.description}</p>
+              <div className="mt-5 space-y-3">
+                {plan.features.map((feature) => (
+                  <p key={feature} className="flex items-start gap-2 text-sm leading-6 text-wa-gray-700">
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
+                    {feature}
+                  </p>
+                ))}
+              </div>
+              <LandingButton href="/signup" variant={plan.featured ? "primary" : "secondary"} className="mt-7 w-full sm:mt-auto">
+                اختر الخطة
+              </LandingButton>
             </div>
           ))}
         </div>
@@ -514,22 +723,55 @@ function ComparisonSection() {
 
 function FaqSection() {
   return (
-    <section className="relative z-10 border-y border-wa-gray-100 bg-wa-gray-50/80 py-14 sm:py-20">
-      <div className="mx-auto max-w-[1200px] px-3 sm:px-6">
-        <SectionHeading
-          eyebrow="أسئلة قبل التجربة"
-          title="إجابات قصيرة تقلل التردد قبل التسجيل."
-          body="هذه الأسئلة تظهر للمستخدمين الذين يقارنون بين أدوات الردود التلقائية ويريدون معرفة هل kallem مناسب لهم الآن."
-        />
-        <div className="mt-8 grid gap-3 md:grid-cols-2">
-          {faqItems.map((item) => (
-            <FormalCard key={item.question} className="p-4 sm:p-5">
-              <h3 className="text-lg font-semibold text-wa-gray-900">{item.question}</h3>
-              <p className="mt-3 text-body-sm leading-6 text-wa-gray-600">{item.answer}</p>
-            </FormalCard>
-          ))}
-        </div>
+    <section id="faq" className="relative z-10 mx-auto max-w-[980px] px-3 py-14 sm:px-5 sm:py-20">
+      <SectionHeading
+        eyebrow="أسئلة سريعة"
+        title="كل سؤال مهم قبل التسجيل يجب أن تكون إجابته قصيرة."
+        body="اختصرت النصوص حتى لا يشعر المستخدم أن الصفحة تحتاج قراءة طويلة قبل اتخاذ القرار."
+        center
+      />
+      <div className="mt-8 space-y-3">
+        {faqs.map((item) => (
+          <details key={item.question} className="group rounded-[22px] border border-white/65 bg-white/84 p-5 shadow-[0_12px_36px_rgba(4,44,83,0.08)] backdrop-blur-xl">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wa-blue-600">
+              {item.question}
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-wa-blue-50 text-wa-blue-600 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+            <p className="mt-4 text-body-sm leading-7 text-wa-gray-600">{item.answer}</p>
+          </details>
+        ))}
       </div>
+    </section>
+  );
+}
+
+function FinalCta() {
+  return (
+    <section className="relative z-10 mx-auto max-w-[1180px] px-3 py-14 sm:px-5 sm:py-20">
+      <Surface className="overflow-hidden rounded-[32px] p-6 sm:p-10 lg:p-12">
+        <div className="grid gap-7 lg:grid-cols-[1fr_0.62fr] lg:items-end">
+          <div>
+            <p className="text-sm font-semibold text-wa-blue-600">ابدأ الآن</p>
+            <h2 className="mt-3 max-w-[760px] text-[34px] font-semibold leading-[1.08] text-wa-gray-900 [text-wrap:balance] sm:text-[58px]">
+              اجعل كل رسالة فرصة واضحة للرد أو البيع أو المتابعة.
+            </h2>
+            <p className="mt-4 max-w-[640px] text-body-sm leading-7 text-wa-gray-600 sm:text-lg sm:leading-8">
+              أنشئ حسابك، اربط القنوات، أضف معلومات النشاط، ثم شغّل المساعد عندما تصبح الجاهزية مكتملة.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            <LandingButton href="/signup" className="w-full">
+              إنشاء حساب
+              <ArrowLeft className="size-4" aria-hidden="true" />
+            </LandingButton>
+            <LandingButton href="/pricing" variant="secondary" className="w-full">
+              مراجعة الأسعار
+            </LandingButton>
+          </div>
+        </div>
+      </Surface>
     </section>
   );
 }
@@ -538,7 +780,7 @@ function StructuredData() {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqItems.map((item) => ({
+    mainEntity: faqs.map((item) => ({
       "@type": "Question",
       name: item.question,
       acceptedAnswer: {
@@ -570,376 +812,22 @@ function StructuredData() {
   );
 }
 
-function FeatureCard({ feature }: { feature: (typeof featureGroups)[number] }) {
-  const Icon = feature.icon;
-
-  return (
-    <Link
-      href={feature.href}
-      className="group block rounded-[20px] border border-wa-gray-100 bg-white p-4 shadow-[0_14px_40px_rgba(13,20,33,0.04)] transition hover:-translate-y-0.5 hover:border-wa-blue-100 hover:shadow-[0_20px_56px_rgba(26,86,255,0.10)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wa-blue-600 sm:p-5"
-      data-cinema-reveal
-    >
-      <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600 transition group-hover:bg-wa-blue-600 group-hover:text-white">
-        <Icon className="size-5" aria-hidden="true" />
-      </div>
-      <h3 className="mt-4 text-lg font-semibold text-wa-gray-900">{feature.title}</h3>
-      <p className="mt-2 text-body-sm leading-6 text-wa-gray-600">{feature.body}</p>
-    </Link>
-  );
-}
-
-function PromoVideoSection() {
-  return (
-    <section id="demo" className="relative z-10 mx-auto max-w-[1200px] px-3 pb-12 sm:px-6 sm:pb-16" data-cinema-section>
-      <FormalCard className="overflow-hidden p-3 sm:p-5" data-cinema-reveal>
-        <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
-          <div className="px-2 py-3 sm:px-4 lg:py-6">
-            <p className="text-sm font-semibold text-wa-blue-600">فيديو تعريفي</p>
-            <h2 className="mt-3 text-[30px] font-semibold leading-tight text-wa-gray-900 sm:text-[46px] sm:leading-[1.12]">
-              شاهد كيف يربط Kallem واتساب وإنستجرام وماسنجر بالذكاء الاصطناعي.
-            </h2>
-            <p className="mt-4 text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">
-              عرض سريع لمدة ٣٠ ثانية يوضح الربط السهل، الردود التلقائية، الصندوق الموحد، اكتشاف Leads، وتدريب المساعد بالعربية.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {["واتساب", "إنستجرام", "ماسنجر", "صندوق موحد", "Leads"].map((item) => (
-                <span key={item} className="rounded-full border border-wa-gray-100 bg-wa-gray-50 px-3 py-2 text-xs font-semibold text-wa-gray-600">
-                  {item}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[24px] border border-wa-gray-100 bg-wa-gray-900 shadow-[0_24px_70px_rgba(13,20,33,0.16)] sm:rounded-[32px]">
-            <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_24%_0%,rgba(37,211,102,0.22),transparent_34%),linear-gradient(180deg,rgba(255,255,255,0.06),transparent_35%)]" />
-            <video
-              className="relative z-0 aspect-video w-full bg-wa-gray-900 object-cover"
-              src="/videos/kallem-promo.mp4"
-              poster="/videos/kallem-promo-poster.png"
-              autoPlay
-              muted
-              loop
-              playsInline
-              controls
-              preload="metadata"
-              aria-label="فيديو تعريفي عن منصة Kallem"
-            >
-              متصفحك لا يدعم تشغيل الفيديو.
-            </video>
-          </div>
-        </div>
-      </FormalCard>
-    </section>
-  );
-}
-
 export default function Home() {
   return (
     <main className="app-glass-background relative min-h-screen overflow-x-hidden text-wa-gray-900">
-      <SmoothScroll />
-      <CinematicScrollEffects />
       <StructuredData />
-
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_18%_16%,rgba(255,255,255,0.22),transparent_28%),radial-gradient(circle_at_82%_10%,rgba(255,255,255,0.18),transparent_24%)]" />
-      <div className="pointer-events-none fixed inset-0 z-0 opacity-24 [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:72px_72px]" />
-
-      <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
-        <nav className="glass-surface mx-auto flex max-w-[1200px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5 sm:py-4">
-          <BrandLockup />
-          <div className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 lg:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-full px-4 py-2 text-sm font-medium text-wa-gray-600 transition hover:bg-white/82 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/login"
-              className="hidden min-h-10 items-center rounded-full px-4 text-sm font-semibold text-wa-gray-600 transition hover:bg-wa-gray-50 hover:text-wa-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600 sm:inline-flex"
-            >
-              تسجيل الدخول
-            </Link>
-            <Link
-              href="/signup"
-              className="inline-flex min-h-11 items-center justify-center rounded-full bg-wa-blue-600 px-5 text-sm font-semibold text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] transition hover:bg-[#0E47E8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wa-blue-600"
-            >
-              ابدأ مجانًا
-            </Link>
-          </div>
-        </nav>
-      </header>
-
-      <section className="glass-surface relative z-10 mx-2 mt-3 grid max-w-[1200px] gap-8 rounded-[28px] px-3 pb-12 pt-10 sm:mx-auto sm:mt-5 sm:rounded-[36px] sm:px-6 sm:pb-16 sm:pt-16 lg:min-h-[calc(100svh-110px)] lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-10 lg:py-12">
-        <div>
-          <MotionReveal>
-            <div className="inline-flex items-center gap-2 rounded-full border border-wa-blue-100 bg-white px-3 py-2 text-xs font-semibold text-wa-blue-600 shadow-[0_10px_30px_rgba(26,86,255,0.08)]">
-              <Sparkles className="size-4" aria-hidden="true" />
-              مصمم للأعمال الصغيرة في مصر والعالم العربي
-            </div>
-            <h1 className="mt-5 max-w-[13ch] text-[40px] font-semibold leading-[1.06] text-wa-gray-900 sm:text-[66px] sm:leading-[1.03] lg:text-[78px]">
-              كل محادثات عملائك تتحول لعمل واضح.
-            </h1>
-            <p className="mt-5 max-w-[620px] text-body leading-7 text-wa-gray-600 sm:mt-7 sm:text-xl sm:leading-8">
-              صندوق موحد وردود AI عربية لواتساب وإنستجرام وماسنجر. اجمع الرسائل، افهم العميل، ورد أو سلّم للبشر، ثم حوّل المحادثة إلى Lead أو طلب.
-            </p>
-            <div className="mt-6 grid gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:gap-3">
-              <MagneticLink href="/signup" className="w-full bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] hover:bg-[#0E47E8] sm:w-auto">
-                ابدأ مجانًا
-                <ArrowLeft className="size-4" aria-hidden="true" />
-              </MagneticLink>
-              <MagneticLink href="#workflow" className="w-full border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50 sm:w-auto">
-                شاهد طريقة العمل
-              </MagneticLink>
-            </div>
-            <div className="mt-5 max-w-[420px] rounded-[22px] border border-wa-gray-100 bg-white/90 p-3 shadow-[0_16px_44px_rgba(13,20,33,0.06)] sm:mt-6 sm:p-4">
-              <p className="mb-3 text-center text-body-sm font-semibold text-wa-gray-700">أو ادخل مباشرة بحسابك</p>
-              <SocialAuthButtons mode="signup" nextPath="/connect" />
-            </div>
-          </MotionReveal>
-
-          <div className="mt-7 grid grid-cols-2 gap-2.5 sm:mt-9 sm:grid-cols-4 sm:gap-3">
-            {heroStats.map((item, index) => (
-              <MotionReveal key={item.label} delay={0.08 + index * 0.04}>
-                <div className="rounded-2xl border border-wa-gray-100 bg-white px-3 py-3 shadow-[0_12px_34px_rgba(13,20,33,0.05)] sm:px-4 sm:py-4">
-                  <p className="text-xs font-medium text-wa-gray-400">{item.label}</p>
-                  <p className="mt-2 text-base font-semibold text-wa-gray-900">{item.value}</p>
-                </div>
-              </MotionReveal>
-            ))}
-          </div>
-        </div>
-
-        <ProductPreview />
-      </section>
-
-      <OperatingSystemSection />
-      <PromoVideoSection />
-      <CustomerProofSection />
-
-      <section id="workflow" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
-        <SectionHeading
-          eyebrow="طريقة العمل"
-          title="من أول رسالة سوشيال إلى طلب أو عميل محتمل."
-          body="التجربة مصممة لصاحب نشاط غير تقني: اربط القنوات، أضف معلوماتك، ثم اترك المساعد يرد تحت تحكمك."
-        />
-        <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
-          {workflowSteps.map((step, index) => {
-            const Icon = step.icon;
-
-            return (
-              <FormalCard key={step.title} className="p-4 sm:p-5" data-cinema-reveal>
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex size-11 items-center justify-center rounded-2xl bg-wa-blue-50 text-wa-blue-600">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </div>
-                  <span className="text-sm font-semibold text-wa-gray-300">{String(index + 1).padStart(2, "0")}</span>
-                </div>
-                <h3 className="mt-5 text-xl font-semibold text-wa-gray-900">{step.title}</h3>
-                <p className="mt-3 text-body-sm leading-6 text-wa-gray-600">{step.body}</p>
-              </FormalCard>
-            );
-          })}
-        </div>
-      </section>
-
-      <section id="features" className="relative z-10 border-y border-wa-gray-100 bg-wa-gray-50/80 py-14 sm:py-20" data-cinema-section>
-        <div className="mx-auto max-w-[1200px] px-3 sm:px-6">
-          <SectionHeading
-            eyebrow="مميزات المنتج"
-            title="كل قنوات العملاء في تجربة واحدة واضحة."
-            body="kallem ليس أداة واتساب فقط. هو مركز رسائل يربط واتساب وإنستجرام وماسنجر مع معرفة النشاط، الطلبات، الدفع، التحليلات، وتسليم المحادثات للبشر عند الحاجة."
-          />
-          <div className="mt-8 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-4">
-            {featureGroups.map((feature) => (
-              <FeatureCard key={feature.title} feature={feature} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <ComparisonSection />
-
-      <section id="connect" className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
-        <div className="grid gap-6 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
-          <SectionHeading
-            eyebrow="ربط قنوات Meta بدون قلق"
-            title="واتساب وإنستجرام وماسنجر في مسار واحد واضح."
-            body="كل قناة لها صلاحيات وقواعد من Meta. لذلك kallem يعرض حالة واتساب، إنستجرام، وماسنجر بوضوح: المتصل، الناقص صلاحيات، وما يحتاج مراجعة قبل استقبال العملاء الحقيقيين."
-          />
-          <FormalCard className="overflow-hidden" data-cinema-reveal>
-            <div className="border-b border-wa-gray-100 p-4 sm:p-6">
-              <p className="text-sm font-semibold text-wa-blue-600">ما سيراه صاحب النشاط</p>
-              <h3 className="mt-2 text-2xl font-semibold text-wa-gray-900">لوحة ربط القنوات ومتابعة الجاهزية</h3>
-            </div>
-            <div className="grid gap-3 p-4 sm:p-6">
-              {[
-                { title: "واتساب", value: "رقم النشاط التجاري والـ webhook", icon: ShieldCheck },
-                { title: "إنستجرام", value: "DM من حساب Professional مرتبط بالصفحة", icon: MessageSquareText },
-                { title: "ماسنجر", value: "رسائل صفحة Facebook بنفس الصندوق", icon: Zap },
-                { title: "المالك", value: "يقدر يوقف أو يتدخل يدويًا", icon: SlidersHorizontal },
-              ].map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-                    <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-white text-wa-blue-600">
-                      <Icon className="size-5" aria-hidden="true" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-wa-gray-900">{item.title}</p>
-                      <p className="mt-1 text-body-sm text-wa-gray-600">{item.value}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </FormalCard>
-        </div>
-      </section>
-
-      <section className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20" data-cinema-section>
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <FormalCard className="p-4 sm:p-6" data-cinema-reveal>
-            <div className="flex items-center justify-between gap-3 border-b border-wa-gray-100 pb-4">
-              <div>
-                <p className="text-sm text-wa-gray-400">مناسب للموبايل</p>
-                <h2 className="mt-1 text-2xl font-semibold text-wa-gray-900">أزرار كبيرة ومسار قصير</h2>
-              </div>
-              <span className="rounded-full bg-wa-blue-50 px-3 py-1.5 text-xs font-semibold text-wa-blue-600">390px ready</span>
-            </div>
-            <div className="mt-5 space-y-3">
-              {[
-                "CTA واضح: ابدأ مجانًا أو شاهد طريقة العمل.",
-                "النص العربي قصير، داكن، ومباشر على خلفية بيضاء.",
-                "كل كارت يشرح نتيجة عملية وليس مصطلح تقني فقط.",
-                "روابط المميزات تفتح صفحات التطبيق الفعلية بعد تسجيل الدخول.",
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-4">
-                  <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-wa-blue-600" aria-hidden="true" />
-                  <p className="text-body-sm leading-6 text-wa-gray-700">{item}</p>
-                </div>
-              ))}
-            </div>
-          </FormalCard>
-
-          <div className="rounded-[32px] border border-wa-gray-100 bg-wa-gray-900 p-3 shadow-[0_22px_70px_rgba(13,20,33,0.16)]" data-cinema-reveal>
-            <div className="rounded-[24px] bg-white p-4">
-              <div className="flex items-center justify-between">
-                <BrandLockup />
-                <span className="flex size-10 items-center justify-center rounded-full bg-wa-gray-50 text-sm font-semibold text-wa-gray-600">LO</span>
-              </div>
-              <div className="mt-6 rounded-[22px] border border-wa-gray-100 bg-wa-gray-50 p-4">
-                <p className="text-xs font-semibold text-wa-gray-400">اليوم</p>
-                <h3 className="mt-2 text-2xl font-semibold text-wa-gray-900">المساعد يرد على العملاء</h3>
-                <div className="mt-4 grid grid-cols-2 gap-2">
-                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">قنوات متصلة</span>
-                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">Lead جديد</span>
-                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">طلب جديد</span>
-                  <span className="rounded-2xl bg-white px-3 py-3 text-sm font-semibold text-wa-gray-700">دفع جاهز</span>
-                </div>
-              </div>
-              <Link
-                href="/dashboard"
-                prefetch={false}
-                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-wa-blue-600 px-5 text-sm font-semibold text-white"
-              >
-                افتح لوحة التحكم
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="pricing" className="relative z-10 border-y border-wa-gray-100 bg-white py-14 sm:py-20" data-cinema-section>
-        <div className="mx-auto max-w-[1200px] px-3 sm:px-6">
-          <SectionHeading
-            eyebrow="الأسعار"
-            title="خطط واضحة بالجنيه المصري."
-            body="كل خطة تعرض عدد الردود، عدد القنوات، ومتى تحتاج الترقية. بدون وعود غامضة أو كلمة Unlimited."
-          />
-          <div className="mt-8 grid gap-4 sm:mt-12 lg:grid-cols-3">
-            {pricingPlans.map((plan) => (
-              <FormalCard
-                key={plan.name}
-                className={cn("relative flex flex-col p-4 sm:min-h-[540px] sm:p-6", plan.featured && "border-wa-blue-600 ring-4 ring-wa-blue-50")}
-                data-cinema-reveal
-              >
-                {plan.featured ? (
-                  <span className="absolute left-4 top-4 rounded-full bg-wa-blue-600 px-3 py-1 text-xs font-semibold text-white">
-                    الأنسب للنمو
-                  </span>
-                ) : null}
-                <p className="text-sm font-semibold text-wa-blue-600">{plan.name}</p>
-                <div className="mt-5 flex items-end gap-2">
-                  <p className="text-[42px] font-semibold leading-none text-wa-gray-900 sm:text-[54px]">{plan.price}</p>
-                  <p className="pb-2 text-sm text-wa-gray-500">/ شهر</p>
-                </div>
-                <p className="mt-3 text-body-sm leading-6 text-wa-gray-600">{plan.description}</p>
-                <div className="mt-5 grid grid-cols-2 gap-2.5">
-                  <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3">
-                    <p className="text-xs text-wa-gray-400">الردود</p>
-                    <p className="mt-2 text-sm font-semibold text-wa-gray-900">{plan.replies}</p>
-                  </div>
-                  <div className="rounded-2xl border border-wa-gray-100 bg-wa-gray-50 p-3">
-                    <p className="text-xs text-wa-gray-400">القنوات</p>
-                    <p className="mt-2 text-sm font-semibold text-wa-gray-900">{plan.numbers}</p>
-                  </div>
-                </div>
-                <div className="mt-5 space-y-3">
-                  {plan.features.map((feature) => (
-                    <p key={feature} className="flex items-start gap-2 text-sm leading-6 text-wa-gray-600">
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-wa-blue-600" aria-hidden="true" />
-                      {feature}
-                    </p>
-                  ))}
-                </div>
-                <Link
-                  href={plan.href}
-                  className={cn(
-                    "mt-6 inline-flex min-h-12 items-center justify-center rounded-full px-5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-wa-blue-600 sm:mt-auto",
-                    plan.featured ? "bg-wa-blue-600 text-white hover:bg-[#0E47E8]" : "border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50",
-                  )}
-                >
-                  {plan.cta}
-                </Link>
-              </FormalCard>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      <div className="pointer-events-none fixed inset-0 z-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,.18)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.16)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <Header />
+      <Hero />
+      <ProofStrip />
+      <BeforeAfterSection />
+      <UseCasesSection />
+      <WorkflowSection />
+      <ChannelsSection />
+      <FeatureGridSection />
+      <PricingSection />
       <FaqSection />
-
-      <section className="relative z-10 mx-auto max-w-[1200px] px-3 py-14 sm:px-6 sm:py-20">
-        <FormalCard className="overflow-hidden p-5 sm:p-10 lg:p-12">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.72fr] lg:items-end">
-            <div>
-              <p className="text-sm font-semibold text-wa-blue-600">ابدأ الآن</p>
-              <h2 className="mt-3 max-w-[760px] text-[32px] font-semibold leading-tight text-wa-gray-900 sm:text-[58px] sm:leading-[1.08]">
-                اجعل رسائل السوشيال قناة بيع ودعم، وليس صناديق متفرقة.
-              </h2>
-              <p className="mt-4 max-w-[640px] text-body-sm leading-6 text-wa-gray-600 sm:text-lg sm:leading-8">
-                أنشئ الحساب، أضف معلومات نشاطك، ثم راقب الردود، العملاء المحتملين، الطلبات، والدفع من مكان واحد.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:flex lg:grid lg:flex-none">
-              <MagneticLink href="/signup" className="w-full bg-wa-blue-600 text-white shadow-[0_18px_44px_rgba(26,86,255,0.22)] hover:bg-[#0E47E8]">
-                إنشاء حساب
-                <ArrowLeft className="size-4" aria-hidden="true" />
-              </MagneticLink>
-              <MagneticLink href="/support" className="w-full border border-wa-gray-200 bg-white text-wa-gray-900 hover:bg-wa-gray-50">
-                التواصل مع الدعم
-              </MagneticLink>
-            </div>
-          </div>
-        </FormalCard>
-      </section>
-
+      <FinalCta />
       <div className="relative z-10">
         <AppFooter />
       </div>

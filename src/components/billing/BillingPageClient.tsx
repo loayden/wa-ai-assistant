@@ -104,6 +104,24 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
     },
   });
 
+  const checkoutStatus = searchParams.get("checkout");
+  const preselectedPlan = searchParams.get("plan");
+  const preselectAnnounced = useRef(false);
+
+  useEffect(() => {
+    if (preselectedPlan !== "PRO" && preselectedPlan !== "BUSINESS") {
+      return;
+    }
+
+    if (subscription.isLoading || !subscription.user || preselectAnnounced.current) {
+      return;
+    }
+
+    preselectAnnounced.current = true;
+    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    toast.success(`اخترت خطة ${planLabel(preselectedPlan)}. أكمل الدفع من بطاقتها.`);
+  }, [preselectedPlan, subscription.isLoading, subscription.user]);
+
   if (subscription.isLoading) {
     return <BillingLoadingSkeleton />;
   }
@@ -132,23 +150,6 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
   const mutationError = checkoutMutation.error;
   const billingBusy = checkoutMutation.isPending;
   const paymentLocked = paymobMode !== "live";
-  const checkoutStatus = searchParams.get("checkout");
-  const preselectedPlan = searchParams.get("plan");
-  const preselectAnnounced = useRef(false);
-
-  useEffect(() => {
-    if (preselectedPlan !== "PRO" && preselectedPlan !== "BUSINESS") {
-      return;
-    }
-
-    if (subscription.isLoading || !subscription.user || preselectAnnounced.current) {
-      return;
-    }
-
-    preselectAnnounced.current = true;
-    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    toast.success(`اخترت خطة ${planLabel(preselectedPlan)}. أكمل الدفع من بطاقتها.`);
-  }, [preselectedPlan, subscription.isLoading, subscription.user]);
   const trialDaysRemaining = getTrialDaysRemaining(user.trialEndsAt);
 
   function handlePlanAction(targetPlan: PlanTier) {

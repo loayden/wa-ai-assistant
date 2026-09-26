@@ -214,8 +214,36 @@ export async function POST(request: Request, context: RouteContext) {
       relatedMessageId: message.id,
     });
 
+    /*
+     * A human just took over this thread: pause the AI so it never talks
+     * over the owner. The owner resumes it from the thread when ready.
+     */
+    await prisma.conversationHandoff.upsert({
+      where: {
+        userId_connectionId_customerPhone: {
+          userId: user.id,
+          connectionId: thread.connection.id,
+          customerPhone: thread.customerPhone,
+        },
+      },
+      create: {
+        userId: user.id,
+        connectionId: thread.connection.id,
+        customerPhone: thread.customerPhone,
+        active: true,
+        handoffAt: new Date(),
+        resumedAt: null,
+      },
+      update: {
+        active: true,
+        handoffAt: new Date(),
+        resumedAt: null,
+      },
+    });
+
     return jsonSuccess({
       messageSent: true,
+      handoffActive: true,
       message,
     });
   } catch (error) {

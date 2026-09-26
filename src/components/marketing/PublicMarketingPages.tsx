@@ -528,14 +528,14 @@ export function ComparisonMarketingPage({ pageKey }: { pageKey: ComparisonPageKe
 
       <section className="border-y border-wa-gray-100 bg-wa-gray-50/75 py-12 sm:py-16">
         <div className="mx-auto max-w-[1160px] px-3 sm:px-6">
-          <div className="overflow-hidden rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.05)]">
-            <div className="grid grid-cols-[0.7fr_1fr_1fr] border-b border-wa-gray-100 bg-wa-gray-50 text-sm font-semibold text-wa-gray-700">
+          <div className="overflow-x-auto rounded-[24px] border border-wa-gray-100 bg-white shadow-[0_18px_54px_rgba(13,20,33,0.05)]">
+            <div className="grid min-w-[640px] grid-cols-[0.7fr_1fr_1fr] border-b border-wa-gray-100 bg-wa-gray-50 text-sm font-semibold text-wa-gray-700">
               <div className="p-4 sm:p-5">المعيار</div>
               <div className="p-4 text-center sm:p-5">{page.competitorName}</div>
               <div className="bg-wa-blue-50 p-4 text-center text-wa-blue-700 sm:p-5">kallem</div>
             </div>
             {page.rows.map((row) => (
-              <div key={row.area} className="grid grid-cols-[0.7fr_1fr_1fr] border-b border-wa-gray-100 last:border-b-0">
+              <div key={row.area} className="grid min-w-[640px] grid-cols-[0.7fr_1fr_1fr] border-b border-wa-gray-100 last:border-b-0">
                 <div className="p-4 text-sm font-semibold text-wa-gray-900 sm:p-5">{row.area}</div>
                 <div className="p-4 text-body-sm leading-6 text-wa-gray-600 sm:p-5">{row.competitor}</div>
                 <div className="bg-wa-blue-50/50 p-4 text-body-sm font-medium leading-6 text-wa-gray-800 sm:p-5">{row.kallem}</div>

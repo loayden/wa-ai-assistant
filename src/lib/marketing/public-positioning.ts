@@ -86,7 +86,7 @@ export function getPublicPlanCards(): PublicPlanCard[] {
       priceLabel: limits.monthlyPriceEgp === 0 ? "مجانًا" : `${formatStableNumber(limits.monthlyPriceEgp)} جنيه / شهر`,
       replyLimit: `${formatStableNumber(limits.includedRepliesPerMonth)} رد شهري`,
       channelLimit: `${formatStableNumber(limits.maxConnections)} ${limits.maxConnections === 1 ? "قناة" : "قنوات"}`,
-      ctaHref: tier === "FREE" ? "/signup" : "/signup?next=%2Fbilling",
+      ctaHref: tier === "FREE" ? "/signup" : `/signup?next=${encodeURIComponent(`/billing?plan=${tier}`)}`,
     };
   });
 }

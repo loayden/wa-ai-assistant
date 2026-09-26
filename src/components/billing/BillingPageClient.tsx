@@ -7,9 +7,11 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { AlertTriangle, CheckCircle2, Gift, LockKeyhole, Minus, ReceiptText, ShieldCheck } from "lucide-react";
 
 import { PlanCard } from "@/components/billing/PlanCard";
@@ -131,6 +133,22 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
   const billingBusy = checkoutMutation.isPending;
   const paymentLocked = paymobMode !== "live";
   const checkoutStatus = searchParams.get("checkout");
+  const preselectedPlan = searchParams.get("plan");
+  const preselectAnnounced = useRef(false);
+
+  useEffect(() => {
+    if (preselectedPlan !== "PRO" && preselectedPlan !== "BUSINESS") {
+      return;
+    }
+
+    if (subscription.isLoading || !subscription.user || preselectAnnounced.current) {
+      return;
+    }
+
+    preselectAnnounced.current = true;
+    document.getElementById("plans")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    toast.success(`اخترت خطة ${planLabel(preselectedPlan)}. أكمل الدفع من بطاقتها.`);
+  }, [preselectedPlan, subscription.isLoading, subscription.user]);
   const trialDaysRemaining = getTrialDaysRemaining(user.trialEndsAt);
 
   function handlePlanAction(targetPlan: PlanTier) {

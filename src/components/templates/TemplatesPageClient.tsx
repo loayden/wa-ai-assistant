@@ -124,9 +124,11 @@ function TemplatePreview({ form }: { form: FormState }) {
 
 function TemplateCard({ template }: { template: MessageTemplateResponse }) {
   const queryClient = useQueryClient();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const deleteMutation = useMutation({
     mutationFn: () => apiData(`/api/templates/${template.id}`, { method: "DELETE" }),
     onSuccess: () => {
+      setConfirmingDelete(false);
       void queryClient.invalidateQueries({ queryKey: ["templates"] });
       toast.success("تم حذف القالب");
     },
@@ -152,16 +154,32 @@ function TemplateCard({ template }: { template: MessageTemplateResponse }) {
           </div>
           <p className="mt-1 text-label text-wa-gray-400">{template.name}</p>
         </div>
-        <Button
-          aria-label="حذف القالب"
-          disabled={deleteMutation.isPending}
-          size="sm"
-          variant="outline"
-          onClick={() => deleteMutation.mutate()}
-        >
-          <Trash2 className="size-4" aria-hidden="true" />
-          حذف
-        </Button>
+        {confirmingDelete ? (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={deleteMutation.isPending}
+              onClick={() => deleteMutation.mutate()}
+            >
+              تأكيد الحذف
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setConfirmingDelete(false)}>
+              تراجع
+            </Button>
+          </div>
+        ) : (
+          <Button
+            aria-label="حذف القالب"
+            disabled={deleteMutation.isPending}
+            size="sm"
+            variant="outline"
+            onClick={() => setConfirmingDelete(true)}
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
+            حذف
+          </Button>
+        )}
       </div>
       <p className="mt-4 line-clamp-2 text-body-sm leading-6 text-wa-gray-600">{maskTemplateVariables(template.bodyText)}</p>
       {template.rejectionReason ? (

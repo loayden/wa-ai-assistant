@@ -103,6 +103,7 @@ function normalizeItems(items: unknown): OrderItem[] {
 export function OrdersPageClient() {
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const ordersQuery = useQuery({
     queryKey: ["orders", filter],
     queryFn: () => apiData<OrdersResponse>(filter === "all" ? "/api/orders" : `/api/orders?status=${filter}`),
@@ -296,15 +297,35 @@ export function OrdersPageClient() {
                       </Button>
                     ) : null}
                     {order.status !== "cancelled" && order.status !== "delivered" ? (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="rounded-full"
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "cancelled" })}
-                      >
-                        إلغاء
-                      </Button>
+                      confirmCancelId === order.id ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full"
+                            disabled={updateStatusMutation.isPending}
+                            onClick={() => {
+                              setConfirmCancelId(null);
+                              updateStatusMutation.mutate({ orderId: order.id, status: "cancelled" });
+                            }}
+                          >
+                            تأكيد الإلغاء
+                          </Button>
+                          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setConfirmCancelId(null)}>
+                            تراجع
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="rounded-full"
+                          disabled={updateStatusMutation.isPending}
+                          onClick={() => setConfirmCancelId(order.id)}
+                        >
+                          إلغاء
+                        </Button>
+                      )
                     ) : null}
                   </div>
                 </article>

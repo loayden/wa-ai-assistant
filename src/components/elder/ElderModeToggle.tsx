@@ -19,7 +19,7 @@ export function ElderModeToggle({ enabled, onToggle }: ElderModeToggleProps) {
       type="button"
       role="switch"
       aria-checked={enabled}
-      aria-label="Toggle large text mode"
+      aria-label="تبديل النص الكبير"
       onClick={onToggle}
       className={cn(
         "relative h-10 w-[72px] rounded-full transition-colors duration-250 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50",

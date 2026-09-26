@@ -5,6 +5,7 @@ import { BookMarked, Loader2, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { translateError } from "@/lib/errors/translateError";
 
 type Correction = {
   id: string;
@@ -82,6 +83,16 @@ export function CorrectionsPageClient() {
           {[0, 1, 2].map((item) => (
             <Skeleton key={item} className="h-36 rounded-[24px]" />
           ))}
+        </div>
+      ) : correctionsQuery.isError ? (
+        <div className="rounded-[24px] border border-wa-gray-100 bg-white p-8 text-center">
+          <p className="text-title-md font-semibold text-wa-gray-950">تعذر تحميل التصحيحات</p>
+          <p className="mx-auto mt-2 max-w-lg text-body-sm leading-7 text-wa-gray-600">
+            {translateError(correctionsQuery.error instanceof Error ? correctionsQuery.error.message : correctionsQuery.error)}
+          </p>
+          <Button className="mt-4 rounded-full" onClick={() => void correctionsQuery.refetch()}>
+            حاول مرة أخرى
+          </Button>
         </div>
       ) : deleteMutation.error ? (
         <div className="rounded-[18px] border border-red-100 bg-red-50 px-4 py-3 text-body-sm font-semibold text-red-700">

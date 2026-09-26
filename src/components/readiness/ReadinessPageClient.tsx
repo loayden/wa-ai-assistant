@@ -138,6 +138,14 @@ export function ReadinessPageClient({ initialReadiness }: ReadinessPageClientPro
 
   return (
     <div className="kallem-workspace-page" dir="rtl">
+      {readinessQuery.isError ? (
+        <div className="mb-4 flex flex-col gap-3 rounded-[22px] border border-wa-warning bg-wa-warning-bg p-4 text-body-sm leading-6 text-wa-gray-800 sm:flex-row sm:items-center sm:justify-between">
+          <p>تعذر تحديث الفحص — المعروض بيانات آخر فحص ناجح وقد تكون قديمة.</p>
+          <Button className="rounded-full" size="sm" variant="outline" onClick={() => void readinessQuery.refetch()}>
+            إعادة المحاولة
+          </Button>
+        </div>
+      ) : null}
       <section className={cn("workspace-hero rounded-[28px] border bg-white p-4 shadow-[0_18px_60px_rgba(13,20,33,0.05)] sm:p-6 lg:p-7", tone.border)}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
           <div>

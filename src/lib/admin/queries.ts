@@ -26,18 +26,41 @@ export function getStartOfMonth(now = new Date()) {
   return new Date(now.getFullYear(), now.getMonth(), 1);
 }
 
+/*
+ * Shared definitions so every admin surface agrees on what "paid" and
+ * "churn risk" mean. Paid = PRO/BUSINESS with an active subscription that
+ * has completed at least one payment. Churn risk = paid + active + silent.
+ */
+export const CHURN_INACTIVE_DAYS = 14;
+
+export function paidSubscriberWhere(): Prisma.UserWhereInput {
+  return {
+    planTier: { in: [PlanTier.PRO, PlanTier.BUSINESS] },
+    subscriptionStatus: SubscriptionStatus.ACTIVE,
+    paidAt: { not: null },
+  };
+}
+
+export function churnRiskWhere(now = new Date()): Prisma.UserWhereInput {
+  return {
+    ...paidSubscriberWhere(),
+    messages: { none: { createdAt: { gte: new Date(now.getTime() - CHURN_INACTIVE_DAYS * 24 * 60 * 60 * 1000) } } },
+  };
+}
+
 export async function getAdminOverview(now = new Date()) {
   const today = getStartOfToday(now);
   const weekStart = getStartOfWeek(now);
   const monthStart = getStartOfMonth(now);
-  const churnCutoff = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-  const [totalBusinesses, freeCount, proCount, businessCount, activeThisWeek, messagesToday, messagesThisMonth, ordersToday, leadsToday, signupsToday, signupsThisWeek, churnRisk] =
+  const [totalBusinesses, freeCount, proCount, businessCount, paidProCount, paidBusinessCount, activeThisWeek, messagesToday, messagesThisMonth, ordersToday, leadsToday, signupsToday, signupsThisWeek, churnRisk] =
     await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { planTier: PlanTier.FREE } }),
       prisma.user.count({ where: { planTier: PlanTier.PRO } }),
       prisma.user.count({ where: { planTier: PlanTier.BUSINESS } }),
+      prisma.user.count({ where: { ...paidSubscriberWhere(), planTier: PlanTier.PRO } }),
+      prisma.user.count({ where: { ...paidSubscriberWhere(), planTier: PlanTier.BUSINESS } }),
       prisma.user.count({ where: { messages: { some: { createdAt: { gte: weekStart } } } } }),
       prisma.message.count({ where: { createdAt: { gte: today } } }),
       prisma.message.count({ where: { createdAt: { gte: monthStart } } }),
@@ -45,25 +68,20 @@ export async function getAdminOverview(now = new Date()) {
       prisma.lead.count({ where: { detectedAt: { gte: today } } }),
       prisma.user.count({ where: { createdAt: { gte: today } } }),
       prisma.user.count({ where: { createdAt: { gte: weekStart } } }),
-      prisma.user.count({
-        where: {
-          planTier: { in: [PlanTier.PRO, PlanTier.BUSINESS] },
-          messages: { none: { createdAt: { gte: churnCutoff } } },
-        },
-      }),
+      prisma.user.count({ where: churnRiskWhere(now) }),
     ]);
 
   return {
     total_businesses: totalBusinesses,
     active_this_week: activeThisWeek,
-    total_paid: proCount + businessCount,
+    total_paid: paidProCount + paidBusinessCount,
     pro_count: proCount,
     business_count: businessCount,
     free_count: freeCount,
     mrr_egp: calculateMrrEgp({
       [PlanTier.FREE]: freeCount,
-      [PlanTier.PRO]: proCount,
-      [PlanTier.BUSINESS]: businessCount,
+      [PlanTier.PRO]: paidProCount,
+      [PlanTier.BUSINESS]: paidBusinessCount,
     }),
     total_messages_today: messagesToday,
     total_messages_this_month: messagesThisMonth,
@@ -82,14 +100,13 @@ export async function getAdminBusinesses(params: {
 }) {
   const page = Math.max(1, params.page);
   const limit = Math.min(100, Math.max(1, params.limit));
-  const churnCutoff = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
   const baseWhere: Prisma.UserWhereInput =
     params.filter === "paid"
-      ? { planTier: { in: [PlanTier.PRO, PlanTier.BUSINESS] } }
+      ? paidSubscriberWhere()
       : params.filter === "free"
         ? { planTier: PlanTier.FREE }
         : params.filter === "churn_risk"
-          ? { planTier: { in: [PlanTier.PRO, PlanTier.BUSINESS] }, messages: { none: { createdAt: { gte: churnCutoff } } } }
+          ? churnRiskWhere()
           : {};
 
   const [total, users] = await Promise.all([
@@ -104,6 +121,7 @@ export async function getAdminBusinesses(params: {
         email: true,
         fullName: true,
         planTier: true,
+        subscriptionStatus: true,
         monthlyReplyCount: true,
         onboardingCompleted: true,
         createdAt: true,
@@ -124,12 +142,26 @@ export async function getAdminBusinesses(params: {
   ]);
 
   const weekStart = getStartOfWeek();
-  const rows = await Promise.all(
-    users.map(async (user) => {
-      const [messages7d, lastMessage] = await Promise.all([
-        prisma.message.count({ where: { userId: user.id, createdAt: { gte: weekStart } } }),
-        user.messages[0]?.createdAt ?? null,
-      ]);
+  const churnStart = new Date(Date.now() - CHURN_INACTIVE_DAYS * 24 * 60 * 60 * 1000);
+  const userIds = users.map((user) => user.id);
+  const [counts7d, counts14d] = await Promise.all([
+    prisma.message.groupBy({
+      by: ["userId"],
+      where: { userId: { in: userIds }, createdAt: { gte: weekStart } },
+      _count: { _all: true },
+    }),
+    prisma.message.groupBy({
+      by: ["userId"],
+      where: { userId: { in: userIds }, createdAt: { gte: churnStart } },
+      _count: { _all: true },
+    }),
+  ]);
+  const messages7dByUser = new Map(counts7d.map((row) => [row.userId, row._count._all]));
+  const messages14dByUser = new Map(counts14d.map((row) => [row.userId, row._count._all]));
+  const rows = users.map((user) => {
+      const messages7d = messages7dByUser.get(user.id) ?? 0;
+      const messages14d = messages14dByUser.get(user.id) ?? 0;
+      const lastMessage = user.messages[0]?.createdAt ?? null;
       const replyLimit = user.planTier === PlanTier.BUSINESS ? 10000 : user.planTier === PlanTier.PRO ? 2000 : 50;
 
       return {
@@ -137,18 +169,19 @@ export async function getAdminBusinesses(params: {
         name: user.fullName ?? user.email,
         email: user.email,
         plan: user.planTier,
+        subscription_status: user.subscriptionStatus,
         replies_used: user.monthlyReplyCount,
         replies_limit: replyLimit,
         usage_pct: getUsagePercent(user.monthlyReplyCount, replyLimit),
         last_message_at: lastMessage?.toISOString() ?? null,
         messages_7d: messages7d,
+        messages_14d: messages14d,
         created_at: user.createdAt.toISOString(),
         channel_count: user._count.connections,
         has_knowledge_base: user._count.knowledgeBaseEntries > 0,
         is_onboarded: user.onboardingCompleted,
       };
-    }),
-  );
+    });
 
   return {
     businesses: rows,
@@ -162,10 +195,11 @@ export async function getAdminBusinesses(params: {
 
 export async function getAdminRevenue(range: AdminRange) {
   const rangeStart = getRangeStart(range);
-  const [freeCount, proCount, businessCount, events] = await Promise.all([
+  const monthStart = getStartOfMonth();
+  const [freeCount, paidProCount, paidBusinessCount, events, upgradesThisMonth, downgradesThisMonth] = await Promise.all([
     prisma.user.count({ where: { planTier: PlanTier.FREE } }),
-    prisma.user.count({ where: { planTier: PlanTier.PRO } }),
-    prisma.user.count({ where: { planTier: PlanTier.BUSINESS } }),
+    prisma.user.count({ where: { ...paidSubscriberWhere(), planTier: PlanTier.PRO } }),
+    prisma.user.count({ where: { ...paidSubscriberWhere(), planTier: PlanTier.BUSINESS } }),
     prisma.subscriptionEvent.findMany({
       where: {
         createdAt: { gte: rangeStart },
@@ -177,11 +211,18 @@ export async function getAdminRevenue(range: AdminRange) {
       },
       orderBy: { createdAt: "asc" },
     }),
+    prisma.subscriptionEvent.count({ where: { createdAt: { gte: monthStart } } }),
+    prisma.user.count({
+      where: {
+        subscriptionStatus: { in: [SubscriptionStatus.CANCELED, SubscriptionStatus.PAST_DUE] },
+        updatedAt: { gte: monthStart },
+      },
+    }),
   ]);
   const mrr = calculateMrrEgp({
     [PlanTier.FREE]: freeCount,
-    [PlanTier.PRO]: proCount,
-    [PlanTier.BUSINESS]: businessCount,
+    [PlanTier.PRO]: paidProCount,
+    [PlanTier.BUSINESS]: paidBusinessCount,
   });
   const dailyRevenue = new Map<string, number>();
 
@@ -196,17 +237,20 @@ export async function getAdminRevenue(range: AdminRange) {
     daily_revenue: Array.from(dailyRevenue.entries()).map(([date, egp]) => ({ date, egp })),
     plan_breakdown: {
       free: freeCount,
-      pro: proCount,
-      business: businessCount,
+      pro: paidProCount,
+      business: paidBusinessCount,
     },
-    upgrades_this_month: events.length,
-    downgrades_this_month: 0,
+    upgrades_this_month: upgradesThisMonth,
+    downgrades_this_month: downgradesThisMonth,
   };
 }
 
 export async function getAdminBusinessDetail(userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+  const start = new Date(Date.now() - 13 * 24 * 60 * 60 * 1000);
+  start.setHours(0, 0, 0, 0);
+  const [user, chartMessages] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
     select: {
       id: true,
       email: true,
@@ -255,23 +299,20 @@ export async function getAdminBusinessDetail(userId: string) {
         },
       },
     },
-  });
+    }),
+    prisma.message.findMany({
+      where: { userId, createdAt: { gte: start } },
+      orderBy: { createdAt: "asc" },
+      take: 5000,
+      select: { createdAt: true },
+    }),
+  ]);
 
   if (!user) {
     return null;
   }
 
-  const start = new Date(Date.now() - 13 * 24 * 60 * 60 * 1000);
-  start.setHours(0, 0, 0, 0);
-  const messages = await prisma.message.findMany({
-    where: {
-      userId,
-      createdAt: { gte: start },
-    },
-    select: {
-      createdAt: true,
-    },
-  });
+  const messages = chartMessages;
   const daily = new Map<string, number>();
 
   for (let index = 0; index < 14; index += 1) {

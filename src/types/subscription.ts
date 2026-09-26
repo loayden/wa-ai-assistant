@@ -6,6 +6,20 @@
  */
 export type PlanTier = "FREE" | "PRO" | "BUSINESS";
 
+export const PLAN_AR_LABELS: Record<PlanTier, string> = {
+  FREE: "مجاني",
+  PRO: "احترافي",
+  BUSINESS: "أعمال",
+};
+
+export function planLabel(plan: PlanTier | string | null | undefined): string {
+  if (plan === "FREE" || plan === "PRO" || plan === "BUSINESS") {
+    return PLAN_AR_LABELS[plan];
+  }
+
+  return "مجاني";
+}
+
 export type SubscriptionStatus = "ACTIVE" | "INACTIVE" | "PAST_DUE" | "CANCELED";
 
 export type PlanLimits = {

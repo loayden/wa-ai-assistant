@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     const entry = existingSingleton
       ? await prisma.knowledgeBaseEntry.update({
-          where: { id: existingSingleton.id },
+          where: { id: existingSingleton.id, userId: user.id },
           data: {
             title: parsed.data.title,
             content: parsed.data.content,

@@ -108,7 +108,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
       <div className="pointer-events-none fixed inset-0 opacity-24 [background-image:linear-gradient(rgba(255,255,255,.16)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.14)_1px,transparent_1px)] [background-size:72px_72px]" />
       <header className="relative px-2 py-2 sm:px-4">
         <nav className="glass-surface mx-auto flex max-w-[980px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5">
-          <Link href="/" className="inline-flex items-center" aria-label="kallem home">
+          <Link href="/" className="inline-flex items-center" aria-label="الرئيسية">
             <LogoMark size="lg" />
           </Link>
           <Link href="/blog" className="text-body-sm font-semibold text-wa-blue-600 hover:underline">

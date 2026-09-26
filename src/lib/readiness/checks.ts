@@ -361,7 +361,7 @@ function checkWorkingHours(settings: UserSettings): ReadinessCheck {
       category: "business",
       message: "ساعات العمل غير محددة. قد يرد المساعد خارج وقتك الحقيقي.",
       action: "ضبط ساعات العمل",
-      actionHref: "/settings",
+      actionHref: "/assistant",
     });
   }
 

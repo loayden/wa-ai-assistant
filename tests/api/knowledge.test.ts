@@ -136,7 +136,7 @@ describe("knowledge API", () => {
 
     expect(response.status).toBe(200);
     expect(apiMocks.prisma.knowledgeBaseEntry.update).toHaveBeenCalledWith({
-      where: { id: ENTRY_ID },
+      where: { id: ENTRY_ID, userId: USER_ID },
       data: {
         title: "Business Info",
         content: "We are a clinic in Cairo.",
@@ -144,8 +144,7 @@ describe("knowledge API", () => {
     });
   });
 
-  it("updates only entries owned by the current user", async () => {
-    apiMocks.prisma.knowledgeBaseEntry.findFirst.mockResolvedValueOnce(makeEntry());
+  it("updates only entries owned by the current user", async () => {    apiMocks.prisma.knowledgeBaseEntry.findFirst.mockResolvedValueOnce(makeEntry());
     apiMocks.prisma.knowledgeBaseEntry.update.mockResolvedValueOnce(makeEntry({ title: "Prices" }));
 
     const response = await PATCH(jsonRequest({ title: "Prices" }), { params: Promise.resolve({ id: ENTRY_ID }) });
@@ -171,7 +170,7 @@ describe("knowledge API", () => {
     expect(response.status).toBe(200);
     expect(body.data.deleted).toBe(true);
     expect(apiMocks.prisma.knowledgeBaseEntry.delete).toHaveBeenCalledWith({
-      where: { id: ENTRY_ID },
+      where: { id: ENTRY_ID, userId: USER_ID },
     });
   });
 });

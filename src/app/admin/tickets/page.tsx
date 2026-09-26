@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { prisma } from "@/lib/prisma/client";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ function formatDate(value: Date) {
 }
 
 export default async function AdminTicketsPage() {
+  await requireAdminPage("/admin/tickets");
   const [tickets, openCount, inProgressCount, resolvedToday] = await Promise.all([
     prisma.supportTicket.findMany({
       orderBy: { updatedAt: "desc" },

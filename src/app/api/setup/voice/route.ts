@@ -12,9 +12,12 @@ import { updateUserSettings } from "@/lib/api/settings";
 import { openai } from "@/lib/openai/client";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const MAX_VOICE_UPLOAD_BYTES = 5 * 1024 * 1024;
 
 const VoiceConfigSchema = z.object({
   businessType: z.enum(["doctor", "restaurant", "store", "service", "realEstate", "legal", "general"]),
@@ -84,11 +87,30 @@ Transcription: ${JSON.stringify(transcription)}
 export async function POST(request: Request) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `setup-voice:${user.id}`,
+      limit: 5,
+      windowMs: 60_000,
+      context: "api.setup.voice",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة جداً، انتظر قليلاً.", 429);
+    }
+
     const formData = await request.formData();
     const audioFile = getAudioFile(formData);
 
     if (!audioFile) {
-      return jsonError("Audio file is required.", 400);
+      return jsonError("ملف التسجيل مطلوب.", 400);
+    }
+
+    if (audioFile.size > MAX_VOICE_UPLOAD_BYTES) {
+      return jsonError("التسجيل طويل جداً. سجل مقطعاً أقصر من ٥ دقائق.", 400);
+    }
+
+    if (audioFile.type && !audioFile.type.startsWith("audio/")) {
+      return jsonError("الملف المرفوع ليس تسجيلاً صوتياً.", 400);
     }
 
     let transcription: string;
@@ -97,7 +119,7 @@ export async function POST(request: Request) {
       transcription = await transcribeAudio(audioFile);
     } catch (error) {
       logger.error("api.setup.voice", "Whisper transcription failed.", { error, userId: user.id });
-      return jsonError("Could not process your recording. Please try again.", 500);
+      return jsonError("تعذر معالجة التسجيل. حاول مرة أخرى.", 500);
     }
 
     const config = await extractVoiceConfig(transcription);

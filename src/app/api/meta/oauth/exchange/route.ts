@@ -16,6 +16,26 @@ const exchangeSchema = z
   })
   .strict();
 
+function isAllowedRedirectUri(candidate: string) {
+  let url: URL;
+
+  try {
+    url = new URL(candidate);
+  } catch {
+    return false;
+  }
+
+  if (process.env.NODE_ENV !== "production" && (url.hostname === "localhost" || url.hostname === "127.0.0.1")) {
+    return true;
+  }
+
+  try {
+    return url.origin === new URL(appEnv.NEXT_PUBLIC_APP_URL).origin;
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     await requireAppUser();
@@ -24,6 +44,10 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return jsonValidationError(parsed.error);
+    }
+
+    if (!isAllowedRedirectUri(parsed.data.redirectUri)) {
+      return jsonError("رابط العودة غير معتمد لهذا التطبيق.", 400);
     }
 
     const tokenRes = await fetch(

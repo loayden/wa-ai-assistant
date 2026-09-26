@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminBusinessTools } from "@/components/admin/AdminBusinessTools";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 import { getAdminBusinessDetail } from "@/lib/admin/queries";
 
 function formatDate(value: string | null) {
@@ -23,6 +24,7 @@ function formatDirection(direction: string) {
 }
 
 export default async function AdminBusinessDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage("/admin/businesses");
   const { id } = await params;
   const detail = await getAdminBusinessDetail(id);
 

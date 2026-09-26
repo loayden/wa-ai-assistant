@@ -5,13 +5,15 @@
  * compact surface so the billing route remains operational, not marketing-led.
  */
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { Check, MessageCircle, Phone, ReceiptText } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils";
 import type { PlanTier } from "@/types/subscription";
+import { PLAN_AR_LABELS } from "@/types/subscription";
 
 type PlanCardProps = {
   title: PlanTier;
@@ -26,13 +28,10 @@ type PlanCardProps = {
   actionLabel: string;
   disabled?: boolean;
   onAction: () => void;
+  supportHref?: string;
 };
 
-const planNames: Record<PlanTier, string> = {
-  FREE: "مجاني",
-  PRO: "Pro",
-  BUSINESS: "Business",
-};
+const planNames: Record<PlanTier, string> = PLAN_AR_LABELS;
 
 export function PlanCard({
   actionLabel,
@@ -46,6 +45,7 @@ export function PlanCard({
   overageLabel,
   priceLabel,
   recommended = false,
+  supportHref,
   title,
 }: PlanCardProps) {
   return (
@@ -94,14 +94,20 @@ export function PlanCard({
       </CardContent>
 
       <CardFooter className="p-4 pt-0 sm:p-6 sm:pt-0">
-        <Button
-          className="w-full rounded-full"
-          disabled={disabled || current}
-          variant={current ? "secondary" : recommended ? "default" : "outline"}
-          onClick={onAction}
-        >
-          {current ? "الخطة الحالية" : actionLabel}
-        </Button>
+        {supportHref && !current ? (
+          <Link href={supportHref} className={cn(buttonVariants({ variant: "outline" }), "w-full rounded-full")}>
+            {actionLabel}
+          </Link>
+        ) : (
+          <Button
+            className="w-full rounded-full"
+            disabled={disabled || current}
+            variant={current ? "secondary" : recommended ? "default" : "outline"}
+            onClick={onAction}
+          >
+            {current ? "الخطة الحالية" : actionLabel}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

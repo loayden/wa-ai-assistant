@@ -345,10 +345,13 @@ export async function processOutboundQueue(options: ProcessOutboundQueueOptions 
   const batchSize = options.batchSize ?? OUTBOX_CRON_BATCH_SIZE;
   const candidates = await prisma.outboundMessage.findMany({
     where: {
-      status: OutboundMessageStatus.FAILED,
-      nextAttemptAt: {
-        lte: new Date(),
-      },
+      OR: [
+        { status: OutboundMessageStatus.PENDING },
+        {
+          status: OutboundMessageStatus.FAILED,
+          nextAttemptAt: { lte: new Date() },
+        },
+      ],
     },
     orderBy: [{ nextAttemptAt: "asc" }, { createdAt: "asc" }],
     take: batchSize,

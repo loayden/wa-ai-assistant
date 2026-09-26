@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AdminTicketTools } from "@/components/admin/AdminTicketTools";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 import { prisma } from "@/lib/prisma/client";
 
 function formatDate(value: Date) {
@@ -28,6 +29,7 @@ function priorityLabel(priority: string) {
 }
 
 export default async function AdminTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdminPage("/admin/tickets");
   const { id } = await params;
   const ticket = await prisma.supportTicket.findUnique({
     where: { id },

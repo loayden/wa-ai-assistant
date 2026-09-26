@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma/client";
 import { getAdminEmail, sendSupportEmail } from "@/lib/support/email";
 import { serializeTicketMessage } from "@/lib/support/tickets";
 import { appEnv } from "@/lib/utils/env";
+import { escapeHtml } from "@/lib/utils/html";
 import { logger } from "@/lib/utils/logger";
 
 export const runtime = "nodejs";
@@ -57,7 +58,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     });
 
     await prisma.supportTicket.update({
-      where: { id: ticket.id },
+      where: user.isAdmin ? { id: ticket.id } : { id: ticket.id, userId: user.id },
       data: {
         status: user.isAdmin ? "waiting_customer" : "open",
         updatedAt: new Date(),
@@ -72,7 +73,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         html: `<div dir="rtl" style="font-family:Arial,sans-serif">
           <p>تم الرد على تذكرتك في كَلّم.</p>
           <p><strong>الرد:</strong></p>
-          <p>${parsed.data.content}</p>
+          <p>${escapeHtml(parsed.data.content)}</p>
           <p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/support">عرض الرد</a></p>
         </div>`,
       });
@@ -81,9 +82,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         to: getAdminEmail(),
         subject: `💬 رد عميل على تذكرة — ${ticket.subject}`,
         html: `<div dir="rtl" style="font-family:Arial,sans-serif">
-          <p><strong>النشاط:</strong> ${ticket.user.fullName ?? ticket.user.email}</p>
+          <p><strong>النشاط:</strong> ${escapeHtml(ticket.user.fullName ?? ticket.user.email)}</p>
           <p><strong>الرد:</strong></p>
-          <p>${parsed.data.content}</p>
+          <p>${escapeHtml(parsed.data.content)}</p>
           <p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/admin/tickets/${ticket.id}">فتح التذكرة</a></p>
         </div>`,
       });

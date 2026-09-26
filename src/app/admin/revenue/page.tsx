@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminRevenue, type AdminRange } from "@/lib/admin/queries";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ function formatEgp(value: number) {
 }
 
 export default async function AdminRevenuePage({ searchParams }: { searchParams?: Promise<{ range?: string }> }) {
+  await requireAdminPage("/admin/revenue");
   const resolvedSearchParams = await searchParams;
   const range = ranges.includes(resolvedSearchParams?.range as AdminRange) ? (resolvedSearchParams?.range as AdminRange) : "30d";
   const data = await getAdminRevenue(range);

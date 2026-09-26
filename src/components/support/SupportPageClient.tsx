@@ -82,6 +82,7 @@ export function SupportPageClient() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [newTicketOpen, setNewTicketOpen] = useState(false);
   const [reply, setReply] = useState("");
@@ -94,6 +95,7 @@ export function SupportPageClient() {
 
   async function loadTickets() {
     setLoading(true);
+    setListError(null);
     try {
       const response = await apiData<{ tickets: Ticket[] }>("/api/tickets");
       setTickets(response.tickets);
@@ -101,6 +103,7 @@ export function SupportPageClient() {
         setSelectedId(response.tickets[0].id);
       }
     } catch (error) {
+      setListError(translateError(error, "تعذر تحميل تذاكر الدعم."));
       toast.error("تعذر تحميل تذاكر الدعم", {
         description: translateError(error, "حاولي مرة أخرى."),
       });
@@ -270,6 +273,14 @@ export function SupportPageClient() {
           </div>
           {loading ? (
             <div className="p-4 text-body-sm text-wa-gray-500">جارٍ تحميل التذاكر...</div>
+          ) : listError ? (
+            <div className="p-5 text-center">
+              <p className="text-body font-semibold text-wa-gray-900">تعذر تحميل التذاكر</p>
+              <p className="mt-1 text-body-sm leading-6 text-wa-gray-600">{listError}</p>
+              <Button className="mt-3 rounded-full" size="sm" variant="outline" onClick={() => void loadTickets()}>
+                حاول مرة أخرى
+              </Button>
+            </div>
           ) : tickets.length === 0 ? (
             <div className="p-5 text-center">
               <LifeBuoy className="mx-auto size-10 text-wa-blue-600" aria-hidden="true" />
@@ -385,11 +396,14 @@ export function SupportPageClient() {
                 ) : (
                   <div className="space-y-3">
                     <Textarea minRows={2} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="اكتب ردك هنا..." />
+                    {!reply.trim() && reply.length > 0 ? (
+                      <p className="text-body-sm text-wa-error">اكتب الرد أولاً قبل الإرسال.</p>
+                    ) : null}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <button type="button" onClick={closeTicket} disabled={sending} className="text-body-sm font-semibold text-wa-gray-500 hover:text-wa-gray-900 disabled:opacity-50">
                         إغلاق التذكرة
                       </button>
-                      <Button isLoading={sending} onClick={sendReply} className="rounded-full">
+                      <Button isLoading={sending} disabled={!reply.trim()} onClick={sendReply} className="rounded-full">
                         <Send className="size-4" aria-hidden="true" />
                         إرسال الرد
                       </Button>

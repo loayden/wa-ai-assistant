@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
@@ -46,6 +47,17 @@ function serializeCorrection(correction: {
 export async function POST(request: Request, context: RouteContext) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `message-correct:${user.id}`,
+      limit: 10,
+      windowMs: 60_000,
+      context: "api.messages.correct",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة جداً، انتظر قليلاً.", 429);
+    }
+
     const params = paramsSchema.safeParse(await context.params);
 
     if (!params.success) {

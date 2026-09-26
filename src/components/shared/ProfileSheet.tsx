@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useElderMode } from "@/hooks/useElderMode";
 import type { PlanTier } from "@/types/subscription";
+import { planLabel } from "@/types/subscription";
 
 export interface ProfileSheetProps {
   open: boolean;
@@ -33,7 +34,7 @@ export function ProfileSheet({ onBilling, onClose, onSignOut, open, planTier, us
           <p className="text-body font-medium text-wa-gray-900">{userName || "الحساب"}</p>
           <p className="mt-1 text-body-sm text-wa-gray-600">{userEmail || "تم تسجيل الدخول"}</p>
           <div className="mt-3 flex items-center justify-between gap-3">
-            <StatusBadge label={planTier} variant={planTier === "FREE" ? "free" : "pro"} />
+            <StatusBadge label={planLabel(planTier)} variant={planTier === "FREE" ? "free" : "pro"} />
             <p className="text-body-sm text-wa-gray-600">{planTier === "FREE" ? "بداية مجانية" : "الخطة المدفوعة مفعّلة"}</p>
           </div>
         </div>

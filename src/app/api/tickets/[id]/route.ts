@@ -90,7 +90,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const updatedTicket = await prisma.supportTicket.update({
-      where: { id },
+      where: user.isAdmin ? { id } : { id, userId: user.id },
       data: {
         ...(nextStatus ? { status: nextStatus, resolvedAt: nextStatus === "resolved" ? new Date() : null } : {}),
         ...(nextPriority ? { priority: nextPriority } : {}),

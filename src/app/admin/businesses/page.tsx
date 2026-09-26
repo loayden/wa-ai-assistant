@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getAdminBusinesses } from "@/lib/admin/queries";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export default async function AdminBusinessesPage({
   searchParams?: Promise<{ filter?: string; page?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
+  await requireAdminPage("/admin/businesses");
   const selectedFilter = filters.some((filter) => filter.value === resolvedSearchParams?.filter) ? resolvedSearchParams?.filter : "all";
   const page = Number(resolvedSearchParams?.page ?? 1);
   const data = await getAdminBusinesses({ filter: selectedFilter as "all" | "paid" | "free" | "churn_risk", page, limit: 20 });
@@ -62,7 +64,8 @@ export default async function AdminBusinessesPage({
         </div>
         {data.businesses.map((business) => {
           const highUsage = business.usage_pct >= 80;
-          const churnRisk = business.plan !== "FREE" && business.messages_7d === 0;
+          const churnRisk =
+            business.plan !== "FREE" && business.subscription_status === "ACTIVE" && business.messages_14d === 0;
           return (
             <Link
               key={business.id}

@@ -387,6 +387,16 @@ export function TemplatesPageClient() {
         </div>
         {templatesQuery.isLoading ? (
           <p className="rounded-2xl border border-wa-gray-100 bg-white p-4 text-body-sm text-wa-gray-500">جارٍ تحميل القوالب...</p>
+        ) : templatesQuery.isError ? (
+          <div className="rounded-2xl border border-wa-gray-100 bg-white p-4 text-center">
+            <p className="text-body font-semibold text-wa-gray-900">تعذر تحميل القوالب</p>
+            <p className="mt-1 text-body-sm text-wa-gray-600">
+              {translateError(templatesQuery.error instanceof Error ? templatesQuery.error.message : templatesQuery.error)}
+            </p>
+            <Button className="mt-3 rounded-full" size="sm" onClick={() => void templatesQuery.refetch()}>
+              حاول مرة أخرى
+            </Button>
+          </div>
         ) : templates.length === 0 ? (
           <p className="rounded-2xl border border-wa-gray-100 bg-white p-4 text-body-sm leading-6 text-wa-gray-600">
             لا توجد قوالب بعد. أنشئ أول قالب، انتظر موافقة Meta، ثم استخدمه للمتابعة والحملات.

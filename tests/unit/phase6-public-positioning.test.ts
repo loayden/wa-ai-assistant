@@ -48,8 +48,8 @@ describe("phase 6 public positioning", () => {
   it("positions competitor pages around clarity instead of cloning competitors", () => {
     expect(comparisonPages.respondio.competitorName).toBe("respond.io");
     expect(comparisonPages.whatchimp.competitorName).toBe("WhatChimp");
-    expect(comparisonPages.respondio.rows.some((row) => row.kallem.includes("Arabic-first"))).toBe(true);
-    expect(comparisonPages.whatchimp.rows.some((row) => row.kallem.includes("test/live"))).toBe(true);
+    expect(comparisonPages.respondio.rows.some((row) => row.kallem.includes("عربية أولاً"))).toBe(true);
+    expect(comparisonPages.whatchimp.rows.some((row) => row.kallem.includes("تجريبي/إنتاجي"))).toBe(true);
   });
 
   it("exposes Phase 8 feature pages for AI quality and the unified inbox", () => {

@@ -10,6 +10,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
@@ -101,6 +102,17 @@ async function sendOrderWhatsAppMessage(params: {
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `order-update:${user.id}`,
+      limit: 20,
+      windowMs: 60_000,
+      context: "api.orders.update",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة جداً، انتظر قليلاً.", 429);
+    }
+
     const params = paramsSchema.safeParse(await context.params);
 
     if (!params.success) {
@@ -138,7 +150,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const updatedOrder = await prisma.order.update({
-      where: { id: order.id },
+      where: { id: order.id, userId: user.id },
       data: {
         status: parsed.data.status,
         customerAddress: parsed.data.customerAddress === undefined ? undefined : parsed.data.customerAddress || null,
@@ -190,7 +202,7 @@ export async function PATCH(request: Request, context: RouteContext) {
           });
 
           await prisma.order.update({
-            where: { id: order.id },
+            where: { id: order.id, userId: user.id },
             data: {
               paymentLink: payment.url,
               paymentLinkSentAt: new Date(),

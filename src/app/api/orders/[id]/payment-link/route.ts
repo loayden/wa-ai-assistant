@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import { WhatsAppClientError } from "@/lib/whatsapp/client";
 
 export const runtime = "nodejs";
@@ -41,6 +42,17 @@ function serializeOrderPayment(order: {
 export async function POST(_request: Request, context: RouteContext) {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `order-paylink:${user.id}`,
+      limit: 10,
+      windowMs: 60_000,
+      context: "api.orders.payment-link",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة جداً، انتظر قليلاً.", 429);
+    }
+
     const params = paramsSchema.safeParse(await context.params);
 
     if (!params.success) {
@@ -92,7 +104,7 @@ export async function POST(_request: Request, context: RouteContext) {
 
     const updatedOrder = await prisma.$transaction(async (tx) => {
       const savedOrder = await tx.order.update({
-        where: { id: order.id },
+        where: { id: order.id, userId: user.id },
         data: {
           paymentLink: payment.url,
           paymentLinkSentAt: new Date(),

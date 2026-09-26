@@ -149,7 +149,7 @@ export function SetupFlow({
             <div className="space-y-2">
               <p className="text-body-sm font-semibold text-wa-gray-900">رقم صاحب النشاط <span className="font-medium text-wa-gray-400">(اختياري)</span></p>
               <p className="text-body-sm text-wa-gray-600">
-                احفظي رقم صاحب النشاط فقط إذا أردتِ أوامر المالك مثل <code className="ltr inline-block">stop</code> و <code className="ltr inline-block">resume</code> أن تعمل بوضوح مع الرقم المتصل.
+                احفظي رقم صاحب النشاط فقط إذا أردتِ أوامر المالك (أرسلي <code className="ltr inline-block">stop</code> للإيقاف و <code className="ltr inline-block">resume</code> للتشغيل من هذا الرقم) أن تعمل بوضوح مع الرقم المتصل.
               </p>
               <Input
                 id="ownerPhoneNumber"

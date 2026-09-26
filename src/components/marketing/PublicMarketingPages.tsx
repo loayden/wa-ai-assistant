@@ -46,7 +46,7 @@ function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 px-2 py-2 sm:px-4">
       <nav className="glass-surface mx-auto flex max-w-[1160px] items-center justify-between gap-3 rounded-[24px] px-3 py-3 sm:px-5">
-        <Link href="/" className="inline-flex items-center" aria-label="kallem home">
+        <Link href="/" className="inline-flex items-center" aria-label="الرئيسية">
           <LogoMark size="lg" />
         </Link>
         <div className="hidden items-center gap-1 rounded-full border border-white/70 bg-white/50 p-1 lg:flex">
@@ -370,7 +370,7 @@ export function PublicPricingPage({ paymobMode }: { paymobMode: PaymobMode }) {
           <div>
             <p className="text-sm font-semibold text-wa-blue-600">الأسعار</p>
             <h1 className="mt-3 max-w-[780px] text-[38px] font-semibold leading-[1.08] text-wa-gray-900 sm:text-[64px] sm:leading-[1.04]">
-              خطط واضحة بالجنيه المصري، بدون كلمة Unlimited.
+              خطط واضحة بالجنيه المصري، بدون باقات غير محدودة.
             </h1>
             <p className="mt-5 max-w-[760px] text-body leading-7 text-wa-gray-600 sm:text-xl sm:leading-8">
               كل خطة تعرض عدد الردود والقنوات بوضوح. الدفع يفتح فقط عندما يكون Paymob في وضع الإنتاج حتى لا يدفع عميل حقيقي في بيئة اختبار.
@@ -464,9 +464,9 @@ export function SecurityTrustPage() {
                 </p>
               </div>
               {[
-                { icon: LockKeyhole, label: "Tokens", value: "مشفرة ولا تظهر للعميل" },
-                { icon: ShieldCheck, label: "Readiness", value: "يفصل التجربة عن الإنتاج" },
-                { icon: CreditCard, label: "Paymob", value: "test/live قبل checkout" },
+                { icon: LockKeyhole, label: "الرموز", value: "مشفرة ولا تظهر للعميل" },
+                { icon: ShieldCheck, label: "الجاهزية", value: "يفصل التجربة عن الإنتاج" },
+                { icon: CreditCard, label: "الدفع", value: "وضع تجريبي/إنتاجي قبل إتمام الدفع" },
               ].map((item) => {
                 const Icon = item.icon;
 

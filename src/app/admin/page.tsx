@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AlertTriangle, Building2, CheckCircle2, MessageSquareText, Sparkles, WalletCards } from "lucide-react";
 
 import { getAdminBusinesses, getAdminOverview } from "@/lib/admin/queries";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ function KpiCard({
 }
 
 export default async function AdminOverviewPage() {
+  await requireAdminPage();
   const [overview, recentBusinesses] = await Promise.all([
     getAdminOverview(),
     getAdminBusinesses({ filter: "all", page: 1, limit: 10 }),

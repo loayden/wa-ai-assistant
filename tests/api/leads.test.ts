@@ -128,7 +128,7 @@ describe("leads API", () => {
       },
     });
     expect(apiMocks.prisma.lead.update).toHaveBeenCalledWith({
-      where: { id: LEAD_ID },
+      where: { id: LEAD_ID, userId: USER_ID },
       data: { status: "contacted" },
     });
   });

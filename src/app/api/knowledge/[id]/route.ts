@@ -55,7 +55,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const entry = await prisma.knowledgeBaseEntry.update({
-      where: { id: existing.id },
+      where: { id: existing.id, userId: user.id },
       data: parsed.data,
     });
 
@@ -101,7 +101,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     }
 
     await prisma.knowledgeBaseEntry.delete({
-      where: { id: existing.id },
+      where: { id: existing.id, userId: user.id },
     });
 
     return jsonSuccess({ deleted: true });

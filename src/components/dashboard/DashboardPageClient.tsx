@@ -43,7 +43,7 @@ import type { SettingsResponse } from "@/types/api";
 import type { WhatsAppConnectionSummary } from "@/components/whatsapp/ConnectionStatus";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { PLAN_LIMITS } from "@/types/subscription";
+import { PLAN_LIMITS, planLabel } from "@/types/subscription";
 import { cn } from "@/lib/utils";
 import { formatStableNumber } from "@/lib/utils/format";
 
@@ -323,7 +323,7 @@ export function DashboardPageClient({
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-6">
+          <div className="bg-white p-4 sm:p-6" id="ai-master-toggle">
             <AIToggle enabled={autoReplyEnabled} onOptimisticChange={setAutoReplyEnabled} className="border-0 bg-wa-gray-50 shadow-none" />
             <div className="mt-4 grid grid-cols-2 gap-2">
               <HeroMiniStat label="اليوم" value={String(todayCount)} />
@@ -361,7 +361,7 @@ export function DashboardPageClient({
           <CommandSignal
             icon={<CreditCard className="size-4 text-wa-gray-500" aria-hidden="true" />}
             label="الخطة"
-            value={user.planTier}
+            value={planLabel(user.planTier)}
             detail={`استخدام ${usagePercent}% من ردود الشهر`}
           />
         </div>
@@ -384,7 +384,9 @@ export function DashboardPageClient({
                 icon={<Bot className="size-4" aria-hidden="true" />}
                 title="تشغيل الردود التلقائية"
                 body={autoReplyEnabled ? "المساعد يعمل الآن." : "شغّلي الردود من الزر الرئيسي."}
-                href="/dashboard"
+                onClick={() => {
+                  document.getElementById("ai-master-toggle")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
               />
               <NextStepRow
                 done={Boolean(settings.businessContext)}
@@ -569,7 +571,7 @@ function OnboardingBanner({
     },
     {
       done: hasBusinessInfo,
-      href: "/settings",
+      href: "/assistant",
       icon: Bot,
       title: "٢. أضف معلومات النشاط",
       body: "اكتب اسم النشاط، ما تبيعه، مناطق الخدمة، وسياساتك الأساسية.",

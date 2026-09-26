@@ -188,8 +188,8 @@ export const comparisonPages = {
     body: "respond.io قوي للفرق الكبيرة والقنوات الكثيرة. kallem يركز على صاحب نشاط عربي يريد ربط واتساب وإنستجرام وماسنجر، يعرف ما ينقصه، ويبدأ الردود بدون لوحة معقدة.",
     rows: [
       { area: "الجمهور", competitor: "فرق Enterprise وعمليات متعددة", kallem: "أنشطة عربية صغيرة ومتوسطة تريد بدء سريع" },
-      { area: "اللغة والتجربة", competitor: "English-first وتجربة عالمية عامة", kallem: "Arabic-first وRTL من أول شاشة" },
-      { area: "الجاهزية", competitor: "يعتمد غالبًا على إعدادات كثيرة", kallem: "Score واضح يفصل code/config عن manual setup" },
+      { area: "اللغة والتجربة", competitor: "إنجليزية أولاً وتجربة عالمية عامة", kallem: "عربية أولاً ودعم كامل لاتجاه RTL من أول شاشة" },
+      { area: "الجاهزية", competitor: "يعتمد غالبًا على إعدادات كثيرة", kallem: "مؤشر واضح يفصل الإعدادات التقنية عن الإعداد اليدوي" },
       { area: "فشل الردود", competitor: "قد يحتاج فهم تقني", kallem: "سبب عربي وفعل واضح داخل المحادثة" },
       { area: "التجارة المحلية", competitor: "منصة مراسلة واسعة", kallem: "منتجات، طلبات، Paymob، وسياق نشاط محلي" },
     ],
@@ -202,7 +202,7 @@ export const comparisonPages = {
       { area: "نطاق القنوات", competitor: "تركيز أكبر على واتساب", kallem: "واتساب، إنستجرام، وماسنجر في صندوق واحد" },
       { area: "الشفافية", competitor: "تجربة تعتمد على الربط والتشغيل", kallem: "جاهزية، موافقات، webhooks، وأسباب فشل ظاهرة" },
       { area: "جودة AI", competitor: "أتمتة عامة", kallem: "ردود من معرفة ومنتجات وساعات عمل ومحادثة العميل" },
-      { area: "الدفع", competitor: "قد لا يكون محليًا كافيًا", kallem: "تسعير EGP وPaymob مع فصل test/live" },
+      { area: "الدفع", competitor: "قد لا يكون محليًا كافيًا", kallem: "تسعير EGP وPaymob مع فصل تجريبي/إنتاجي" },
       { area: "المستخدم", competitor: "مناسب لمن يعرف إعدادات automation", kallem: "مصمم لمالك نشاط غير تقني" },
     ],
   },
@@ -210,7 +210,7 @@ export const comparisonPages = {
 
 export const featurePages = {
   ai: {
-    eyebrow: "AI Answer Quality",
+    eyebrow: "جودة إجابات المساعد",
     title: "مساعد يرد من بيانات نشاطك، لا من تخمين عام.",
     body: "kallem يجمع معلومات النشاط، المنتجات، الأسعار، المعرفة، التصحيحات، ساعات العمل، وسياساتك قبل صياغة الرد. إذا كانت البيانات ناقصة، يوضح ما ينقص بدل اختراع إجابة.",
     asset: "/assets/3dicons/chat-text-dynamic-color.png",
@@ -232,7 +232,7 @@ export const featurePages = {
     ],
   },
   inbox: {
-    eyebrow: "Unified Inbox",
+    eyebrow: "صندوق موحد",
     title: "صندوق واحد يوضح ما حدث لكل رسالة ولماذا فشل الرد إن فشل.",
     body: "الرسائل من واتساب وإنستجرام وماسنجر تظهر في مكان واحد، مع حالة الرد التلقائي، التسليم، التسليم للبشر، وسبب الفشل باللغة العربية.",
     asset: "/assets/3dicons/mobile-dynamic-premium.png",
@@ -241,10 +241,10 @@ export const featurePages = {
     secondaryCta: "راجع الجاهزية",
     secondaryHref: "/signup?next=%2Freadiness",
     highlights: [
-      "Timeline واضح للرسالة والرد ومحاولة الإرسال",
-      "أسباب فشل مصنفة بدل request failed",
+      "سجل زمني واضح للرسالة والرد ومحاولة الإرسال",
+      "أسباب فشل مصنفة بدل رسالة تقنية غامضة",
       "تسليم للبشر عند انخفاض الثقة أو وجود مشكلة قناة",
-      "Outbox للرسائل المعلقة والفاشلة والقابلة لإعادة المحاولة",
+      "صندوق صادر للرسائل المعلقة والفاشلة والقابلة لإعادة المحاولة",
     ],
     workflow: [
       "استقبل الرسالة من القناة",

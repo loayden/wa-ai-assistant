@@ -1,12 +1,14 @@
 import Link from "next/link";
 
 import { getAdminQuestions } from "@/lib/admin/queries";
+import { requireAdminPage } from "@/lib/admin/page-guard";
 
 export const dynamic = "force-dynamic";
 
 const ranges = ["7d", "30d"] as const;
 
 export default async function AdminQuestionsPage({ searchParams }: { searchParams?: Promise<{ range?: string }> }) {
+  await requireAdminPage("/admin/questions");
   const resolvedSearchParams = await searchParams;
   const range = ranges.includes(resolvedSearchParams?.range as "7d" | "30d") ? (resolvedSearchParams?.range as "7d" | "30d") : "7d";
   const data = await getAdminQuestions(range);

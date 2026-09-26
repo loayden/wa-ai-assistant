@@ -16,6 +16,7 @@ import { prisma } from "@/lib/prisma/client";
 import { normalizeMetaTemplateStatus } from "@/lib/templates/meta";
 import { getOwnedConnectionForTemplates, serializeTemplate } from "@/lib/templates/service";
 import { logger } from "@/lib/utils/logger";
+import { checkRateLimit } from "@/lib/utils/rateLimit";
 import type { MessageTemplatesResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -24,6 +25,17 @@ export const dynamic = "force-dynamic";
 export async function POST() {
   try {
     const user = await requireAppUser();
+    const rateLimit = checkRateLimit({
+      key: `templates-sync:${user.id}`,
+      limit: 5,
+      windowMs: 60_000,
+      context: "api.templates.sync",
+    });
+
+    if (!rateLimit.allowed) {
+      return jsonError("طلبات كثيرة جداً، انتظر قليلاً.", 429);
+    }
+
     const connections = await prisma.whatsAppConnection.findMany({
       where: { userId: user.id, isActive: true, isVerified: true },
       orderBy: { createdAt: "desc" },

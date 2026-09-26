@@ -43,7 +43,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const lead = await prisma.lead.update({
-      where: { id: params.data.id },
+      where: { id: existing.id, userId: user.id },
       data: { status: parsed.data.status },
     });
 

@@ -22,7 +22,7 @@ export function IconButton({ children, className, label, shape = "rounded", type
       type={type}
       aria-label={label}
       className={cn(
-        "inline-flex size-10 items-center justify-center bg-wa-gray-50 text-wa-gray-600 transition-all duration-150 hover:bg-wa-gray-100 active:scale-95 active:bg-wa-gray-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 disabled:pointer-events-none disabled:opacity-40 sm:size-11",
+        "inline-flex size-11 items-center justify-center bg-wa-gray-50 text-wa-gray-600 transition-all duration-150 hover:bg-wa-gray-100 active:scale-95 active:bg-wa-gray-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-wa-blue-50 disabled:pointer-events-none disabled:opacity-40",
         shape === "circle" ? "rounded-full" : "rounded-xl",
         className,
       )}

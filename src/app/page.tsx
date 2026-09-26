@@ -197,7 +197,7 @@ const faqs = [
 
 function BrandLockup({ className }: { className?: string }) {
   return (
-    <Link href="/" className={cn("inline-flex items-center", className)} aria-label="kallem home">
+    <Link href="/" className={cn("inline-flex items-center", className)} aria-label="الرئيسية">
       <LogoMark size="lg" />
     </Link>
   );

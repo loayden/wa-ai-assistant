@@ -1,5 +1,7 @@
 import type { InboundWhatsAppMessage } from "@/lib/validators/message";
 
+export { escapeHtml } from "@/lib/utils/html";
+
 export function extractMessageBody(message: InboundWhatsAppMessage): string {
   switch (message.type) {
     case "text":
@@ -41,18 +43,4 @@ export function extractAudioMediaId(message: InboundWhatsAppMessage): string | n
 
 export function normalizePhoneNumber(value: string): string {
   return value.replace(/\D/g, "");
-}
-
-export function escapeHtml(value: string) {
-  return value.replace(/[&<>"']/g, (char) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;",
-    };
-
-    return entities[char] ?? char;
-  });
 }

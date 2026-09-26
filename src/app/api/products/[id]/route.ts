@@ -80,6 +80,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     const product = await prisma.product.update({
       where: {
         id: existingProduct.id,
+        userId: user.id,
       },
       data: {
         name: parsed.data.name,
@@ -130,6 +131,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     await prisma.product.delete({
       where: {
         id: existingProduct.id,
+        userId: user.id,
       },
     });
 

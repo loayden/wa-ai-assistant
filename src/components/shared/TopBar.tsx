@@ -36,6 +36,7 @@ import { useFastNavigation } from "@/hooks/useFastNavigation";
 import { useLaunchReadiness } from "@/hooks/useReadiness";
 import { useAuthStore } from "@/store/authStore";
 import type { PlanTier } from "@/types/subscription";
+import { planLabel } from "@/types/subscription";
 import { BRAND_NAME } from "@/lib/utils/brand";
 import { cn } from "@/lib/utils";
 
@@ -112,7 +113,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
   const readinessScore = readinessQuery.data?.score;
   const displayName = userName;
   const displayEmail = userEmail;
-  const displayPlan = planTier;
+  const displayPlan = planLabel(planTier);
   const navItems = isAdmin ? [...appNavItems, { href: "/admin", label: "الإدارة", icon: ShieldCheck }] : appNavItems;
   const mobilePrimaryItems = navItems.filter((item) => mobilePrimaryHrefs.has(item.href));
   const desktopPrimaryItems = navItems.filter((item) => desktopPrimaryHrefs.has(item.href) || (isAdmin && item.href === "/admin"));
@@ -227,7 +228,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
             type="button"
             aria-label="فتح الحساب"
             onClick={() => setProfileOpen(true)}
-            className="glass-control flex size-10 items-center justify-center rounded-full text-[11px] font-semibold text-wa-gray-700 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 sm:text-label"
+            className="glass-control flex size-11 items-center justify-center rounded-full text-[11px] font-semibold text-wa-gray-700 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/70 sm:text-label"
           >
             {initialsFor(displayName, displayEmail)}
           </button>
@@ -297,7 +298,7 @@ export function TopBar({ isAdmin = false, onBilling, onSignOut, planTier = "FREE
       </BottomSheet>
       <ProfileSheet
         open={profileOpen}
-        planTier={displayPlan}
+        planTier={planTier}
         userEmail={displayEmail}
         userName={displayName}
         onBilling={handleBilling}

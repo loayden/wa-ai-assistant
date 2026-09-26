@@ -6,6 +6,7 @@ import { shouldSendNotification } from "@/lib/notifications/preferences";
 import { sendConversationNotificationOnce } from "@/lib/notifications/events";
 import { prisma } from "@/lib/prisma/client";
 import { appEnv } from "@/lib/utils/env";
+import { escapeHtml } from "@/lib/utils/html";
 import { logger } from "@/lib/utils/logger";
 import { conversationParamsSchema } from "@/lib/validators/conversations";
 
@@ -67,7 +68,7 @@ export async function POST(_request: Request, context: RouteContext) {
         customerPhone: thread.customerPhone,
         event: "handoff",
         subject: "محادثة تحتاج تدخلك",
-        html: `<p>تم تحويل محادثة إلى الرد اليدوي.</p><p><strong>العميل:</strong> ${thread.customerPhone}</p><p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/messages">افتح صندوق الرسائل</a></p>`,
+        html: `<p>تم تحويل محادثة إلى الرد اليدوي.</p><p><strong>العميل:</strong> ${escapeHtml(thread.customerPhone)}</p><p><a href="${appEnv.NEXT_PUBLIC_APP_URL}/messages">افتح صندوق الرسائل</a></p>`,
       });
     }
 

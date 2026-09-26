@@ -218,7 +218,7 @@ export function AnalyticsPageClient() {
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <PostStat label="تعليق" value={post.commentCount} />
-                      <PostStat label="Leads" value={post.leadCount} />
+                      <PostStat label="عملاء" value={post.leadCount} />
                       <PostStat label="DM" value={post.dmCount} />
                     </div>
                   </article>

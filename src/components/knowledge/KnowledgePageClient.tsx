@@ -312,6 +312,13 @@ export function KnowledgePageClient({ initialEntries, initialProducts }: Knowled
   }
 
   async function saveHours() {
+    if (openTime === closeTime) {
+      toast.error("وقت الفتح والإغلاق متطابقان", {
+        description: "اختاري وقت إغلاق مختلفاً عن وقت الفتح.",
+      });
+      return;
+    }
+
     setIsSavingHours(true);
 
     try {

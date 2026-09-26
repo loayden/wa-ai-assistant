@@ -72,6 +72,12 @@ async function sendDayTwoNudges(now: Date) {
       const messageCount = await prisma.message.count({ where: { userId: user.id } });
 
       if (messageCount > 0) {
+        // Stamp so active users are never rescanned by this batch again.
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { onboardingNudgeSentAt: new Date() },
+          select: { id: true },
+        });
         skipped += 1;
         continue;
       }

@@ -21,7 +21,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { apiData } from "@/lib/api/client";
 import { translateError } from "@/lib/errors/translateError";
 import { formatStableNumber } from "@/lib/utils/format";
-import { PLAN_LIMITS, type PlanTier } from "@/types/subscription";
+import { PLAN_LIMITS, planLabel, type PlanTier } from "@/types/subscription";
 
 type RedirectResponse = {
   url: string;
@@ -245,16 +245,17 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
             const copy = planCopy[plan];
             const isCurrent = currentPlan === plan;
             const isPaidTarget = plan !== "FREE";
+            const needsSupportDowngrade = plan === "FREE" && isPaidPlan;
             const actionLabel = isCurrent
               ? "الخطة الحالية"
-              : plan === "FREE" && isPaidPlan
-                ? "تواصل مع الدعم"
+              : needsSupportDowngrade
+                ? "تواصل مع الدعم للتخفيض"
                 : isPaidTarget
                   ? paymentLocked
                     ? "الدفع غير متاح الآن"
                     : isPaidPlan
-                    ? `التبديل إلى ${plan}`
-                    : `الترقية إلى ${plan}`
+                      ? `التبديل إلى ${planLabel(plan)}`
+                      : `الترقية إلى ${planLabel(plan)}`
                   : "الخطة الحالية";
 
             return (
@@ -271,6 +272,7 @@ export function BillingPageClient({ isAdmin, paymobMode }: BillingPageClientProp
                 recommended={copy.recommended}
                 actionLabel={billingBusy ? "جارٍ فتح Paymob..." : actionLabel}
                 disabled={billingBusy || (isPaidTarget && paymentLocked) || (plan === "FREE" && isPaidPlan)}
+                supportHref={needsSupportDowngrade ? "/support" : undefined}
                 onAction={() => handlePlanAction(plan)}
               />
             );
@@ -405,9 +407,9 @@ function ComparisonCell({ active, highlight = false, value }: { active?: boolean
       <span className={["inline-flex min-h-8 items-center justify-center gap-1 rounded-full px-3", active ? "bg-white ring-1 ring-wa-blue-200" : ""].join(" ")}>
         {typeof value === "boolean" ? (
           value ? (
-            <CheckCircle2 className="size-4 text-wa-success" aria-label="Included" />
+            <CheckCircle2 className="size-4 text-wa-success" aria-label="مشمول" />
           ) : (
-            <Minus className="size-4 text-wa-gray-300" aria-label="Not included" />
+            <Minus className="size-4 text-wa-gray-300" aria-label="غير مشمول" />
           )
         ) : (
           value

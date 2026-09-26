@@ -9,15 +9,10 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  Bot,
-  Clock3,
   Inbox,
   MessageSquareText,
-  MoreHorizontal,
   Search,
   Settings2,
-  ShieldCheck,
-  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -156,32 +151,8 @@ export function MessageList() {
               <div className="min-w-0">
                 <h1 className="text-body font-semibold text-wa-gray-900">المحادثات</h1>
                 <p className="mt-0.5 break-words text-label font-semibold uppercase tracking-widest text-wa-gray-400">
-                  WhatsApp · Instagram · Messenger
+                  واتساب · إنستجرام · ماسنجر
                 </p>
-              </div>
-              <div className="scrollbar-none flex w-fit max-w-full shrink-0 items-center overflow-x-auto rounded-full border border-wa-gray-100 bg-white p-1 text-body-sm font-semibold text-wa-gray-600">
-                <button
-                  className={cn("rounded-full px-3 py-1.5", simpleFilter === "ALL" ? "bg-wa-blue-50 text-wa-blue-700" : "text-wa-gray-500")}
-                  type="button"
-                  onClick={() => {
-                    setSimpleFilter("ALL");
-                    setStatus("ALL");
-                    setPage(1);
-                  }}
-                >
-                  Chats
-                </button>
-                <button
-                  className={cn("rounded-full px-3 py-1.5", simpleFilter === "UNANSWERED" ? "bg-wa-blue-50 text-wa-blue-700" : "text-wa-gray-500")}
-                  type="button"
-                  onClick={() => {
-                    setSimpleFilter("UNANSWERED");
-                    setStatus("RECEIVED");
-                    setPage(1);
-                  }}
-                >
-                  Unreplied
-                </button>
               </div>
             </div>
 
@@ -367,16 +338,12 @@ export function MessageList() {
         </main>
 
         <aside dir="rtl" className="hidden min-h-0 flex-col items-center gap-2 border-r border-wa-gray-100/80 bg-white/58 px-2 py-4 xl:flex">
-          <ToolButton icon={<UserRound />} label="بيانات العميل" />
-          <ToolButton icon={<Bot />} label="AI Assist" active />
-          <ToolButton icon={<Clock3 />} label="السجل" />
-          <ToolButton icon={<ShieldCheck />} label="الجودة" tone={failedCount > 0 ? "danger" : "default"} />
           <ToolButton icon={<Settings2 />} label="إعدادات القنوات" href="/connect" />
           <div className="mt-auto flex flex-col items-center gap-2">
             <RailMetric label="اليوم" value={todayCount} />
             <RailMetric label="AI" value={aiRepliesCount} />
             <RailMetric label="بشري" value={handoffCount} />
-            <ToolButton icon={<MoreHorizontal />} label="المزيد" />
+            {failedCount > 0 ? <RailMetric label="متعثر" value={failedCount} /> : null}
           </div>
         </aside>
       </section>
@@ -399,7 +366,7 @@ function FilterChip({
     <button
       type="button"
       className={cn(
-        "inline-flex min-h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-semibold transition",
+        "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-semibold transition",
         active
           ? "border-wa-blue-200 bg-wa-blue-50 text-wa-blue-800 shadow-[0_8px_20px_rgba(26,86,255,0.08)]"
           : "border-wa-gray-100 bg-white/74 text-wa-gray-600 hover:bg-white",

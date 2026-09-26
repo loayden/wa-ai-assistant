@@ -13,6 +13,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { translateError } from "@/lib/errors/translateError";
 import { apiData } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import { formatStableMoney, formatStableNumber } from "@/lib/utils/format";
@@ -199,6 +200,16 @@ export function OrdersPageClient() {
             {Array.from({ length: 4 }, (_, index) => (
               <Skeleton key={index} className="h-56 rounded-3xl" />
             ))}
+          </div>
+        ) : ordersQuery.isError ? (
+          <div className="p-6 text-center sm:p-10">
+            <p className="text-h3 font-semibold text-wa-gray-900">تعذر تحميل الطلبات</p>
+            <p className="mt-2 text-body-sm text-wa-gray-600">
+              {translateError(ordersQuery.error instanceof Error ? ordersQuery.error.message : ordersQuery.error)}
+            </p>
+            <Button className="mt-4 rounded-full" onClick={() => void ordersQuery.refetch()}>
+              حاول مرة أخرى
+            </Button>
           </div>
         ) : orders.length === 0 ? (
           <div className="p-8 text-center sm:p-12">

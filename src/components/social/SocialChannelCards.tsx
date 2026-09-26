@@ -401,7 +401,7 @@ export function SocialChannelCards({ apiVersion, appId, whatsappConnected }: Soc
           description="استقبال رسائل الرقم التجاري والرد عليها من نفس صندوق العملاء."
           status={whatsappConnected ? "متصل" : "غير متصل"}
           statusClassName={whatsappConnected ? "bg-wa-success-bg text-wa-success" : "bg-wa-gray-50 text-wa-gray-600"}
-          actionHref="/whatsapp"
+          actionHref="/connect"
           actionLabel={whatsappConnected ? "إدارة رقم واتساب" : "ربط رقم واتساب"}
         />
         <ChannelCard

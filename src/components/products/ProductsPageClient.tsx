@@ -388,6 +388,16 @@ export function ProductsPageClient() {
           </div>
           {productsQuery.isLoading ? (
             <div className="space-y-3 p-4 sm:p-5">{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-24 rounded-2xl" />)}</div>
+          ) : productsQuery.isError ? (
+            <div className="p-6 text-center sm:p-10">
+              <p className="text-h3 font-semibold text-wa-gray-900">تعذر تحميل المنتجات</p>
+              <p className="mt-2 text-body-sm text-wa-gray-600">
+                {translateError(productsQuery.error instanceof Error ? productsQuery.error.message : productsQuery.error)}
+              </p>
+              <Button className="mt-4 rounded-full" onClick={() => void productsQuery.refetch()}>
+                حاول مرة أخرى
+              </Button>
+            </div>
           ) : products.length === 0 ? (
             <div className="p-8 text-center">
               <div className="mx-auto flex size-14 items-center justify-center rounded-3xl bg-wa-blue-50">

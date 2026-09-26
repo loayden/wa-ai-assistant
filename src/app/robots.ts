@@ -33,7 +33,7 @@ export default function robots(): MetadataRoute.Robots {
           "/orders",
           "/products",
           "/readiness",
-          "/settings",
+          "/assistant",
           "/support",
           "/templates",
           "/whatsapp",

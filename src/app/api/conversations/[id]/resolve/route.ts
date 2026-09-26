@@ -6,6 +6,7 @@ import { resolveConversationThread } from "@/lib/api/conversations";
 import { whatsappClient } from "@/lib/api/whatsapp";
 import { jsonDatabaseUnavailableIfNeeded, jsonError, jsonSuccess, jsonValidationError } from "@/lib/api/response";
 import { getOrCreateUserSettings } from "@/lib/api/settings";
+import { translateError } from "@/lib/errors/translateError";
 import { prisma } from "@/lib/prisma/client";
 import { decrypt } from "@/lib/utils/encryption";
 import { appEnv } from "@/lib/utils/env";
@@ -34,14 +35,19 @@ export async function POST(_request: Request, context: RouteContext) {
     const thread = await resolveConversationThread(user.id, params.data.id);
 
     if (!thread || !thread.connection.isActive) {
-      return jsonError("Conversation not found.", 404);
+      return jsonError("المحادثة غير موجودة.", 404);
     }
 
     const settings = await getOrCreateUserSettings(user.id);
     const now = new Date();
     let ratingRequestedAt: Date | null = null;
 
-    if (settings.csatEnabled) {
+    /*
+     * CSAT requests only go out on WhatsApp threads. Instagram/Messenger
+     * threads resolve without a rating request instead of failing, since
+     * phoneNumberId/customerPhone are meaningless on those channels.
+     */
+    if (settings.csatEnabled && thread.connection.channel === "whatsapp") {
       const sendResponse = await whatsappClient.sendMessage(thread.connection.phoneNumberId, thread.customerPhone, DEFAULT_CSAT_MESSAGE, {
         accessToken: appEnv.WHATSAPP_MOCK_MODE ? undefined : decrypt(thread.connection.accessToken),
       });
@@ -69,6 +75,16 @@ export async function POST(_request: Request, context: RouteContext) {
       });
     }
 
+    /*
+     * Only overwrite ratingRequestedAt when a fresh request actually went
+     * out, so resolving with CSAT disabled (or on a social channel) never
+     * wipes a pending rating.
+     */
+    const handoffData = {
+      active: false,
+      resolvedAt: now,
+      ...(ratingRequestedAt ? { ratingRequestedAt } : {}),
+    };
     const handoff = await prisma.conversationHandoff.upsert({
       where: {
         userId_connectionId_customerPhone: {
@@ -81,15 +97,9 @@ export async function POST(_request: Request, context: RouteContext) {
         userId: user.id,
         connectionId: thread.connection.id,
         customerPhone: thread.customerPhone,
-        active: false,
-        resolvedAt: now,
-        ratingRequestedAt,
+        ...handoffData,
       },
-      update: {
-        active: false,
-        resolvedAt: now,
-        ratingRequestedAt,
-      },
+      update: handoffData,
     });
 
     return jsonSuccess({
@@ -111,7 +121,7 @@ export async function POST(_request: Request, context: RouteContext) {
     if (error instanceof WhatsAppClientError) {
       const details = error.response?.error?.error_data?.details || error.response?.error?.message;
 
-      return jsonError(details || "Meta rejected the rating request message.", 502);
+      return jsonError(translateError(details, "رفضت Meta رسالة طلب التقييم."), 502);
     }
 
     const databaseErrorResponse = jsonDatabaseUnavailableIfNeeded("api.conversations.resolve", error);
@@ -121,6 +131,6 @@ export async function POST(_request: Request, context: RouteContext) {
     }
 
     logger.error("api.conversations.resolve", "Failed to resolve conversation.", { error });
-    return jsonError("Failed to resolve conversation.", 500);
+    return jsonError("تعذر إغلاق المحادثة. حاول مرة أخرى.", 500);
   }
 }

@@ -100,6 +100,7 @@ function makeMessage() {
       phoneNumberId: "1131188840076693",
       accessToken: "encrypted-token",
       isActive: true,
+      channel: "whatsapp",
     },
   };
 }

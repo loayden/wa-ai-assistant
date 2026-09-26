@@ -400,16 +400,55 @@ export async function processInboundMessage(params: {
       };
     }
 
-    const sendResponse = await sendReply({
-      phoneNumberId: params.phoneNumberId,
-      accessToken: connection.accessToken,
-      to: params.message.from,
-      replyText: settings.offHoursMessage,
-    });
-    const outboundWaMessageId = sendResponse.messages[0]?.id;
+    let outboundWaMessageId: string | null = null;
+    let offHoursSendError: unknown = null;
+
+    try {
+      const sendResponse = await sendReply({
+        phoneNumberId: params.phoneNumberId,
+        accessToken: connection.accessToken,
+        to: params.message.from,
+        replyText: settings.offHoursMessage,
+      });
+      outboundWaMessageId = sendResponse.messages[0]?.id ?? null;
+    } catch (error) {
+      offHoursSendError = error;
+      logger.error("api.webhooks.whatsapp", "Off-hours WhatsApp send failed; marking inbound as failed.", {
+        error,
+        waMessageId: inboundMessage.waMessageId,
+      });
+    }
 
     if (!outboundWaMessageId) {
-      throw new Error("WhatsApp API did not return an off-hours message id.");
+      const failure = classifyOutboundFailure({
+        channel: "whatsapp",
+        error: offHoursSendError ?? new Error("WhatsApp API did not return an off-hours message id."),
+      });
+
+      await prisma.message.update({
+        where: { id: inboundMessage.id },
+        data: {
+          status: MessageStatus.FAILED,
+          aiReplyText: settings.offHoursMessage,
+          aiModelUsed: "off-hours",
+          metadata: {
+            ...messageMetadata,
+            outboundAttempt: buildOutboundAttemptMetadata({
+              channel: "whatsapp",
+              direction: "auto",
+              stage: failure.retry.canRetry ? "failed" : "blocked",
+              failure,
+            }),
+          },
+          processedAt: new Date(),
+        },
+      });
+
+      return {
+        waMessageId: inboundMessage.waMessageId,
+        status: MessageStatus.FAILED,
+        aiReplyText: settings.offHoursMessage,
+      };
     }
 
     await prisma.$transaction([

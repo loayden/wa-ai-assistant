@@ -178,7 +178,8 @@ export function ProductsPageClient() {
         method: "PATCH",
         body: JSON.stringify({ isAvailable }),
     }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      toast.success(variables.isAvailable ? "المنتج متاح الآن." : "تم إخفاء المنتج من البيع.");
       void queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (error) => {

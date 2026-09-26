@@ -204,7 +204,9 @@ export function SupportPageClient() {
   }
 
   async function closeTicket() {
-    if (!selectedTicket) return;
+    if (!selectedTicket || sending) return;
+
+    setSending(true);
 
     try {
       const response = await apiData<{ ticket: Ticket }>(`/api/tickets/${selectedTicket.id}`, {
@@ -218,6 +220,8 @@ export function SupportPageClient() {
       toast.error("تعذر إغلاق التذكرة", {
         description: translateError(error, "حاولي مرة أخرى."),
       });
+    } finally {
+      setSending(false);
     }
   }
 
@@ -382,7 +386,7 @@ export function SupportPageClient() {
                   <div className="space-y-3">
                     <Textarea minRows={2} value={reply} onChange={(event) => setReply(event.target.value)} placeholder="اكتب ردك هنا..." />
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <button type="button" onClick={closeTicket} className="text-body-sm font-semibold text-wa-gray-500 hover:text-wa-gray-900">
+                      <button type="button" onClick={closeTicket} disabled={sending} className="text-body-sm font-semibold text-wa-gray-500 hover:text-wa-gray-900 disabled:opacity-50">
                         إغلاق التذكرة
                       </button>
                       <Button isLoading={sending} onClick={sendReply} className="rounded-full">

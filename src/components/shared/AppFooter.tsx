@@ -124,6 +124,8 @@ export function AppFooter({ className, compact = false }: { className?: string; 
           <div className="flex flex-wrap gap-2">
             <Link
               href="https://www.pexels.com/"
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-full border border-wa-gray-100 bg-white px-3 py-1.5 text-xs font-semibold text-wa-gray-600 transition hover:text-wa-blue-600"
             >
               صور من Pexels

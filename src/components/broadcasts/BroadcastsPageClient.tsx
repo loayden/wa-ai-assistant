@@ -129,6 +129,7 @@ export function BroadcastsPageClient() {
     recipientsText: "",
   });
   const [activeBroadcastId, setActiveBroadcastId] = useState<string | null>(null);
+  const [confirmingSend, setConfirmingSend] = useState(false);
   const templatesQuery = useQuery({
     queryKey: ["templates"],
     queryFn: () => apiData<MessageTemplatesResponse>("/api/templates"),
@@ -195,6 +196,7 @@ export function BroadcastsPageClient() {
       }),
     onSuccess: (data) => {
       setActiveBroadcastId(data.broadcast.id);
+      setConfirmingSend(false);
       toast.success("تم إنشاء الحملة بنجاح. بدأ الإرسال الآن.");
       void queryClient.invalidateQueries({ queryKey: ["broadcasts"] });
       sendMutation.mutate(data.broadcast.id);
@@ -366,32 +368,50 @@ export function BroadcastsPageClient() {
                 ) : null}
               </div>
             ) : null}
-            <Button
-              className="mt-4 min-h-11 w-full sm:w-auto"
-              disabled={!canSend}
-              isLoading={createMutation.isPending || sendMutation.isPending}
-              onClick={() => {
-                if (!form.name.trim()) {
-                  toast.error("اكتب اسماً للحملة أولاً.");
-                  return;
-                }
-                if (!form.templateId) {
-                  toast.error("اختر قالباً معتمداً قبل الإرسال.");
-                  return;
-                }
-                if (recipients.length === 0) {
-                  toast.error("أضف رقماً واحداً على الأقل مع كود الدولة.");
-                  return;
-                }
-                if (!window.confirm(`سيتم إرسال رسالة إلى ${recipients.length.toLocaleString("ar-EG")} مستلم. الإرسال تدريجي لحماية رقمك. هل تريد المتابعة؟`)) {
-                  return;
-                }
-                createMutation.mutate();
-              }}
-            >
-              <SendHorizonal className="size-4" aria-hidden="true" />
-              إرسال الحملة ({recipients.length.toLocaleString("ar-EG")} مستلم)
-            </Button>
+            {confirmingSend ? (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-body-sm font-semibold leading-6 text-amber-900">
+                  سيتم إرسال رسالة إلى {recipients.length.toLocaleString("ar-EG")} مستلم. الإرسال تدريجي لحماية رقمك من قيود Meta. هل تريد المتابعة؟
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    className="min-h-11 flex-1 sm:flex-none"
+                    isLoading={createMutation.isPending || sendMutation.isPending}
+                    onClick={() => createMutation.mutate()}
+                  >
+                    <SendHorizonal className="size-4" aria-hidden="true" />
+                    تأكيد الإرسال
+                  </Button>
+                  <Button className="min-h-11" variant="outline" onClick={() => setConfirmingSend(false)}>
+                    تراجع
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                className="mt-4 min-h-11 w-full sm:w-auto"
+                disabled={!canSend}
+                isLoading={createMutation.isPending || sendMutation.isPending}
+                onClick={() => {
+                  if (!form.name.trim()) {
+                    toast.error("اكتب اسماً للحملة أولاً.");
+                    return;
+                  }
+                  if (!form.templateId) {
+                    toast.error("اختر قالباً معتمداً قبل الإرسال.");
+                    return;
+                  }
+                  if (recipients.length === 0) {
+                    toast.error("أضف رقماً واحداً على الأقل مع كود الدولة.");
+                    return;
+                  }
+                  setConfirmingSend(true);
+                }}
+              >
+                <SendHorizonal className="size-4" aria-hidden="true" />
+                إرسال الحملة ({recipients.length.toLocaleString("ar-EG")} مستلم)
+              </Button>
+            )}
           </div>
         </div>
 

@@ -160,6 +160,11 @@ export function AnalyticsPageClient() {
                   </div>
                 ))}
               </div>
+              {summary.totalReplies === 0 ? (
+                <p className="mt-3 rounded-2xl bg-wa-blue-50 px-4 py-3 text-center text-body-sm leading-6 text-wa-blue-800">
+                  لا توجد ردود بعد في هذه الفترة. اربط قناة وفعّل الردود التلقائية وستظهر الأعمدة هنا.
+                </p>
+              ) : null}
             </div>
             {locked ? (
               <div className="absolute inset-0 flex items-center justify-center bg-white/58 p-5 backdrop-blur-[1px]">

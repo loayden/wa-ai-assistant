@@ -80,6 +80,7 @@ export function LeadsPageClient() {
   const [leads, setLeads] = useState<LeadResponse[]>([]);
   const [instagramCommentLeads, setInstagramCommentLeads] = useState<InstagramCommentLeadResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -192,11 +193,16 @@ export function LeadsPageClient() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => window.location.assign("/api/leads/export")}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-wa-gray-200 px-3 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 sm:min-h-11 sm:px-4"
+                disabled={exporting || leads.length === 0}
+                onClick={() => {
+                  setExporting(true);
+                  window.location.assign("/api/leads/export");
+                  window.setTimeout(() => setExporting(false), 4000);
+                }}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-wa-gray-200 px-3 text-body-sm font-semibold text-wa-gray-700 transition hover:bg-wa-gray-50 disabled:opacity-50 sm:px-4"
               >
                 <Download className="size-4" aria-hidden="true" />
-                تصدير CSV
+                {exporting ? "جارٍ تجهيز الملف..." : "تصدير CSV"}
               </button>
               <Button size="sm" variant="outline" className="rounded-full" onClick={() => void loadLeads(filter, channelFilter)}>
                 <RefreshCcw className="size-4" aria-hidden="true" />

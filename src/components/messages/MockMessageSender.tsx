@@ -31,8 +31,8 @@ type MockWebhookResponse = {
   }>;
 };
 
-export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "15555550199", onSent }: MockMessageSenderProps) {
-  const [customerPhoneNumber, setCustomerPhoneNumber] = useState("15555550100");
+export function MockMessageSender({ phoneNumberId, displayPhoneNumber = "201144999221", onSent }: MockMessageSenderProps) {
+  const [customerPhoneNumber, setCustomerPhoneNumber] = useState("201000000000");
   const [messageText, setMessageText] = useState("مرحباً، هل أنتم متاحون اليوم؟");
   const [responseText, setResponseText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

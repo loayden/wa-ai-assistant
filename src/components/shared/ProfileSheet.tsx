@@ -9,6 +9,7 @@
 import { ElderModeToggle } from "@/components/elder/ElderModeToggle";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/button";
+import { replayWelcome } from "@/components/onboarding/FirstRunWelcome";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useElderMode } from "@/hooks/useElderMode";
 import type { PlanTier } from "@/types/subscription";
@@ -46,6 +47,16 @@ export function ProfileSheet({ onBilling, onClose, onSignOut, open, planTier, us
           <ElderModeToggle enabled={elderEnabled} onToggle={toggleElder} />
         </div>
         <Button className="w-full" variant="outline" onClick={onBilling}>عرض الفوترة</Button>
+        <Button
+          className="w-full"
+          variant="ghost"
+          onClick={() => {
+            onClose();
+            replayWelcome();
+          }}
+        >
+          إعادة الجولة الترحيبية
+        </Button>
         <Button className="w-full text-wa-error" variant="ghost" onClick={onSignOut}>تسجيل الخروج</Button>
       </div>
     </BottomSheet>

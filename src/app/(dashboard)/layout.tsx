@@ -6,6 +6,7 @@
  */
 import type { Metadata } from "next";
 import { TopBar } from "@/components/shared/TopBar";
+import { FirstRunWelcome } from "@/components/onboarding/FirstRunWelcome";
 import { ensureAppUser } from "@/lib/api/auth";
 import { noIndexMetadata } from "@/lib/marketing/seo";
 import { getUser } from "@/lib/supabase/server";
@@ -53,6 +54,7 @@ export default async function DashboardLayout({
           </div>
         </div>
       </main>
+      <FirstRunWelcome show={!appUser.onboardingCompleted} userName={fullName} />
     </div>
   );
 }
